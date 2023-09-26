@@ -344,13 +344,13 @@ export const takeTrades = async (
   {
     decisionMakingPoints = 3,
     additionalIndicators = {
-      willR: true,
-      mfi: true,
-      trend: true,
-      cci: true,
-      stochastic: true,
-      vwap: true,
-      psar: true,
+      willR: false,
+      mfi: false,
+      trend: false,
+      cci: false,
+      stochastic: false,
+      vwap: false,
+      psar: false,
     },
     vPointOffset = 10,
     rsiLow = 48,
@@ -722,11 +722,6 @@ export const takeTrades = async (
         signalWeight[macdSignal] * indicatorsWeightEnum.macd +
         signalWeight[smaSignal] * indicatorsWeightEnum.movingAvg;
 
-      const decisionMakingPoint = decisionMakingPoints || 3;
-
-      let isBuySignal = initialSignal >= decisionMakingPoint;
-      let isSellSignal = initialSignal <= -1 * decisionMakingPoint;
-
       const furtherIndicatorSignals = [];
       if (additionalIndicators.cci)
         furtherIndicatorSignals.push(
@@ -757,24 +752,17 @@ export const takeTrades = async (
           signalWeight[willRSignal] * indicatorsWeightEnum.williamR
         );
 
-      const furtherPossibility =
-        (furtherIndicatorSignals.reduce((acc, curr) => curr + acc, 0) /
-          furtherIndicatorSignals.length) *
-        100;
+      const additionalIndicatorsWeight =
+        furtherIndicatorSignals.reduce((acc, curr) => curr + acc, 0) || 0;
 
-      const estimatedAccuracy = `${(
-        50 +
-        ((isSellSignal ? -1 : 1) * furtherPossibility) / 2
-      ).toFixed(1)}%`;
+      const decisionMakingPoint = decisionMakingPoints || 3;
 
-      // if (parseInt(estimatedAccuracy) < 70) {
-      //   isBuySignal = false;
-      //   isSellSignal = false;
-      // }
+      let isBuySignal =
+        initialSignal + additionalIndicatorsWeight >= decisionMakingPoint;
+      let isSellSignal =
+        initialSignal + additionalIndicatorsWeight <= -1 * decisionMakingPoint;
 
       const analytic = {
-        estimatedAccuracy,
-        vols: vols.slice(i - 4, i + 1),
         additionalIndicators,
         mainSignals: {
           rsiSignal,

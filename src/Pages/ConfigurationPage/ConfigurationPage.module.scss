@@ -33,11 +33,58 @@
       }
     }
 
+    .configs {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      border: 2px dotted $primary;
+      border-radius: 10px;
+      padding: 20px;
+
+      .config {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: $shadow-2;
+
+        .title {
+          font-size: 16px;
+          font-weight: 500;
+        }
+
+        .right {
+          display: flex;
+          gap: 20px;
+          align-items: center;
+
+          button {
+            height: 30px;
+
+            svg {
+              height: 17px;
+              width: 17px;
+            }
+          }
+        }
+      }
+    }
+
     .footer {
       display: flex;
-      justify-content: flex-end;
+      flex-wrap: wrap;
+      row-gap: 10px;
+      justify-content: space-between;
       align-items: center;
       gap: 20px;
+
+      .right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
 
       button {
         font-size: 16px;
@@ -49,6 +96,7 @@
       }
     }
   }
+
   .results {
     display: flex;
     flex-wrap: wrap;
@@ -110,11 +158,44 @@
       }
 
       .footer {
+        row-gap: 10px;
+
         button {
           font-size: 14px;
         }
       }
+
+      .configs {
+        padding: 10px;
+
+        .config {
+          padding: 8px;
+          flex-wrap: wrap;
+
+          .title {
+            font-size: 12px;
+          }
+
+          .right {
+            gap: 6px;
+
+            button {
+              height: 30px;
+              width: fit-content;
+              min-width: 10px;
+              padding: 10px;
+              font-size: 14px;
+
+              svg {
+                height: 17px;
+                width: 17px;
+              }
+            }
+          }
+        }
+      }
     }
+
     .results {
       gap: 20px;
       row-gap: 15px;
@@ -130,7 +211,7 @@
         }
 
         .desc {
-          font-size: 16px;
+          font-size: 14px;
         }
       }
     }

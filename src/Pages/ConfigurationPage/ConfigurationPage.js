@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { Copy } from "react-feather";
+import React, { useEffect, useState } from "react";
+import { Bookmark, Copy, X } from "react-feather";
+import { toast } from "react-hot-toast";
 
 import InputSelect from "Components/InputControl/InputSelect/InputSelect";
 import InputControl from "Components/InputControl/InputControl";
@@ -8,9 +9,9 @@ import Button from "Components/Button/Button";
 
 import stockData from "utils/stockData";
 import { copyToClipboard } from "utils/util";
+import { takeTrades } from "utils/tradeUtil";
 
 import styles from "./ConfigurationPage.module.scss";
-import { takeTrades } from "utils/tradeUtil";
 
 const availableStocks = [
   {
@@ -157,6 +158,7 @@ const optionalIndicators = [
 ];
 
 function ConfigurationPage() {
+  const [savedConfigs, setSavedConfigs] = useState([]);
   const [values, setValues] = useState({
     decisionMakingPoints: 3,
     additionalIndicators: {
@@ -196,6 +198,7 @@ function ConfigurationPage() {
     mfiHigh: 83,
     vwapPeriod: 14,
   });
+  const [firstRender, setFirstRender] = useState(true);
   const [selectedStock, setSelectedStock] = useState({});
   const [tradeResults, setTradeResults] = useState({});
 
@@ -204,9 +207,7 @@ function ConfigurationPage() {
 
     const { trades } = await takeTrades(selectedStock.data, values);
 
-    const totalTradesNeeded = parseInt(
-      ((selectedStock.data.c.length * 5) / 60 / 6) * 2
-    );
+    const totalDays = parseInt((selectedStock.data.c.length * 5) / 60 / 6);
 
     const total = trades.length;
     const profitable = trades.filter((item) => item.result == "profit").length;
@@ -214,10 +215,13 @@ function ConfigurationPage() {
     setTradeResults({
       stock: selectedStock.label,
       profitPercent: `${((profitable / total) * 100).toFixed(2)}%`,
-      tradesNeeded: totalTradesNeeded,
+      tradesNeeded: totalDays * 2,
+      totalDays,
       tradesTaken: total,
       profitMaking: profitable,
       lossMaking: total - profitable,
+      buyTrades: trades.filter((item) => item.type == "buy").length,
+      sellTrades: trades.filter((item) => item.type == "sell").length,
       trades: trades.sort((a, b) =>
         parseInt(a.analytics.estimatedAccuracy) >
         parseInt(b.analytics.estimatedAccuracy)
@@ -225,7 +229,66 @@ function ConfigurationPage() {
           : 1
       ),
     });
+    toast.success("Evaluation done");
   };
+
+  const handleSaveConfig = () => {
+    const configString = JSON.stringify(values);
+
+    const correspondingConfigs = savedConfigs.filter(
+      (item) => item.stock == selectedStock.value
+    );
+
+    const alreadyExist = correspondingConfigs.some(
+      (item) => JSON.stringify(item.config) == configString
+    );
+    if (alreadyExist) {
+      toast.error("Config already exists in saved");
+      return;
+    }
+
+    setSavedConfigs((prev) => [
+      ...prev,
+      {
+        stock: selectedStock.value,
+        name: `${selectedStock.value} ${correspondingConfigs.length + 1}`,
+        config: values,
+      },
+    ]);
+  };
+
+  const handleConfigApply = (config) => {
+    if (typeof config.config == "object") {
+      setValues(config.config);
+      setSelectedStock(
+        availableStocks.find((item) => item.value == config.stock)
+      );
+
+      toast.success("Config applied");
+    }
+  };
+
+  useEffect(() => {
+    if (firstRender) return;
+
+    const str = JSON.stringify(savedConfigs);
+    localStorage.setItem("saved-config", str);
+  }, [savedConfigs]);
+
+  useEffect(() => {
+    try {
+      const savedConfigs = localStorage.getItem("saved-config");
+      if (savedConfigs) {
+        const arr = JSON.parse(savedConfigs);
+
+        if (Array.isArray(arr)) setSavedConfigs(arr);
+      }
+    } catch (err) {
+      // nothing
+    }
+
+    setFirstRender(false);
+  }, []);
 
   return (
     <div className={styles.container}>
@@ -240,6 +303,11 @@ function ConfigurationPage() {
               label: item.label,
               value: item.value,
             }))}
+            value={
+              selectedStock.value
+                ? { label: selectedStock.label, value: selectedStock.value }
+                : ""
+            }
             onChange={(e) =>
               setSelectedStock(
                 availableStocks.find((item) => item.value == e.value)
@@ -663,8 +731,8 @@ function ConfigurationPage() {
             </div>
 
             <div className={styles.card}>
-              <p className={`${styles.title}`}>{tradeResults.tradesNeeded}</p>
-              <p className={styles.desc}>Trades needed</p>
+              <p className={`${styles.title}`}>{tradeResults.totalDays}</p>
+              <p className={styles.desc}>Total days</p>
             </div>
 
             <div className={styles.card}>
@@ -685,22 +753,76 @@ function ConfigurationPage() {
               </p>
               <p className={styles.desc}>Loss making trades</p>
             </div>
+
+            <div className={styles.card}>
+              <p className={`${styles.title}`}>{tradeResults.buyTrades}</p>
+              <p className={styles.desc}>BUY trades</p>
+            </div>
+
+            <div className={styles.card}>
+              <p className={`${styles.title}`}>{tradeResults.sellTrades}</p>
+              <p className={styles.desc}>SELL trades</p>
+            </div>
+          </div>
+        ) : (
+          ""
+        )}
+
+        {savedConfigs?.length ? (
+          <div className={styles.configs}>
+            <p className={styles.label}>Saved configs</p>
+            {savedConfigs.map((item, index) => (
+              <div className={styles.config} key={index}>
+                <p className={styles.title}>{item.name}</p>
+
+                <div className={styles.right}>
+                  <Button
+                    outlineButton
+                    onClick={() => copyToClipboard(item.config)}
+                  >
+                    <Copy />
+                  </Button>
+                  <Button onClick={() => handleConfigApply(item)}>Apply</Button>
+
+                  <div
+                    className="icon"
+                    onClick={() =>
+                      setSavedConfigs((prev) =>
+                        prev.filter((e, i) => i !== index)
+                      )
+                    }
+                  >
+                    <X />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           ""
         )}
 
         <div className={styles.footer}>
-          <Button
-            outlineButton
-            onClick={() => copyToClipboard(JSON.stringify(values))}
-          >
-            <Copy /> copy configuration
-          </Button>
+          {selectedStock.value ? (
+            <Button outlineButton onClick={() => handleSaveConfig()}>
+              <Bookmark /> Save current config
+            </Button>
+          ) : (
+            <p />
+          )}
 
-          <Button disabled={!selectedStock?.value} onClick={handleEvaluation}>
-            Evaluate
-          </Button>
+          <div className={styles.right}>
+            <Button
+              outlineButton
+              onClick={() => copyToClipboard(JSON.stringify(values))}
+            >
+              <Copy /> copy configuration
+            </Button>
+
+            <Button disabled={!selectedStock?.value} onClick={handleEvaluation}>
+              Evaluate
+            </Button>
+          </div>
         </div>
       </div>
     </div>
