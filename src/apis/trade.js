@@ -21,3 +21,25 @@ export const getTodayTrades = async () => {
     return false;
   }
 };
+
+export const getBestStockPresets = async () => {
+  const reqPath = `/trade/preset`;
+  let response;
+
+  try {
+    response = await fetchWrapper(reqPath);
+    const data = await response.json();
+    if (!data?.success) {
+      errorToastLogger(
+        "getBestStockPresets",
+        data?.message || "Failed to get presets",
+        data?.error
+      );
+      return false;
+    }
+    return data;
+  } catch (err) {
+    errorToastLogger("getBestStockPresets", "Failed to get presets", err);
+    return false;
+  }
+};

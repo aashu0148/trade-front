@@ -7,9 +7,10 @@ import InputControl from "Components/InputControl/InputControl";
 import MultiSelect from "Components/MultiSelect/MultiSelect";
 import Button from "Components/Button/Button";
 
-import stockData from "utils/stockData";
+import { getBestStockPresets } from "apis/trade";
 import { copyToClipboard } from "utils/util";
 import { indicatorsWeightEnum, takeTrades } from "utils/tradeUtil";
+import stockData from "utils/stockData";
 
 import styles from "./ConfigurationPage.module.scss";
 
@@ -52,51 +53,60 @@ const optionalIndicators = [
   },
 ];
 
+const defaultConfigs = {
+  decisionMakingPoints: 3,
+  additionalIndicators: {
+    willR: false,
+    mfi: false,
+    trend: true,
+    cci: false,
+    stochastic: false,
+    vwap: false,
+    psar: false,
+  },
+  useSupportResistances: true,
+  vPointOffset: 8,
+  rsiLow: 48,
+  rsiHigh: 63,
+  smaLowPeriod: 18,
+  smaHighPeriod: 150,
+  rsiPeriod: 8,
+  macdFastPeriod: 14,
+  macdSlowPeriod: 24,
+  macdSignalPeriod: 8,
+  bollingerBandPeriod: 23,
+  bollingerBandStdDev: 4,
+  cciPeriod: 20,
+  stochasticPeriod: 14,
+  stochasticMA: 3,
+  stochasticLow: 23,
+  stochasticHigh: 83,
+  willRPeriod: 14,
+  willRLow: -90,
+  willRHigh: -10,
+  psarStart: 0.02,
+  psarAcceleration: 0.02,
+  psarMaxValue: 0.2,
+  superTrendMultiplier: 3,
+  mfiPeriod: 14,
+  mfiLow: 23,
+  mfiHigh: 83,
+  vwapPeriod: 14,
+};
 function ConfigurationPage() {
   const [savedConfigs, setSavedConfigs] = useState([]);
-  const [values, setValues] = useState({
-    decisionMakingPoints: 3,
-    additionalIndicators: {
-      willR: false,
-      mfi: false,
-      trend: true,
-      cci: false,
-      stochastic: false,
-      vwap: false,
-      psar: false,
-    },
-    useSupportResistances: true,
-    vPointOffset: 8,
-    rsiLow: 48,
-    rsiHigh: 63,
-    smaLowPeriod: 18,
-    smaHighPeriod: 150,
-    rsiPeriod: 8,
-    macdFastPeriod: 14,
-    macdSlowPeriod: 24,
-    macdSignalPeriod: 8,
-    bollingerBandPeriod: 23,
-    bollingerBandStdDev: 4,
-    cciPeriod: 20,
-    stochasticPeriod: 14,
-    stochasticMA: 3,
-    stochasticLow: 23,
-    stochasticHigh: 83,
-    willRPeriod: 14,
-    willRLow: -90,
-    willRHigh: -10,
-    psarStart: 0.02,
-    psarAcceleration: 0.02,
-    psarMaxValue: 0.2,
-    superTrendMultiplier: 3,
-    mfiPeriod: 14,
-    mfiLow: 23,
-    mfiHigh: 83,
-    vwapPeriod: 14,
-  });
+  const [values, setValues] = useState({ ...defaultConfigs });
   const [firstRender, setFirstRender] = useState(true);
   const [selectedStock, setSelectedStock] = useState({});
   const [tradeResults, setTradeResults] = useState({});
+  const [stockPresets, setStockPresets] = useState({});
+
+  const fetchBestStockPreset = async () => {
+    const res = await getBestStockPresets();
+    if (!res) return;
+
+    setStockPresets(res.data);
+  };
 
   const handleEvaluation = async () => {
     if (!selectedStock?.data?.c?.length) return;
@@ -165,6 +175,13 @@ function ConfigurationPage() {
     }
   };
 
+  const handleApplyBestPreset = () => {
+    const preset = stockPresets[selectedStock.value] || {};
+
+    setValues({ ...defaultConfigs, ...preset });
+    toast.success("Preset applied");
+  };
+
   useEffect(() => {
     if (firstRender) return;
 
@@ -185,6 +202,7 @@ function ConfigurationPage() {
     }
 
     setFirstRender(false);
+    fetchBestStockPreset();
   }, []);
 
   return (
@@ -744,11 +762,17 @@ function ConfigurationPage() {
 
         <div className={styles.footer}>
           {selectedStock.value ? (
-            <Button outlineButton onClick={() => handleSaveConfig()}>
-              <Bookmark /> Save current config
-            </Button>
+            <div className={styles.right}>
+              <Button outlineButton onClick={() => handleSaveConfig()}>
+                <Bookmark /> Save current config
+              </Button>
+
+              <Button onClick={() => handleApplyBestPreset()}>
+                Apply best preset
+              </Button>
+            </div>
           ) : (
-            <p />
+            <div />
           )}
 
           <div className={styles.right}>
