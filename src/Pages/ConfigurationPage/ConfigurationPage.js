@@ -9,7 +9,7 @@ import Button from "Components/Button/Button";
 
 import stockData from "utils/stockData";
 import { copyToClipboard } from "utils/util";
-import { takeTrades } from "utils/tradeUtil";
+import { indicatorsWeightEnum, takeTrades } from "utils/tradeUtil";
 
 import styles from "./ConfigurationPage.module.scss";
 
@@ -128,31 +128,31 @@ const availableStocks = [
 
 const optionalIndicators = [
   {
-    label: "William % R",
+    label: "William % R" + ` (${indicatorsWeightEnum.williamR} point)`,
     value: "willR",
   },
   {
-    label: "Money flow index",
+    label: "Money flow index" + ` (${indicatorsWeightEnum.mfi} point)`,
     value: "mfi",
   },
   {
-    label: "Trend indicator (beta)",
+    label: "Trend indicator (beta)" + ` (${indicatorsWeightEnum.trend} point)`,
     value: "trend",
   },
   {
-    label: "Commodity channel index",
+    label: "Commodity channel index" + ` (${indicatorsWeightEnum.cci} point)`,
     value: "cci",
   },
   {
-    label: "Stochastic",
+    label: "Stochastic" + ` (${indicatorsWeightEnum.stochastic} point)`,
     value: "stochastic",
   },
   {
-    label: "VWAP",
+    label: "VWAP" + ` (${indicatorsWeightEnum.vwap} point)`,
     value: "vwap",
   },
   {
-    label: "Parabolic SAR",
+    label: "Parabolic SAR" + ` (${indicatorsWeightEnum.psar} point)`,
     value: "psar",
   },
 ];
@@ -164,13 +164,14 @@ function ConfigurationPage() {
     additionalIndicators: {
       willR: false,
       mfi: false,
-      trend: false,
+      trend: true,
       cci: false,
       stochastic: false,
       vwap: false,
       psar: false,
     },
-    vPointOffset: 10,
+    useSupportResistances: true,
+    vPointOffset: 8,
     rsiLow: 48,
     rsiHigh: 63,
     smaLowPeriod: 18,
@@ -265,6 +266,7 @@ function ConfigurationPage() {
       );
 
       toast.success("Config applied");
+      setTradeResults({});
     }
   };
 
@@ -331,6 +333,40 @@ function ConfigurationPage() {
             disabled={!selectedStock?.value}
           />
         </div>
+        <div className="row" style={{ alignItems: "center" }}>
+          <MultiSelect
+            id={JSON.stringify(values.useSupportResistances)}
+            options={[
+              {
+                label: `Use support resistances`,
+                value: "useSupportResistances",
+                selected: values.useSupportResistances,
+              },
+            ]}
+            onChange={(obj) =>
+              setValues((prev) => ({
+                ...prev,
+                useSupportResistances: obj[0].selected,
+              }))
+            }
+          />
+
+          <InputControl
+            placeholder="Enter number"
+            numericInput
+            label="V-point offset"
+            max={30}
+            min={1}
+            value={values.vPointOffset}
+            onChange={(e) =>
+              setValues((prev) => ({
+                ...prev,
+                vPointOffset: parseInt(e.target.value),
+              }))
+            }
+            disabled={!selectedStock?.value}
+          />
+        </div>
         <div className="col" style={{ gap: "10px" }}>
           <p className={styles.label}>Additional indicators</p>
 
@@ -354,7 +390,6 @@ function ConfigurationPage() {
             }
           />
         </div>
-
         <div className="col" style={{ gap: "10px" }}>
           <p className={styles.label}>MACD </p>
 
@@ -717,52 +752,60 @@ function ConfigurationPage() {
         </div>
 
         {tradeResults?.profitPercent ? (
-          <div className={styles.results}>
-            <div className={styles.card}>
-              <p
-                className={`${styles.title} ${
-                  parseInt(tradeResults.profitPercent) > 40
-                    ? styles.green
-                    : styles.red
-                }`}
-              >
-                {tradeResults.profitPercent}
-              </p>
-              <p className={styles.desc}>Profit Percent 💸</p>
-            </div>
+          <div>
+            <p
+              className={styles.heading}
+              style={{ textAlign: "center", marginBottom: "15px" }}
+            >
+              Results: {selectedStock.label}
+            </p>
+            <div className={styles.results}>
+              <div className={styles.card}>
+                <p
+                  className={`${styles.title} ${
+                    parseInt(tradeResults.profitPercent) > 40
+                      ? styles.green
+                      : styles.red
+                  }`}
+                >
+                  {tradeResults.profitPercent}
+                </p>
+                <p className={styles.desc}>Profit Percent 💸</p>
+              </div>
 
-            <div className={styles.card}>
-              <p className={`${styles.title}`}>{tradeResults.totalDays}</p>
-              <p className={styles.desc}>Total days</p>
-            </div>
+              <div className={styles.card}>
+                <p className={`${styles.title}`}>{tradeResults.totalDays}</p>
+                <p className={styles.desc}>Total days</p>
+              </div>
 
-            <div className={styles.card}>
-              <p className={`${styles.title}`}>{tradeResults.tradesTaken}</p>
-              <p className={styles.desc}>Trades taken</p>
-            </div>
+              <div className={styles.card}>
+                <p className={`${styles.title}`}>{tradeResults.tradesTaken}</p>
+                <p className={styles.desc}>Trades taken</p>
+              </div>
 
-            <div className={styles.card}>
-              <p className={`${styles.title} ${styles.green}`}>
-                {tradeResults.profitMaking}
-              </p>
-              <p className={styles.desc}>Profit making trades</p>
-            </div>
+              <div className={styles.card}>
+                <p className={`${styles.title} ${styles.green}`}>
+                  {tradeResults.profitMaking}
+                </p>
+                <p className={styles.desc}>Profit making trades</p>
+              </div>
 
-            <div className={styles.card}>
-              <p className={`${styles.title} ${styles.red}`}>
-                {tradeResults.lossMaking}
-              </p>
-              <p className={styles.desc}>Loss making trades</p>
-            </div>
+              <div className={styles.card}>
+                <p className={`${styles.title} ${styles.red}`}>
+                  {tradeResults.lossMaking}
+                </p>
+                <p className={styles.desc}>Loss making trades</p>
+              </div>
 
-            <div className={styles.card}>
-              <p className={`${styles.title}`}>{tradeResults.buyTrades}</p>
-              <p className={styles.desc}>BUY trades</p>
-            </div>
+              <div className={styles.card}>
+                <p className={`${styles.title}`}>{tradeResults.buyTrades}</p>
+                <p className={styles.desc}>BUY trades</p>
+              </div>
 
-            <div className={styles.card}>
-              <p className={`${styles.title}`}>{tradeResults.sellTrades}</p>
-              <p className={styles.desc}>SELL trades</p>
+              <div className={styles.card}>
+                <p className={`${styles.title}`}>{tradeResults.sellTrades}</p>
+                <p className={styles.desc}>SELL trades</p>
+              </div>
             </div>
           </div>
         ) : (
@@ -779,7 +822,7 @@ function ConfigurationPage() {
                 <div className={styles.right}>
                   <Button
                     outlineButton
-                    onClick={() => copyToClipboard(item.config)}
+                    onClick={() => copyToClipboard(JSON.stringify(item.config))}
                   >
                     <Copy />
                   </Button>

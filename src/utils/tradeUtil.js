@@ -346,13 +346,14 @@ export const takeTrades = async (
     additionalIndicators = {
       willR: false,
       mfi: false,
-      trend: false,
+      trend: true,
       cci: false,
       stochastic: false,
       vwap: false,
       psar: false,
     },
-    vPointOffset = 10,
+    useSupportResistances = true,
+    vPointOffset = 8,
     rsiLow = 48,
     rsiHigh = 63,
     smaLowPeriod = 18,
@@ -820,8 +821,7 @@ export const takeTrades = async (
           ? nearestResistance - price
           : targetProfit;
 
-        // commented out for testing purpose
-        // if (possibleProfit < targetProfit) continue;
+        if (possibleProfit < targetProfit && useSupportResistances) continue;
 
         isTradeTaken = true;
         trade = {
@@ -861,8 +861,7 @@ export const takeTrades = async (
           ? price - nearestSupport
           : targetProfit;
 
-        // commented out for testing purpose
-        // if (possibleProfit < targetProfit) continue;
+        if (possibleProfit < targetProfit && useSupportResistances) continue;
 
         isTradeTaken = true;
         trade = {
