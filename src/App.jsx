@@ -97,7 +97,10 @@ function App() {
 
   useEffect(() => {
     handleUserDetection();
-    greetBackend();
+
+    setInterval(() => {
+      greetBackend();
+    }, 100);
   }, []);
 
   return (
