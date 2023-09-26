@@ -828,10 +828,7 @@ export const takeTrades = async (
           startIndex: i,
           startPrice: price,
           type: signalEnum.buy,
-          target:
-            possibleProfit > targetProfit
-              ? price + targetProfit
-              : price + possibleProfit,
+          target: price + targetProfit,
           sl: price - stopLoss,
           analytics: analytic,
           nearestResistance,
@@ -872,10 +869,7 @@ export const takeTrades = async (
           startIndex: i,
           startPrice: price,
           type: signalEnum.sell,
-          target:
-            possibleProfit > targetProfit
-              ? price - targetProfit
-              : price - possibleProfit,
+          target: price - targetProfit,
           sl: price + stopLoss,
           analytics: analytic,
           nearestSupport,
