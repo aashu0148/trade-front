@@ -69,7 +69,6 @@ function TradePage({ socket }) {
             <th>SL</th>
             <th>Time</th>
           </tr>
-          {console.log(todayTrades)}
           {todayTrades.map((item) => (
             <tr key={item.symbol}>
               <td className={styles.name}>{item.name}</td>
