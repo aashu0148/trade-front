@@ -205,11 +205,12 @@ function ConfigurationPage() {
                 ? { label: selectedStock.label, value: selectedStock.value }
                 : ""
             }
-            onChange={(e) =>
+            onChange={(e) => {
               setSelectedStock(
                 availableStocks.find((item) => item.value == e.value)
-              )
-            }
+              );
+              setTradeResults({});
+            }}
           />
 
           <InputControl
