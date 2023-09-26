@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { LogOut } from "react-feather";
 import { io } from "socket.io-client";
 
+import Banner from "Components/Banner/Banner";
 import Spinner from "Components/Spinner/Spinner";
 import AuthPage from "Pages/AuthPage/AuthPage";
 import TradePage from "Pages/TradePage/TradePage";
+
 import { getCurrentUser, sayHiToBackend } from "apis";
+import { handleLogout } from "utils/util";
 
 import "styles/global.scss";
-import Banner from "Components/Banner/Banner";
-import { LogOut } from "react-feather";
 
 let socket;
 const backendUrl = process.env.REACT_APP_BACKEND_URL;
@@ -109,9 +111,13 @@ function App() {
       {banner.show ? <Banner bannerDetails={banner} /> : ""}
 
       <div className="top-bar">
-        <p className="logout">
-          <LogOut /> Logout
-        </p>
+        {isAuthenticated ? (
+          <p className="logout" onClick={handleLogout}>
+            <LogOut /> Logout
+          </p>
+        ) : (
+          ""
+        )}
       </div>
 
       {appLoaded ? (
