@@ -31,6 +31,8 @@ function TradePage({ socket }) {
     });
 
     socket.on("stock-data", (data) => {
+      if (!data?.date) return;
+
       setStockData(data);
     });
   };
@@ -97,7 +99,7 @@ function TradePage({ socket }) {
               <td className={styles.name}>{item.symbol}</td>
               <td className={styles.price}>{item.data.c}</td>
               <td className={styles.time}>
-                {getTimeFormatted(item.data.t * 1000)}
+                {getTimeFormatted(item.data.t * 1000, true)}
               </td>
             </tr>
           ))}
