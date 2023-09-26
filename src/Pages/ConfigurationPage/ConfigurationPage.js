@@ -764,11 +764,11 @@ function ConfigurationPage() {
           {selectedStock.value ? (
             <div className={styles.right}>
               <Button outlineButton onClick={() => handleSaveConfig()}>
-                <Bookmark /> Save current config
+                <Bookmark /> Save this config
               </Button>
 
               <Button onClick={() => handleApplyBestPreset()}>
-                Apply best preset
+                Apply preset
               </Button>
             </div>
           ) : (
