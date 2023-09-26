@@ -1,20 +1,34 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { getTodayTrades } from "apis/trade";
+import { getTimeFormatted } from "utils/util";
+import bubbleSound from "assets/bubble.mp3";
+import secSound from "assets/10 Sec.mp3";
 
 import styles from "./TradePage.module.scss";
-import { getTimeFormatted } from "utils/util";
 
+let lastTradesLength = 0;
 function TradePage({ socket }) {
+  const audioElem = useRef();
+
   const [todayTrades, setTodayTrades] = useState([]);
   const [stockData, setStockData] = useState({});
 
   const fetchTodayTrades = async () => {
     const res = await getTodayTrades();
 
-    if (!res) return;
+    if (!res?.data) return;
 
-    setTodayTrades(res.data);
+    const newTrades = res.data;
+    setTodayTrades(newTrades);
+
+    if (lastTradesLength && newTrades.length !== lastTradesLength) {
+      console.log("NEW TRADE TAKEN");
+
+      audioElem.current.src = secSound;
+      audioElem.current.play();
+    }
+    lastTradesLength = newTrades.length;
   };
 
   const handleSocketEvents = () => {
@@ -59,6 +73,8 @@ function TradePage({ socket }) {
 
   return (
     <div className={styles.container}>
+      <audio ref={audioElem} />
+
       <div className={styles.section}>
         <p className={styles.heading}>Today's trades</p>
 
@@ -86,7 +102,9 @@ function TradePage({ socket }) {
         </table>
       </div>
       <div className={styles.section}>
-        <p className={styles.heading}>Last recorded data</p>
+        <p className={styles.heading}>
+          Last recorded data (updates every 5 min)
+        </p>
 
         <table className={styles.table}>
           <tr>
@@ -99,7 +117,7 @@ function TradePage({ socket }) {
               <td className={styles.name}>{item.symbol}</td>
               <td className={styles.price}>{item.data.c}</td>
               <td className={styles.time}>
-                {getTimeFormatted(item.data.t * 1000, true)}
+                {getTimeFormatted(item.data.t * 1000)}
               </td>
             </tr>
           ))}
