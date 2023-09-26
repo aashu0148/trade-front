@@ -100,7 +100,7 @@ function App() {
 
     setInterval(() => {
       greetBackend();
-    }, 60);
+    }, 60 * 1000);
   }, []);
 
   return (
