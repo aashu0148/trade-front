@@ -335,6 +335,7 @@ function ConfigurationPage() {
           <p className={styles.label}>Additional indicators</p>
 
           <MultiSelect
+            id={JSON.stringify(values.additionalIndicators)}
             options={optionalIndicators.map((item) => ({
               ...item,
               selected: values.additionalIndicators[item.value] ? true : false,

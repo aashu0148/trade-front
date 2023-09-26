@@ -441,7 +441,7 @@ export const takeTrades = async (
     noOfBreakdowns: 0,
   };
 
-  const startTakingTradeIndex = 2000;
+  const startTakingTradeIndex = 200;
   // allowing the algo to take only one trade for last price
   // const startTakingTradeIndex = priceData.c.length - 1;
 
