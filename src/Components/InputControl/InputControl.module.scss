@@ -4,13 +4,13 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 
   .label {
     font-size: 16px;
-    line-height: 22px;
+    line-height: 24px;
     font-weight: 400;
-    color: $gray-2;
+    color: $gray;
 
     span {
       font-size: 0.875rem;
@@ -21,11 +21,109 @@
     position: relative;
     width: 100%;
     height: fit-content;
-    margin: 1px 0;
+    margin: 3px 0;
     padding: 0px;
     display: flex;
     gap: 5px;
     align-items: center;
+    height: 39px;
+
+    &:has(.activeAuto) {
+      border-color: $primary;
+    }
+
+    &:has(input:disabled) {
+      background-color: $white-2;
+      border-color: $white-2;
+
+      &:hover {
+        border-color: $white-2;
+      }
+    }
+
+    &:hover,
+    &:focus-within {
+      .auto {
+        opacity: 1;
+      }
+    }
+
+    input:disabled + .numericControl {
+      background-color: $white-2;
+      pointer-events: none;
+    }
+
+    .auto {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      cursor: pointer;
+      padding: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: inherit;
+      opacity: 0;
+      transition: 200ms;
+      font-size: 12px;
+      border-radius: 11px;
+      padding: 0px 6px;
+      color: $gray;
+
+      svg {
+        height: 18px;
+        width: 18px;
+        fill: $gray;
+      }
+    }
+
+    .activeAuto {
+      background-color: $primary;
+      color: $white;
+      opacity: 1;
+
+      svg {
+        fill: $primary;
+      }
+    }
+
+    .numericControl {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4px 2px;
+      height: 100%;
+      align-items: center;
+
+      .controlIcon {
+        user-select: none;
+        cursor: n-resize;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 18px;
+        width: 18px;
+
+        &:hover {
+          svg {
+            fill: $black;
+          }
+        }
+
+        svg {
+          fill: $gray;
+          height: 100%;
+          width: 100%;
+          transition: 200ms;
+        }
+      }
+
+      .controlIcon.down {
+        cursor: s-resize;
+      }
+    }
 
     .text {
       font-size: 16px;
@@ -41,7 +139,7 @@
       font-size: 16px;
       line-height: 26px;
       font-weight: 500;
-      padding: 8px 18px;
+      padding: 12px 20px;
       height: 100%;
       width: 100%;
       outline: none;
@@ -136,7 +234,7 @@
 }
 
 .selectContainer {
-  margin: 1px 0;
+  margin: 3px 0;
 }
 
 @media (max-width: 768px) {

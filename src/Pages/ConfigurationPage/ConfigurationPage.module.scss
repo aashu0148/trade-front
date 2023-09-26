@@ -1,0 +1,138 @@
+@import "styles/variables";
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  padding: 25px;
+  min-height: 100vh;
+  height: fit-content;
+
+  .heading {
+    font-size: 22px;
+    line-height: 30px;
+  }
+
+  .form {
+    padding: 25px;
+    border-radius: 5px;
+    background-color: $white;
+    box-shadow: $shadow-2;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+
+    .label {
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 400;
+      color: $gray;
+
+      span {
+        font-size: 0.875rem;
+      }
+    }
+
+    .footer {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 20px;
+
+      button {
+        font-size: 16px;
+
+        svg {
+          height: 16px;
+          width: 16px;
+        }
+      }
+    }
+  }
+  .results {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    row-gap: 15px;
+    align-items: center;
+    justify-content: center;
+
+    .card {
+      padding: 20px;
+      border-radius: 8px;
+      background-color: $white;
+      box-shadow: $shadow-2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-width: 150px;
+
+      .title {
+        font-size: 24px;
+        line-height: 30px;
+        font-weight: 600;
+        text-align: center;
+      }
+
+      .red {
+        color: $red;
+      }
+
+      .green {
+        color: $green;
+      }
+
+      .desc {
+        font-size: 18px;
+        text-align: center;
+        line-height: 22px;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    gap: 20px;
+    padding: 15px;
+
+    .heading {
+      font-size: 18px;
+    }
+
+    .form {
+      padding: 20px;
+      gap: 25px;
+
+      .label {
+        font-size: 14px;
+        line-height: 20px;
+      }
+
+      .footer {
+        button {
+          font-size: 14px;
+        }
+      }
+    }
+    .results {
+      gap: 20px;
+      row-gap: 15px;
+
+      .card {
+        padding: 15px;
+        border-radius: 8px;
+        min-width: 100px;
+
+        .title {
+          font-size: 18px;
+          line-height: 30px;
+        }
+
+        .desc {
+          font-size: 16px;
+        }
+      }
+    }
+  }
+}

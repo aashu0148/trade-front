@@ -172,7 +172,7 @@ a {
   outline: none;
   padding: 8px 12px;
   width: 100%;
-  border: 1px solid $gray;
+  border: 1px solid $white-2;
   background-color: $white;
   color: $black;
   border-radius: 5px;
@@ -181,7 +181,7 @@ a {
   transition: 100ms;
 
   &:hover {
-    border: 1px solid $secondary;
+    border: 1px solid $gray;
   }
 
   &:focus-within {
@@ -247,7 +247,6 @@ a {
   display: flex;
   gap: 20px;
   row-gap: 10px;
-  align-items: center;
 
   & > div {
     flex: 1;
@@ -256,4 +255,10 @@ a {
   @media (max-width: $breakpoint-md) {
     flex-direction: column;
   }
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }

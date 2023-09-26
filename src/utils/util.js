@@ -24,9 +24,14 @@ export const handleNumericInputKeyDown = (event) => {
   }
 };
 
-export const generateUniqueString = () => {
-  return parseInt(Date.now() + Math.random() * 99999999).toString(16);
+export const copyToClipboard = (text, hideToast = false) => {
+  if (!text) return;
+  if (!hideToast) toast.success("Copied");
+  navigator.clipboard.writeText(text);
 };
+
+export const generateUniqueString = () =>
+  (Date.now() + "" + parseInt(Math.random() * 9999999)).toString(16).slice(-10);
 
 export const errorToastLogger = (
   functionName,

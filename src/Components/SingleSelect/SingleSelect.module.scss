@@ -1,0 +1,84 @@
+@import "styles/variables";
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  label {
+    font-size: 16px;
+    line-height: 25px;
+    font-weight: 500;
+    color: $gray;
+  }
+
+  .subLabel {
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    .option {
+      display: flex;
+      align-items: center;
+
+      input {
+        color: $black;
+        height: 16px;
+        width: 16px;
+        position: relative;
+        cursor: pointer;
+        margin-top: 2px;
+
+        &::after {
+          position: absolute;
+          height: 100%;
+          width: 100%;
+          box-sizing: border-box;
+          top: 0px;
+          left: 0px;
+          border: 2px solid $black;
+          background-color: $white;
+          content: "";
+          display: inline-block;
+          visibility: visible;
+          border-radius: 50%;
+        }
+
+        &:checked::before {
+          position: absolute;
+          z-index: 10;
+          height: calc(100% - 8px);
+          width: calc(100% - 8px);
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background-color: $black;
+          content: "";
+          display: inline-block;
+          visibility: visible;
+          border-radius: 50%;
+        }
+      }
+
+      .text {
+        padding-left: 10px;
+        font-size: 16px;
+        color: $black;
+        width: fit-content;
+        cursor: pointer;
+        user-select: none;
+      }
+    }
+  }
+
+  .errorMsg {
+    text-align: start;
+    font-weight: 500;
+    width: 100%;
+  }
+}

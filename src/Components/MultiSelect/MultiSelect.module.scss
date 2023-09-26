@@ -1,0 +1,56 @@
+@import "styles/variables";
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  label {
+    font-size: 16px;
+    line-height: 25px;
+    font-weight: 500;
+    color: $gray;
+  }
+
+  .subLabel {
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .option {
+      display: flex;
+      align-items: center;
+
+      input {
+        color: $primary;
+        accent-color: $primary;
+        height: 20px;
+        width: 20px;
+        position: relative;
+        cursor: pointer;
+        margin-top: 2px;
+        border-radius: 5px;
+      }
+
+      .text {
+        padding-left: 10px;
+        font-size: 16px;
+        color: $black;
+        width: fit-content;
+        cursor: pointer;
+        user-select: none;
+      }
+    }
+  }
+
+  .errorMsg {
+    width: 100%;
+    text-align: start;
+    font-weight: 500;
+  }
+}

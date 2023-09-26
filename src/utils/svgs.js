@@ -63,3 +63,73 @@ export const repeatIcon = (
     <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"></path>
   </svg>
 );
+
+export const arrowUpIcon = (
+  <svg ariaHidden="true" height="24" width="24" viewBox="0 0 24 24">
+    <path d="m7 14 5-5 5 5z"></path>
+  </svg>
+);
+
+export const arrowDownIcon = (
+  <svg ariaHidden="true" height="24" width="24" viewBox="0 0 24 24">
+    <path d="m7 10 5 5 5-5z"></path>
+  </svg>
+);
+
+export const resizeHorizontalIcon = (
+  <svg width="16" height="16">
+    <path
+      d="M 2 7.75 L 14 7.75"
+      fill="transparent"
+      stroke-width="1.5"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    ></path>
+    <path
+      d="M 4 5 L 1 7.75 L 4 10.5"
+      fill="transparent"
+      stroke-width="1.5"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    ></path>
+    <path
+      d="M 12 5 L 15 7.75 L 12 10.5"
+      fill="transparent"
+      stroke-width="1.5"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    ></path>
+  </svg>
+);
+
+export const resizeVerticalIcon = (
+  <svg width="16" height="16">
+    <path
+      d="M 7.75 3 L 7.75 13"
+      fill="transparent"
+      stroke-width="1.5"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    ></path>
+    <path
+      d="M 10.5 5 L 7.75 2.5 L 5 5"
+      fill="transparent"
+      stroke-width="1.5"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    ></path>
+    <path
+      d="M 10.5 11 L 7.75 13.5 L 5 11"
+      fill="transparent"
+      stroke-width="1.5"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    ></path>
+  </svg>
+);

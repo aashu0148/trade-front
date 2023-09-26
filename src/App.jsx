@@ -8,6 +8,7 @@ import Banner from "Components/Banner/Banner";
 import Spinner from "Components/Spinner/Spinner";
 import AuthPage from "Pages/AuthPage/AuthPage";
 import TradePage from "Pages/TradePage/TradePage";
+import ConfigurationPage from "Pages/ConfigurationPage/ConfigurationPage";
 
 import { getCurrentUser, sayHiToBackend } from "apis";
 import { handleLogout } from "utils/util";
@@ -130,6 +131,7 @@ function App() {
             {isAuthenticated ? (
               <Route path="/">
                 <Route path="/" element={<TradePage socket={socket} />} />
+                <Route path="/configure" element={<ConfigurationPage />} />
               </Route>
             ) : (
               ""

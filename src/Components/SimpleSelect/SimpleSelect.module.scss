@@ -1,0 +1,66 @@
+@import "styles/variables";
+
+.container {
+  outline: none;
+  padding: 12px 20px;
+  margin: 0;
+  width: 100%;
+  border: 1px solid transparent;
+  background-color: $white-1;
+  color: $black;
+  border-radius: 5px;
+  font-size: 1rem;
+  transition: 100ms;
+  // -moz-appearance: none;
+  // -webkit-appearance: none;
+  // appearance: none;
+  // position: relative;
+
+  &:hover {
+    border: 1px solid $white-2;
+  }
+
+  &:focus-within {
+    border: 1px solid $primary;
+  }
+
+  &::placeholder {
+    color: $gray;
+  }
+
+  &:disabled {
+    background-color: $white-2;
+    border: 1px solid $white-2;
+    color: $gray;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+
+  // .dropIcon {
+  //   position: absolute;
+  //   top: 50%;
+  //   transform: translateY(-50%);
+  //   right: 2px;
+  //   height: 16px;
+  //   width: 16px;
+  //   z-index: 10;
+
+  //   svg {
+  //     height: 16px;
+  //     width: 16px;
+  //     fill: $gray;
+  //   }
+  // }
+
+  option {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-bottom: 1px solid $white-2;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
