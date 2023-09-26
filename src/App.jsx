@@ -10,6 +10,7 @@ import { getCurrentUser, sayHiToBackend } from "apis";
 
 import "styles/global.scss";
 import Banner from "Components/Banner/Banner";
+import { LogOut } from "react-feather";
 
 let socket;
 const backendUrl = process.env.REACT_APP_BACKEND_URL;
@@ -35,7 +36,11 @@ function App() {
 
     let res = await getCurrentUser();
     setAppLoaded(true);
-    if (!res) return;
+    if (!res) {
+      if (!window.location.href.includes("auth"))
+        window.location.href = "/auth";
+      return;
+    }
 
     setIsAuthenticated(true);
   };
@@ -102,6 +107,12 @@ function App() {
         }}
       />
       {banner.show ? <Banner bannerDetails={banner} /> : ""}
+
+      <div className="top-bar">
+        <p className="logout">
+          <LogOut /> Logout
+        </p>
+      </div>
 
       {appLoaded ? (
         <Router>

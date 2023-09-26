@@ -64,7 +64,7 @@ function TradePage({ socket }) {
           <tr>
             <th>Symbol</th>
             <th>Type</th>
-            <th>Triggered at</th>
+            <th>Trigger</th>
             <th>Target</th>
             <th>SL</th>
             <th>Time</th>

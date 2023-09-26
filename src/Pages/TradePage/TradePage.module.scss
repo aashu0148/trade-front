@@ -89,4 +89,34 @@
       }
     }
   }
+
+  @media (max-width: 768px) {
+    gap: 25px;
+    padding: 20px;
+
+    .section {
+      overflow-x: auto;
+
+      .heading {
+        font-size: 18px;
+      }
+
+      .table {
+        th {
+          padding: 8px;
+          font-size: 14px;
+        }
+
+        td {
+          padding: 8px;
+          font-size: 12px;
+        }
+
+        caption {
+          font-size: 0.875em;
+          margin: 6px;
+        }
+      }
+    }
+  }
 }

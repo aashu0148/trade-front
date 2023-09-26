@@ -58,6 +58,29 @@ a {
   height: 100%;
 }
 
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 6px 16px;
+
+  .logout {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: $red;
+    cursor: pointer;
+
+    svg {
+      height: 16px;
+      width: 16px;
+      color: $red;
+    }
+  }
+}
+
 .spinner-container {
   min-height: 600px;
   width: 100%;
