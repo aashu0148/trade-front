@@ -44,6 +44,10 @@ function TradePage({ socket }) {
       fetchTodayTrades();
     });
 
+    socket.on("test", (data) => {
+      console.log(data);
+    });
+
     socket.on("stock-data", (data) => {
       if (!data?.date) return;
 
