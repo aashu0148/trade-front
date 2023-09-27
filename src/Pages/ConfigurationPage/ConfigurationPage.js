@@ -58,7 +58,7 @@ const defaultConfigs = {
   additionalIndicators: {
     willR: false,
     mfi: false,
-    trend: true,
+    trend: false,
     cci: false,
     stochastic: false,
     vwap: false,
