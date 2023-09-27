@@ -340,6 +340,7 @@ export const takeTrades = async (
     h: [],
     l: [],
     v: [],
+    t: [],
   },
   {
     decisionMakingPoints = 3,
@@ -825,6 +826,7 @@ export const takeTrades = async (
 
         isTradeTaken = true;
         trade = {
+          time: priceData.t[i],
           startIndex: i,
           startPrice: price,
           type: signalEnum.buy,
@@ -865,6 +867,7 @@ export const takeTrades = async (
 
         isTradeTaken = true;
         trade = {
+          time: priceData.t[i],
           startIndex: i,
           startPrice: price,
           type: signalEnum.sell,
