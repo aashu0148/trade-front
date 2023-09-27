@@ -118,6 +118,7 @@ function ConfigurationPage() {
     const total = trades.length;
     const profitable = trades.filter((item) => item.result == "profit").length;
 
+    console.log(trades);
     setTradeResults({
       stock: selectedStock.label,
       profitPercent: `${((profitable / total) * 100).toFixed(2)}%`,
