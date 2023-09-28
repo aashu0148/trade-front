@@ -340,10 +340,8 @@ export const takeTrades = async (
     h: [],
     l: [],
     v: [],
-    t: [],
   },
   {
-    decisionMakingPoints = 3,
     additionalIndicators = {
       willR: false,
       mfi: false,
@@ -353,6 +351,7 @@ export const takeTrades = async (
       vwap: false,
       psar: false,
     },
+    decisionMakingPoints = 3,
     useSupportResistances = true,
     vPointOffset = 8,
     rsiLow = 48,
@@ -381,9 +380,10 @@ export const takeTrades = async (
     mfiLow = 23,
     mfiHigh = 83,
     vwapPeriod = 14,
-  }
+  },
+  takeOneRecentTrade = true
 ) => {
-  if (!priceData.c?.length) return { trades: [], analytics: {} };
+  if (!priceData.c?.length) return { trades: [], analytics: [] };
 
   const indicatorSmallMA = new technicalIndicatorSMA(smaLowPeriod);
   const indicatorBigMA = new technicalIndicatorSMA(smaHighPeriod);
@@ -439,9 +439,10 @@ export const takeTrades = async (
 
   let analytics = [];
 
-  const startTakingTradeIndex = 200;
   // allowing the algo to take only one trade for last price
-  // const startTakingTradeIndex = priceData.c.length - 1;
+  const startTakingTradeIndex = takeOneRecentTrade
+    ? priceData.c.length - 1
+    : 2000;
 
   const vps = getVPoints({
     offset: vPointOffset,
@@ -823,6 +824,7 @@ export const takeTrades = async (
         // updating analytic
         analytic.nearestResistance = nearestResistance;
         analytic.possibleProfit = possibleProfit;
+        analytic.targetProfit = targetProfit;
         analytics.push({
           ...analytic,
         });
@@ -840,6 +842,7 @@ export const takeTrades = async (
           analytics: analytic,
           nearestResistance,
         };
+        if (takeOneRecentTrade) trades.push(trade);
       } else if (isSellSignal) {
         // neglect trade if last trade is recent and type of SELL
         const lastTrade = trades.length ? trades[trades.length - 1] : {};
@@ -871,6 +874,7 @@ export const takeTrades = async (
         // updating analytic
         analytic.nearestSupport = nearestSupport;
         analytic.possibleProfit = possibleProfit;
+        analytic.targetProfit = targetProfit;
         analytics.push({
           ...analytic,
         });
@@ -888,6 +892,7 @@ export const takeTrades = async (
           analytics: analytic,
           nearestSupport,
         };
+        if (takeOneRecentTrade) trades.push(trade);
       }
     }
   }
