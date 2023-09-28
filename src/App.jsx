@@ -116,11 +116,11 @@ function App() {
       {banner.show ? <Banner bannerDetails={banner} /> : ""}
 
       <div className="top-bar">
-        <div className={styles.links}>
-          <a className={`link ${styles.link}`} href={"/"}>
+        <div className={"links"}>
+          <a className={`link`} href={"/"}>
             Home
           </a>
-          <a className={`link ${styles.link}`} href={"/configure"}>
+          <a className={`link`} href={"/configure"}>
             Configure
           </a>
         </div>
