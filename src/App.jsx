@@ -10,6 +10,7 @@ import AuthPage from "Pages/AuthPage/AuthPage";
 import TradePage from "Pages/TradePage/TradePage";
 import ConfigurationPage from "Pages/ConfigurationPage/ConfigurationPage";
 import TestPage from "Pages/TestPage/TestPage";
+import Navbar from "Components/Navbar/Navbar";
 
 import { getCurrentUser, sayHiToBackend } from "apis";
 import { handleLogout } from "utils/util";
@@ -115,26 +116,9 @@ function App() {
       />
       {banner.show ? <Banner bannerDetails={banner} /> : ""}
 
-      <div className="top-bar">
-        <div className={"links"}>
-          <a className={`link`} href={"/"}>
-            Home
-          </a>
-          <a className={`link`} href={"/configure"}>
-            Configure
-          </a>
-        </div>
-        {isAuthenticated ? (
-          <p className="logout" onClick={handleLogout}>
-            <LogOut /> Logout
-          </p>
-        ) : (
-          ""
-        )}
-      </div>
-
       {appLoaded ? (
         <Router>
+          <Navbar isAuthenticated={isAuthenticated} />
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
             {isAuthenticated ? (

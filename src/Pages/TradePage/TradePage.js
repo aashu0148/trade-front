@@ -131,6 +131,7 @@ function TradePage({ socket }) {
             <th>Target</th>
             <th>SL</th>
             <th>Time</th>
+            <th>Status</th>
           </tr>
           {todayTrades.map((item) => (
             <tr key={item.symbol}>

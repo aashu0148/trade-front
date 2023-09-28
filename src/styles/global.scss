@@ -62,12 +62,18 @@ a {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 16px;
+  padding: 16px 25px;
+  background-color: $white;
+  border-bottom: 1px solid $white-2;
 
   .links {
     display: flex;
-    gap: 15px;
+    gap: 20px;
     align-items: center;
+
+    .link {
+      font-weight: 500;
+    }
   }
 
   .logout {
