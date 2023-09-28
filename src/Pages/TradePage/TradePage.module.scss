@@ -59,7 +59,13 @@
         background-color: #f9f9f9;
       }
 
-      .target {
+      .status {
+        text-transform: uppercase;
+        color: #555;
+      }
+
+      .target,
+      .green {
         color: $green;
         font-weight: 600;
       }
@@ -68,7 +74,8 @@
         text-transform: uppercase;
       }
 
-      .sl {
+      .sl,
+      .red {
         color: $red;
         font-weight: 600;
       }

@@ -142,6 +142,17 @@ function TradePage({ socket }) {
               </td>
               <td className={styles.sl}>{parseFloat(item.sl).toFixed(1)}</td>
               <td className={styles.time}>{getTimeFormatted(item.time)}</td>
+              <td
+                className={`${styles.status} ${
+                  item.status == "profit"
+                    ? styles.green
+                    : item.status == "loss"
+                    ? styles.red
+                    : ""
+                }`}
+              >
+                {item.status}
+              </td>
             </tr>
           ))}
         </table>
