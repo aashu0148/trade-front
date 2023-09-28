@@ -437,11 +437,7 @@ export const takeTrades = async (
     trade = {},
     trades = [];
 
-  let analytics = {
-    signals: [],
-    noOfBreakouts: 0,
-    noOfBreakdowns: 0,
-  };
+  let analytics = [];
 
   const startTakingTradeIndex = 200;
   // allowing the algo to take only one trade for last price
