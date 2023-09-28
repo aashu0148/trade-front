@@ -111,7 +111,7 @@ function ConfigurationPage() {
   const handleEvaluation = async () => {
     if (!selectedStock?.data?.c?.length) return;
 
-    const { trades } = await takeTrades(selectedStock.data, values);
+    const { trades } = await takeTrades(selectedStock.data, values, false);
 
     const totalDays = parseInt((selectedStock.data.c.length * 5) / 60 / 6);
 

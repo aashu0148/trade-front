@@ -381,7 +381,7 @@ export const takeTrades = async (
     mfiHigh = 83,
     vwapPeriod = 14,
   },
-  takeOneRecentTrade = true
+  takeOneRecentTrade = false
 ) => {
   if (!priceData.c?.length) return { trades: [], analytics: [] };
 
