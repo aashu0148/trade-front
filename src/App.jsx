@@ -118,7 +118,8 @@ function App() {
 
       {appLoaded ? (
         <Router>
-          <Navbar isAuthenticated={isAuthenticated} />
+          {isAuthenticated && <Navbar isAuthenticated={isAuthenticated} />}
+
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
             {isAuthenticated ? (
