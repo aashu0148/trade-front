@@ -280,7 +280,7 @@ export const getTrendEstimates = (prices = [], startCheckFrom = 12) => {
 const getMacdSignal = (macd) => {
   if (
     !macd?.length ||
-    macd.length > 3 ||
+    macd.length > 5 ||
     macd.some((item) => item.macd == undefined || item.signal == undefined)
   )
     return signalEnum.hold;
@@ -693,7 +693,7 @@ export const takeTrades = async (
           : cci < -100
           ? signalEnum.sell
           : signalEnum.hold;
-      const macdSignal = getMacdSignal(MACD.slice(i - 2, i + 1));
+      const macdSignal = getMacdSignal(MACD.slice(i - 4, i + 1));
       const smaSignal = getSmaCrossedSignal({
         smaLow: smallMA.slice(i - 2, i + 1),
         smaHigh: bigMA.slice(i - 2, i + 1),
@@ -790,9 +790,11 @@ export const takeTrades = async (
         index: i,
         price,
       };
-      analytics.signals.push({
-        ...analytic,
-      });
+
+      if (!isBuySignal && !isSellSignal)
+        analytics.push({
+          ...analytic,
+        });
 
       if (isBuySignal) {
         // neglect trade if last trade is recent and type of BUY
@@ -821,6 +823,13 @@ export const takeTrades = async (
         const possibleProfit = nearestResistance
           ? nearestResistance - price
           : targetProfit;
+
+        // updating analytic
+        analytic.nearestResistance = nearestResistance;
+        analytic.possibleProfit = possibleProfit;
+        analytics.push({
+          ...analytic,
+        });
 
         if (possibleProfit < targetProfit && useSupportResistances) continue;
 
@@ -862,6 +871,13 @@ export const takeTrades = async (
         const possibleProfit = nearestSupport
           ? price - nearestSupport
           : targetProfit;
+
+        // updating analytic
+        analytic.nearestSupport = nearestSupport;
+        analytic.possibleProfit = possibleProfit;
+        analytics.push({
+          ...analytic,
+        });
 
         if (possibleProfit < targetProfit && useSupportResistances) continue;
 
