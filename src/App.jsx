@@ -116,6 +116,14 @@ function App() {
       {banner.show ? <Banner bannerDetails={banner} /> : ""}
 
       <div className="top-bar">
+        <div className={styles.links}>
+          <a className={`link ${styles.link}`} href={"/"}>
+            Home
+          </a>
+          <a className={`link ${styles.link}`} href={"/configure"}>
+            Configure
+          </a>
+        </div>
         {isAuthenticated ? (
           <p className="logout" onClick={handleLogout}>
             <LogOut /> Logout
