@@ -737,7 +737,11 @@ function ConfigurationPage() {
                 <div className={styles.right}>
                   <Button
                     outlineButton
-                    onClick={() => copyToClipboard(JSON.stringify(item.config))}
+                    onClick={() =>
+                      copyToClipboard(
+                        JSON.stringify({ ...item.config, stock: item.stock })
+                      )
+                    }
                   >
                     <Copy />
                   </Button>
@@ -779,7 +783,11 @@ function ConfigurationPage() {
           <div className={styles.right}>
             <Button
               outlineButton
-              onClick={() => copyToClipboard(JSON.stringify(values))}
+              onClick={() =>
+                copyToClipboard(
+                  JSON.stringify({ ...values, stock: selectedStock.value })
+                )
+              }
             >
               <Copy /> copy configuration
             </Button>

@@ -95,13 +95,13 @@ const defaultConfigs = {
   vwapPeriod: 14,
 };
 function TestPage() {
-  const [savedConfigs, setSavedConfigs] = useState([]);
   const [values, setValues] = useState({ ...defaultConfigs });
   const [firstRender, setFirstRender] = useState(true);
-  const [selectedStock, setSelectedStock] = useState({});
-  const [tradeResults, setTradeResults] = useState({});
+  const [selectedStocks, setSelectedStocks] = useState([]);
   const [stockPresets, setStockPresets] = useState({});
-  const [useBestPresets, setUseBestPresets] = useState(false);
+  const [tradeResults, setTradeResults] = useState([]);
+  const [useBestPresets, setUseBestPresets] = useState(true);
+  const [evaluating, setEvaluating] = useState(false);
 
   const fetchBestStockPreset = async () => {
     const res = await getBestStockPresets();
@@ -110,48 +110,99 @@ function TestPage() {
     setStockPresets(res.data);
   };
 
+  const sleep = (time = 200) => new Promise((res) => setTimeout(res, time));
+
   const handleEvaluation = async () => {
-    if (!selectedStock?.data?.c?.length) return;
+    if (!selectedStocks.length) return;
 
-    const { trades } = await takeTrades(selectedStock.data, values);
+    setTradeResults([]);
+    setEvaluating(true);
+    const results = [];
+    for (let i = 0; i < selectedStocks.length; ++i) {
+      await sleep(1200);
 
-    const totalDays = parseInt((selectedStock.data.c.length * 5) / 60 / 6);
+      const stock = availableStocks.find(
+        (item) => item.value == selectedStocks[i].value
+      );
+      if (!stock) continue;
 
-    const total = trades.length;
-    const profitable = trades.filter((item) => item.result == "profit").length;
+      const preset = useBestPresets ? stockPresets[stock.value] : values;
+      if (typeof preset !== "object" || !preset) continue;
 
-    console.log(trades);
-    setTradeResults({
-      stock: selectedStock.label,
-      profitPercent: `${((profitable / total) * 100).toFixed(2)}%`,
-      tradesNeeded: totalDays * 2,
-      totalDays,
-      tradesTaken: total,
-      profitMaking: profitable,
-      lossMaking: total - profitable,
-      buyTrades: trades.filter((item) => item.type == "buy").length,
-      sellTrades: trades.filter((item) => item.type == "sell").length,
-      trades: trades.sort((a, b) =>
-        parseInt(a.analytics.estimatedAccuracy) >
-        parseInt(b.analytics.estimatedAccuracy)
-          ? -1
-          : 1
-      ),
-    });
-    toast.success("Evaluation done");
-  };
+      const { trades } = await takeTrades(stock.data, preset);
+      const totalDays = parseInt((stock.data.c.length * 5) / 60 / 6);
+      const total = trades.length;
+      const profitable = trades.filter(
+        (item) => item.result == "profit"
+      ).length;
 
-  const handleApplyBestPreset = () => {
-    const preset = stockPresets[selectedStock.value] || {};
+      const trade = {
+        stock: stock.label,
+        profitPercent: `${((profitable / total) * 100).toFixed(2)}%`,
+        tradesNeeded: totalDays * 2,
+        totalDays,
+        tradesTaken: total,
+        profitMaking: profitable,
+        lossMaking: total - profitable,
+        buyTrades: trades.filter((item) => item.type == "buy").length,
+        sellTrades: trades.filter((item) => item.type == "sell").length,
+        trades: trades.sort((a, b) =>
+          parseInt(a.analytics.estimatedAccuracy) >
+          parseInt(b.analytics.estimatedAccuracy)
+            ? -1
+            : 1
+        ),
+      };
+      results.push(trade);
 
-    setValues({ ...defaultConfigs, ...preset });
-    toast.success("Preset applied");
+      setTradeResults([...results]);
+    }
+
+    setEvaluating(false);
+    console.table(results);
+    toast.success("Evaluation completed");
   };
 
   useEffect(() => {
     setFirstRender(false);
     fetchBestStockPreset();
   }, []);
+
+  const stocksDiv = (
+    <div className="col" style={{ gap: "10px" }}>
+      <InputSelect
+        placeholder="Select a stock"
+        label="Select stocks"
+        options={availableStocks
+          .filter((item) => !selectedStocks.some((s) => item.value == s.value))
+          .map((item) => ({
+            label: item.label,
+            value: item.value,
+          }))}
+        value={""}
+        onChange={(e) => setSelectedStocks((prev) => [...prev, e])}
+      />
+
+      <div className={styles.chips}>
+        {selectedStocks.map((item) => (
+          <div
+            key={item.value}
+            className={styles.chip}
+            onClick={() =>
+              setSelectedStocks((prev) =>
+                prev.filter((s) => s.value !== item.value)
+              )
+            }
+          >
+            {item.label}{" "}
+            <div className="icon">
+              <X />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className={styles.container}>
@@ -170,58 +221,51 @@ function TestPage() {
           <Toggle
             options={[
               {
-                icon: <Check />,
-                value: "yes",
-              },
-              {
                 icon: <X />,
                 value: "no",
               },
+              {
+                icon: <Check />,
+                value: "yes",
+              },
             ]}
+            selected={useBestPresets ? "yes" : "no"}
             onChange={(e) => setUseBestPresets(e.value == "yes")}
           />
         </div>
 
         {useBestPresets ? (
-          <div className="row"></div>
+          <div className="row">{stocksDiv}</div>
         ) : (
           <>
             <div className="row">
-              <InputSelect
-                placeholder="Select a stock"
-                label="Select stock"
-                options={availableStocks.map((item) => ({
-                  label: item.label,
-                  value: item.value,
-                }))}
-                value={
-                  selectedStock.value
-                    ? { label: selectedStock.label, value: selectedStock.value }
-                    : ""
-                }
-                onChange={(e) => {
-                  setSelectedStock(
-                    availableStocks.find((item) => item.value == e.value)
-                  );
-                  setTradeResults({});
-                }}
-              />
+              {stocksDiv}
 
-              <InputControl
-                placeholder="Enter number"
-                numericInput
-                label="Decision making points (1-10)"
-                max={10}
-                min={1}
-                value={values.decisionMakingPoints}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    decisionMakingPoints: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
+              <div className="col" style={{ gap: "10px" }}>
+                <p className={styles.label}>Additional indicators</p>
+
+                <MultiSelect
+                  id={JSON.stringify(values.additionalIndicators)}
+                  options={optionalIndicators.map((item) => ({
+                    ...item,
+                    selected: values.additionalIndicators[item.value]
+                      ? true
+                      : false,
+                  }))}
+                  onChange={(indicators) =>
+                    setValues((prev) => ({
+                      ...prev,
+                      additionalIndicators: {
+                        ...prev.additionalIndicators,
+                        ...indicators.reduce((acc, curr) => {
+                          acc[curr.value] = curr.selected;
+                          return acc;
+                        }, {}),
+                      },
+                    }))
+                  }
+                />
+              </div>
             </div>
             <div className="row" style={{ alignItems: "center" }}>
               <MultiSelect
@@ -244,6 +288,22 @@ function TestPage() {
               <InputControl
                 placeholder="Enter number"
                 numericInput
+                label="Decision making points (1-10)"
+                max={10}
+                min={1}
+                value={values.decisionMakingPoints}
+                onChange={(e) =>
+                  setValues((prev) => ({
+                    ...prev,
+                    decisionMakingPoints: parseInt(e.target.value),
+                  }))
+                }
+                disabled={!selectedStocks.length}
+              />
+
+              <InputControl
+                placeholder="Enter number"
+                numericInput
                 label="V-point offset"
                 max={30}
                 min={1}
@@ -254,32 +314,7 @@ function TestPage() {
                     vPointOffset: parseInt(e.target.value),
                   }))
                 }
-                disabled={!selectedStock?.value}
-              />
-            </div>
-            <div className="col" style={{ gap: "10px" }}>
-              <p className={styles.label}>Additional indicators</p>
-
-              <MultiSelect
-                id={JSON.stringify(values.additionalIndicators)}
-                options={optionalIndicators.map((item) => ({
-                  ...item,
-                  selected: values.additionalIndicators[item.value]
-                    ? true
-                    : false,
-                }))}
-                onChange={(indicators) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    additionalIndicators: {
-                      ...prev.additionalIndicators,
-                      ...indicators.reduce((acc, curr) => {
-                        acc[curr.value] = curr.selected;
-                        return acc;
-                      }, {}),
-                    },
-                  }))
-                }
+                disabled={!selectedStocks.length}
               />
             </div>
             <div className="col" style={{ gap: "10px" }}>
@@ -299,7 +334,7 @@ function TestPage() {
                       macdFastPeriod: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
                 <InputControl
                   placeholder="Enter number"
@@ -314,7 +349,7 @@ function TestPage() {
                       macdSlowPeriod: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
                 <InputControl
                   placeholder="Enter number"
@@ -329,7 +364,7 @@ function TestPage() {
                       macdSignalPeriod: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
               </div>
             </div>
@@ -350,7 +385,7 @@ function TestPage() {
                       stochasticLow: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
                 <InputControl
                   placeholder="Enter number"
@@ -365,7 +400,7 @@ function TestPage() {
                       stochasticHigh: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
                 <InputControl
                   placeholder="Enter number"
@@ -380,7 +415,7 @@ function TestPage() {
                       stochasticPeriod: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
               </div>
             </div>
@@ -401,7 +436,7 @@ function TestPage() {
                       willRLow: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
                 <InputControl
                   placeholder="Enter number"
@@ -416,7 +451,7 @@ function TestPage() {
                       willRHigh: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
                 <InputControl
                   placeholder="Enter number"
@@ -431,7 +466,7 @@ function TestPage() {
                       willRPeriod: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
               </div>
             </div>
@@ -452,7 +487,7 @@ function TestPage() {
                       mfiLow: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
                 <InputControl
                   placeholder="Enter number"
@@ -467,7 +502,7 @@ function TestPage() {
                       mfiHigh: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
                 <InputControl
                   placeholder="Enter number"
@@ -482,7 +517,7 @@ function TestPage() {
                       mfiPeriod: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
               </div>
             </div>
@@ -503,7 +538,7 @@ function TestPage() {
                       rsiLow: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
                 <InputControl
                   placeholder="Enter number"
@@ -518,7 +553,7 @@ function TestPage() {
                       rsiHigh: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
                 <InputControl
                   placeholder="Enter number"
@@ -533,7 +568,7 @@ function TestPage() {
                       rsiPeriod: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
               </div>
             </div>
@@ -554,7 +589,7 @@ function TestPage() {
                       smaLowPeriod: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
                 <InputControl
                   placeholder="Enter number"
@@ -569,7 +604,7 @@ function TestPage() {
                       smaHighPeriod: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
               </div>
             </div>
@@ -590,7 +625,7 @@ function TestPage() {
                       bollingerBandPeriod: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
                 <InputControl
                   placeholder="Enter number"
@@ -605,7 +640,7 @@ function TestPage() {
                       bollingerBandStdDev: parseInt(e.target.value),
                     }))
                   }
-                  disabled={!selectedStock?.value}
+                  disabled={!selectedStocks.length}
                 />
               </div>
             </div>
@@ -623,7 +658,7 @@ function TestPage() {
                     vwapPeriod: parseInt(e.target.value),
                   }))
                 }
-                disabled={!selectedStock?.value}
+                disabled={!selectedStocks.length}
               />
 
               <InputControl
@@ -639,87 +674,61 @@ function TestPage() {
                     cciPeriod: parseInt(e.target.value),
                   }))
                 }
-                disabled={!selectedStock?.value}
+                disabled={!selectedStocks.length}
               />
             </div>
           </>
         )}
 
-        {tradeResults?.profitPercent ? (
-          <div>
-            <p
-              className={styles.heading}
-              style={{ textAlign: "center", marginBottom: "15px" }}
-            >
-              Results: {selectedStock.label}
-            </p>
-            <div className={styles.results}>
-              <div className={styles.card}>
-                <p
-                  className={`${styles.title} ${
-                    parseInt(tradeResults.profitPercent) > 40
-                      ? styles.green
-                      : styles.red
-                  }`}
-                >
-                  {tradeResults.profitPercent}
-                </p>
-                <p className={styles.desc}>Profit Percent 💸</p>
-              </div>
+        {tradeResults.length ? (
+          <div className={styles.results}>
+            <table className={styles.table}>
+              <tr>
+                <th>Symbol</th>
+                <th>Percent 💸</th>
+                <th>Days</th>
+                <th>Taken</th>
+                <th>Profit making</th>
+                <th>Loss making</th>
+                <th>BUY</th>
+                <th>SELL</th>
+              </tr>
 
-              <div className={styles.card}>
-                <p className={`${styles.title}`}>{tradeResults.totalDays}</p>
-                <p className={styles.desc}>Total days</p>
-              </div>
-
-              <div className={styles.card}>
-                <p className={`${styles.title}`}>{tradeResults.tradesTaken}</p>
-                <p className={styles.desc}>Trades taken</p>
-              </div>
-
-              <div className={styles.card}>
-                <p className={`${styles.title} ${styles.green}`}>
-                  {tradeResults.profitMaking}
-                </p>
-                <p className={styles.desc}>Profit making trades</p>
-              </div>
-
-              <div className={styles.card}>
-                <p className={`${styles.title} ${styles.red}`}>
-                  {tradeResults.lossMaking}
-                </p>
-                <p className={styles.desc}>Loss making trades</p>
-              </div>
-
-              <div className={styles.card}>
-                <p className={`${styles.title}`}>{tradeResults.buyTrades}</p>
-                <p className={styles.desc}>BUY trades</p>
-              </div>
-
-              <div className={styles.card}>
-                <p className={`${styles.title}`}>{tradeResults.sellTrades}</p>
-                <p className={styles.desc}>SELL trades</p>
-              </div>
-            </div>
+              {tradeResults.map((item) => (
+                <tr key={item.symbol}>
+                  <td className={styles.name}>{item.stock}</td>
+                  <td
+                    className={
+                      parseInt(item.profitPercent) > 40
+                        ? styles.green
+                        : styles.red
+                    }
+                  >
+                    {item.profitPercent}
+                  </td>
+                  <td>{item.totalDays}</td>
+                  <td>{item.tradesTaken}</td>
+                  <td className={styles.green}>{item.profitMaking}</td>
+                  <td className={styles.red}>{item.lossMaking}</td>
+                  <td>{item.buyTrades}</td>
+                  <td>{item.sellTrades}</td>
+                </tr>
+              ))}
+            </table>
           </div>
+        ) : (
+          ""
+        )}
+        {evaluating ? (
+          <p className={styles.heading} style={{ textAlign: "center" }}>
+            Evaluating...
+          </p>
         ) : (
           ""
         )}
 
         <div className={styles.footer}>
-          {selectedStock.value ? (
-            <div className={styles.right}>
-              {useBestPresets ? (
-                ""
-              ) : (
-                <Button onClick={() => handleApplyBestPreset()}>
-                  Apply preset
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div />
-          )}
+          <div />
 
           <div className={styles.right}>
             <Button
@@ -729,7 +738,10 @@ function TestPage() {
               <Copy /> copy configuration
             </Button>
 
-            <Button disabled={!selectedStock?.value} onClick={handleEvaluation}>
+            <Button
+              disabled={!selectedStocks.length}
+              onClick={handleEvaluation}
+            >
               Evaluate
             </Button>
           </div>
