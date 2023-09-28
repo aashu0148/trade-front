@@ -687,7 +687,7 @@ function TestPage() {
                 <th>Symbol</th>
                 <th>Percent 💸</th>
                 <th>Days</th>
-                <th>Taken</th>
+                <th>Trades</th>
                 <th>Profit making</th>
                 <th>Loss making</th>
                 <th>BUY</th>
