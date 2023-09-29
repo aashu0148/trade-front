@@ -41,12 +41,16 @@
         border-bottom: 1px solid #ccc;
       }
 
+      tr:nth-child(odd) {
+        background-color: #f9f9f9;
+      }
+
       .profitTrade {
-        background-color: $light-green;
+        background-color: $light-green !important;
       }
 
       .lossTrade {
-        background-color: $light-red;
+        background-color: $light-red !important;
       }
 
       tr:hover {
@@ -61,10 +65,6 @@
         font-size: 1.2em;
         margin: 10px;
         font-style: italic;
-      }
-
-      tr:nth-child(odd) {
-        background-color: #f9f9f9;
       }
 
       .status {
