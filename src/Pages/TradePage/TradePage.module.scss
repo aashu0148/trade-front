@@ -41,6 +41,14 @@
         border-bottom: 1px solid #ccc;
       }
 
+      .profitTrade {
+        background-color: $light-green;
+      }
+
+      .lossTrade {
+        background-color: $light-red;
+      }
+
       tr:hover {
         background-color: #f5f5f5;
       }

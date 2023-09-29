@@ -134,7 +134,16 @@ function TradePage({ socket }) {
             <th>Status</th>
           </tr>
           {todayTrades.map((item) => (
-            <tr key={item.symbol}>
+            <tr
+              key={item.symbol}
+              className={`${
+                item.status == "profit"
+                  ? styles.profitTrade
+                  : item.status == "loss"
+                  ? styles.lossTrade
+                  : ""
+              }`}
+            >
               <td className={styles.name}>{item.name}</td>
               <td className={styles.type}>{item.type}</td>
               <td>{parseFloat(item.startPrice).toFixed(1)}</td>
