@@ -92,6 +92,8 @@ const defaultConfigs = {
   mfiLow: 23,
   mfiHigh: 83,
   vwapPeriod: 14,
+  targetProfitPercent: 1.4,
+  stopLossPercent: 0.7,
 };
 function ConfigurationPage() {
   const [savedConfigs, setSavedConfigs] = useState([]);
@@ -279,6 +281,51 @@ function ConfigurationPage() {
                 vPointOffset: parseInt(e.target.value),
               }))
             }
+            disabled={!selectedStock?.value}
+          />
+        </div>
+        <div className="row">
+          <InputControl
+            placeholder="Enter number"
+            label="Target percentage (0.2 - 2)"
+            type="number"
+            max={4}
+            min={0.2}
+            value={values.targetProfitPercent}
+            onChange={(e) => {
+              const val = isNaN(parseFloat(e.target.value))
+                ? ""
+                : parseFloat(e.target.value);
+
+              if (val < 0 || val > 4) return;
+
+              setValues((prev) => ({
+                ...prev,
+                targetProfitPercent: val,
+              }));
+            }}
+            disabled={!selectedStock?.value}
+          />
+
+          <InputControl
+            placeholder="Enter number"
+            label="Stop-loss percentage (0.2 - 2)"
+            type="number"
+            max={4}
+            min={0.2}
+            value={values.stopLossPercent}
+            onChange={(e) => {
+              const val = isNaN(parseFloat(e.target.value))
+                ? ""
+                : parseFloat(e.target.value);
+
+              if (val < 0 || val > 4) return;
+
+              setValues((prev) => ({
+                ...prev,
+                stopLossPercent: val,
+              }));
+            }}
             disabled={!selectedStock?.value}
           />
         </div>
