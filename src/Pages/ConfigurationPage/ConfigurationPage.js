@@ -17,7 +17,7 @@ import styles from "./ConfigurationPage.module.scss";
 const availableStocks = [
   ...Object.keys(stockData).map((key) => ({
     value: key,
-    label: key,
+    label: `${key} | ${stockData[key].c.pop()}`,
     data: stockData[key],
   })),
 ].filter((item) => item.data?.c?.length);

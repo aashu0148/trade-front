@@ -190,6 +190,7 @@ const InputControl = forwardRef(
                 ? "text"
                 : "password"
             }
+            onWheel={(event) => (numericInput ? event.target.blur() : "")}
             style={{ paddingLeft: textInsideInput ? "0px" : "" }}
             ref={ref}
             onKeyDown={(event) =>
