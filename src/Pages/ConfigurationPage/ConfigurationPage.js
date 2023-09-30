@@ -116,7 +116,7 @@ function ConfigurationPage() {
     const totalDays = parseInt((selectedStock.data.c.length * 5) / 60 / 6);
 
     const total = trades.length;
-    const profitable = trades.filter((item) => item.result == "profit").length;
+    const profitable = trades.filter((item) => item.status == "profit").length;
 
     console.log(trades);
     setTradeResults({
