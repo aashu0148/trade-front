@@ -785,6 +785,31 @@ export const takeTrades = async (
         ...analytic,
       });
 
+    const isAllowedToTakeThisTrade = (trade) => {
+      const existingSimilarTrades = trades.filter(
+        (item) => item.status == "taken" && item.type == trade.type
+      );
+
+      if (existingSimilarTrades.length > 0) return false;
+
+      const timeStr = new Date(trade.time * 1000).toLocaleTimeString("en-in", {
+        timeZone: "Asia/Kolkata",
+        hour12: false,
+      });
+
+      const [hour, min, sec] = timeStr.split(":").map((item) => parseInt(item));
+
+      if (
+        hour < 9 ||
+        hour >= 15 ||
+        (hour == 9 && min < 30) ||
+        (hour == 14 && min > 30)
+      )
+        return false;
+
+      return true;
+    };
+
     if (isBuySignal) {
       let nearestResistance;
       for (let j = 0; j < strongSupportResistances.length; ++j) {
@@ -828,11 +853,7 @@ export const takeTrades = async (
         status: "taken",
       };
 
-      const existingSimilarTrade = trades.filter(
-        (item) => item.status == "taken" && item.type == trade.type
-      ).length;
-
-      if (!existingSimilarTrade) trades.push(trade);
+      if (isAllowedToTakeThisTrade(trade)) trades.push(trade);
     } else if (isSellSignal) {
       let nearestSupport;
       for (let j = 0; j < strongSupportResistances.length; ++j) {
@@ -876,13 +897,7 @@ export const takeTrades = async (
         status: "taken",
       };
 
-      const existingSimilarTrade = trades.filter(
-        (item) => item.status == "taken" && item.type == trade.type
-      ).length
-        ? true
-        : false;
-
-      if (!existingSimilarTrade) trades.push(trade);
+      if (isAllowedToTakeThisTrade(trade)) trades.push(trade);
     }
   }
 

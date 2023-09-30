@@ -699,7 +699,7 @@ function TestPage() {
                   <td className={styles.name}>{item.stock}</td>
                   <td
                     className={
-                      parseInt(item.profitPercent) > 40
+                      parseInt(item.profitPercent) > 46
                         ? styles.green
                         : styles.red
                     }
