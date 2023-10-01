@@ -109,7 +109,7 @@ function TestPage() {
 
     setStockPresets(
       res.data.reduce((acc, curr) => {
-        acc[curr.symbol] = curr;
+        acc[curr.symbol] = curr.preset;
         return acc;
       }, {})
     );
