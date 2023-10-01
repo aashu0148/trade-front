@@ -105,9 +105,14 @@ function TestPage() {
 
   const fetchBestStockPreset = async () => {
     const res = await getBestStockPresets();
-    if (!res) return;
+    if (!Array.isArray(res?.data)) return;
 
-    setStockPresets(res.data);
+    setStockPresets(
+      res.data.reduce((acc, curr) => {
+        acc[curr.symbol] = curr;
+        return acc;
+      }, {})
+    );
   };
 
   const sleep = (time = 200) => new Promise((res) => setTimeout(res, time));

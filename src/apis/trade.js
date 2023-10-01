@@ -23,7 +23,7 @@ export const getTodayTrades = async () => {
 };
 
 export const getBestStockPresets = async () => {
-  const reqPath = `/trade/preset`;
+  const reqPath = `/preset/all`;
   let response;
 
   try {
@@ -40,6 +40,28 @@ export const getBestStockPresets = async () => {
     return data;
   } catch (err) {
     errorToastLogger("getBestStockPresets", "Failed to get presets", err);
+    return false;
+  }
+};
+
+export const createNewPreset = async (values) => {
+  const reqPath = `/preset`;
+  let response;
+
+  try {
+    response = await fetchWrapper(reqPath, values);
+    const data = await response.json();
+    if (!data?.success) {
+      errorToastLogger(
+        "createNewPreset",
+        data?.message || "Failed to create preset",
+        data?.error
+      );
+      return false;
+    }
+    return data;
+  } catch (err) {
+    errorToastLogger("createNewPreset", "Failed to create preset", err);
     return false;
   }
 };

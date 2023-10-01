@@ -7,7 +7,7 @@ import InputControl from "Components/InputControl/InputControl";
 import MultiSelect from "Components/MultiSelect/MultiSelect";
 import Button from "Components/Button/Button";
 
-import { getBestStockPresets } from "apis/trade";
+import { createNewPreset, getBestStockPresets } from "apis/trade";
 import { copyToClipboard } from "utils/util";
 import { indicatorsWeightEnum, takeTrades } from "utils/tradeUtil";
 import stockData from "utils/stockData";
@@ -102,12 +102,20 @@ function ConfigurationPage() {
   const [selectedStock, setSelectedStock] = useState({});
   const [tradeResults, setTradeResults] = useState({});
   const [stockPresets, setStockPresets] = useState({});
+  const [disabledButtons, setDisabledButtons] = useState({
+    savePresetToDb: false,
+  });
 
   const fetchBestStockPreset = async () => {
     const res = await getBestStockPresets();
-    if (!res) return;
+    if (!Array.isArray(res?.data)) return;
 
-    setStockPresets(res.data);
+    setStockPresets(
+      res.data.reduce((acc, curr) => {
+        acc[curr.symbol] = curr;
+        return acc;
+      }, {})
+    );
   };
 
   const handleEvaluation = async () => {
@@ -123,6 +131,7 @@ function ConfigurationPage() {
     console.log(trades);
     setTradeResults({
       stock: selectedStock.label,
+      symbol: selectedStock.value,
       profitPercent: `${((profitable / total) * 100).toFixed(2)}%`,
       tradesNeeded: totalDays * 2,
       totalDays,
@@ -131,12 +140,6 @@ function ConfigurationPage() {
       lossMaking: total - profitable,
       buyTrades: trades.filter((item) => item.type == "buy").length,
       sellTrades: trades.filter((item) => item.type == "sell").length,
-      trades: trades.sort((a, b) =>
-        parseInt(a.analytics.estimatedAccuracy) >
-        parseInt(b.analytics.estimatedAccuracy)
-          ? -1
-          : 1
-      ),
     });
     toast.success("Evaluation done");
   };
@@ -162,6 +165,7 @@ function ConfigurationPage() {
         stock: selectedStock.value,
         name: `${selectedStock.value} ${correspondingConfigs.length + 1}`,
         config: values,
+        result: tradeResults,
       },
     ]);
   };
@@ -183,6 +187,26 @@ function ConfigurationPage() {
 
     setValues({ ...defaultConfigs, ...preset });
     toast.success("Preset applied");
+  };
+
+  const handleSavePresetToDb = async () => {
+    const currentPercent = parseInt(tradeResults.profitPercent) || 0;
+    const tradesTaken = parseInt(tradeResults.tradesTaken) || 0;
+    if (currentPercent < 45)
+      return toast.error("Profit percent must be greater than 45");
+    if (tradesTaken < 18) return toast.error("Take at least 18 trades");
+
+    setDisabledButtons((prev) => ({ ...prev, savePresetToDb: true }));
+    const res = await createNewPreset({
+      preset: values,
+      symbol: selectedStock.value,
+      result: tradeResults,
+    });
+    setDisabledButtons((prev) => ({ ...prev, savePresetToDb: false }));
+    if (!res) return;
+
+    toast.success("Stock preset saved to database");
+    fetchBestStockPreset();
   };
 
   useEffect(() => {
@@ -769,6 +793,17 @@ function ConfigurationPage() {
                 <p className={styles.desc}>SELL trades</p>
               </div>
             </div>
+
+            {parseInt(tradeResults.profitPercent) > 44 && (
+              <Button
+                style={{ margin: "15px auto 0 auto" }}
+                onClick={handleSavePresetToDb}
+                disabled={disabledButtons.savePresetToDb}
+                useSpinnerWhenDisabled
+              >
+                Save this preset to database
+              </Button>
+            )}
           </div>
         ) : (
           ""
@@ -786,7 +821,11 @@ function ConfigurationPage() {
                     outlineButton
                     onClick={() =>
                       copyToClipboard(
-                        JSON.stringify({ ...item.config, stock: item.stock })
+                        JSON.stringify({
+                          preset: { ...item.config },
+                          symbol: item.stock,
+                          result: item.result,
+                        })
                       )
                     }
                   >
@@ -815,9 +854,11 @@ function ConfigurationPage() {
         <div className={styles.footer}>
           {selectedStock.value ? (
             <div className={styles.right}>
-              <Button outlineButton onClick={() => handleSaveConfig()}>
-                <Bookmark /> Save this config
-              </Button>
+              {tradeResults.profitPercent && (
+                <Button outlineButton onClick={() => handleSaveConfig()}>
+                  <Bookmark /> Save this config
+                </Button>
+              )}
 
               <Button onClick={() => handleApplyBestPreset()}>
                 Apply preset
@@ -828,16 +869,24 @@ function ConfigurationPage() {
           )}
 
           <div className={styles.right}>
-            <Button
-              outlineButton
-              onClick={() =>
-                copyToClipboard(
-                  JSON.stringify({ ...values, stock: selectedStock.value })
-                )
-              }
-            >
-              <Copy /> copy configuration
-            </Button>
+            {tradeResults.profitPercent ? (
+              <Button
+                outlineButton
+                onClick={() =>
+                  copyToClipboard(
+                    JSON.stringify({
+                      preset: { ...values },
+                      symbol: selectedStock.value,
+                      result: tradeResults,
+                    })
+                  )
+                }
+              >
+                <Copy /> copy configuration
+              </Button>
+            ) : (
+              ""
+            )}
 
             <Button disabled={!selectedStock?.value} onClick={handleEvaluation}>
               Evaluate
