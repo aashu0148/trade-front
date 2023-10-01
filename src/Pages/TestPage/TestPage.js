@@ -131,7 +131,9 @@ function TestPage() {
       );
       if (!stock) continue;
 
-      const preset = useBestPresets ? stockPresets[stock.value] : values;
+      const preset = useBestPresets
+        ? stockPresets[stock.value] || defaultConfigs
+        : defaultConfigs;
       if (typeof preset !== "object" || !preset) continue;
 
       const { trades } = await takeTrades(stock.data, preset);
