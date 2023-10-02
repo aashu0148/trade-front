@@ -109,8 +109,8 @@ function StocksPage() {
                     <p className={styles.green}>
                       {presets[s].result?.profitPercent}
                     </p>
-                    <p>{presets[s].result?.tradesTaken} trades</p>
                     <p>{presets[s].result?.totalDays} days</p>
+                    <p>{presets[s].result?.tradesTaken} trades</p>
                   </>
                 ) : (
                   ""
