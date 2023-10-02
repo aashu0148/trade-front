@@ -434,6 +434,8 @@ export const takeTrades = async (
     williamR: [],
     mfi: [],
     vPs: [],
+    ranges: [],
+    trends: [],
   };
 
   let trades = [],
@@ -470,6 +472,11 @@ export const takeTrades = async (
     offset: vPointOffset,
     prices: priceData.c.slice(0, startTakingTradeIndex),
   });
+  const ranges = getSupportResistanceRangesFromVPoints(
+    vps,
+    priceData.c.slice(0, startTakingTradeIndex)
+  );
+  const trends = getTrendEstimates(priceData.c.slice(0, startTakingTradeIndex));
   const obv = await IXJIndicators.obv(
     priceData.c.slice(0, startTakingTradeIndex),
     priceData.v.slice(0, startTakingTradeIndex)
@@ -494,11 +501,14 @@ export const takeTrades = async (
     priceData.v.slice(0, startTakingTradeIndex),
     mfiPeriod
   );
-  indicators.vPs = [...vps];
-  indicators.obv = [...obv];
-  indicators.vwap = [...vwap];
-  indicators.mfi = [...moneyFlowIndex];
-  indicators.williamR = [...williamRange];
+  indicators.ranges = ranges;
+  indicators.trends = trends;
+  indicators.vPs = vps;
+  indicators.obv = obv;
+  indicators.vwap = vwap;
+  indicators.mfi = moneyFlowIndex;
+  indicators.williamR = williamRange;
+
   for (let i = 0; i < startTakingTradeIndex; ++i) {
     const high = priceData.h[i];
     const low = priceData.l[i];
@@ -583,6 +593,15 @@ export const takeTrades = async (
       startFrom: i - 40,
       previousOutput: indicators.vPs.filter((item) => item?.index < i - 40),
     });
+    if (ind_vps.length !== indicators.vPs.length) {
+      const ind_ranges = getSupportResistanceRangesFromVPoints(
+        indicators.vPs,
+        prices
+      );
+      indicators.ranges = ind_ranges;
+    }
+    const ind_trends = getTrendEstimates(prices, i - 30);
+    indicators.trends = ind_trends;
     const ind_obv = await IXJIndicators.obv(prices, vols);
     const ind_willR = await IXJIndicators.willr(
       highs,
@@ -621,14 +640,10 @@ export const takeTrades = async (
     const BB = indicators.bollingerBand;
     const stochastic = indicators.stochastic;
 
-    const ranges = getSupportResistanceRangesFromVPoints(
-      indicators.vPs,
-      prices
+    const strongSupportResistances = indicators.ranges.filter(
+      (item) => item?.stillStrong
     );
-    const strongSupportResistances = ranges.filter((item) => item?.stillStrong);
-
-    const pricesWithTrends = getTrendEstimates(prices, i - 40);
-    const trend = pricesWithTrends[i]?.trend;
+    const trend = indicators.trends[i]?.trend;
     const rsi = RSI[i];
     const cci = CCI[i];
     const mfi = indicators.mfi[i];

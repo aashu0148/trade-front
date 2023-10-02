@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { handleLogout } from "utils/util";
 
-function Navbar({ isAuthenticated = false }) {
+function Navbar({ isAuthenticated = false, isAdmin = false }) {
   const navigate = useNavigate();
 
   return (
@@ -16,6 +16,19 @@ function Navbar({ isAuthenticated = false }) {
         <p className={`link`} onClick={() => navigate("/configure")}>
           Configure
         </p>
+
+        {isAdmin ? (
+          <>
+            <p className={`link`} onClick={() => navigate("/stocks")}>
+              Stocks
+            </p>
+            <p className={`link`} onClick={() => navigate("/test")}>
+              Test
+            </p>
+          </>
+        ) : (
+          ""
+        )}
       </div>
       {isAuthenticated ? (
         <p className="logout" onClick={handleLogout}>

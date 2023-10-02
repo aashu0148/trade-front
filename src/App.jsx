@@ -11,6 +11,7 @@ import TradePage from "Pages/TradePage/TradePage";
 import ConfigurationPage from "Pages/ConfigurationPage/ConfigurationPage";
 import TestPage from "Pages/TestPage/TestPage";
 import Navbar from "Components/Navbar/Navbar";
+import StocksPage from "Pages/StocksPage/StocksPage";
 
 import { getCurrentUser, sayHiToBackend } from "apis";
 import { handleLogout } from "utils/util";
@@ -23,6 +24,9 @@ function App() {
   const [appLoaded, setAppLoaded] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [banner, setBanner] = useState({});
+  const [userDetails, setUserDetails] = useState({});
+
+  const isUserAdmin = userDetails?.role === "admin";
 
   const greetBackend = async () => {
     await sayHiToBackend();
@@ -47,6 +51,7 @@ function App() {
       return;
     }
 
+    setUserDetails(res.data);
     setIsAuthenticated(true);
   };
 
@@ -118,7 +123,9 @@ function App() {
 
       {appLoaded ? (
         <Router>
-          {isAuthenticated && <Navbar isAuthenticated={isAuthenticated} />}
+          {isAuthenticated && (
+            <Navbar isAuthenticated={isAuthenticated} isAdmin={isUserAdmin} />
+          )}
 
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
@@ -126,7 +133,15 @@ function App() {
               <Route path="/">
                 <Route path="/" element={<TradePage socket={socket} />} />
                 <Route path="/configure" element={<ConfigurationPage />} />
-                <Route path="/test" element={<TestPage />} />
+
+                {isUserAdmin ? (
+                  <>
+                    <Route path="/stocks" element={<StocksPage />} />
+                    <Route path="/test" element={<TestPage />} />
+                  </>
+                ) : (
+                  ""
+                )}
               </Route>
             ) : (
               ""
