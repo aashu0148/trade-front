@@ -106,7 +106,13 @@ function StocksPage() {
               <div className={styles.right}>
                 {presets[s] ? (
                   <>
-                    <p className={styles.green}>
+                    <p
+                      className={
+                        parseInt(presets[s].result?.profitPercent) > 46
+                          ? styles.green
+                          : styles.red
+                      }
+                    >
                       {presets[s].result?.profitPercent}
                     </p>
                     <p>{presets[s].result?.totalDays} days</p>
