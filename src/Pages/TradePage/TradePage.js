@@ -147,9 +147,9 @@ function TradePage({ socket }) {
           <tr>
             <th></th>
             <th>Symbol</th>
+            <th>LRP</th>
             <th>Type</th>
             <th>Trigger</th>
-            <th>LRP</th>
             <th>Target</th>
             <th>SL</th>
             <th>Time</th>
@@ -186,9 +186,7 @@ function TradePage({ socket }) {
                   )}
                 </td>
                 <td className={styles.name}>{item.name}</td>
-                <td className={styles.type}>{item.type}</td>
-                <td>{parseFloat(item.startPrice).toFixed(1)}</td>
-                <td>
+                <td className={styles.lrp}>
                   {parseFloat(
                     stockData.data[item.symbol]?.c
                       ? stockData.data[item.symbol].c[
@@ -197,6 +195,8 @@ function TradePage({ socket }) {
                       : ""
                   ).toFixed(1)}
                 </td>
+                <td className={styles.type}>{item.type}</td>
+                <td>{parseFloat(item.startPrice).toFixed(1)}</td>
                 <td className={styles.target}>
                   {parseFloat(item.target).toFixed(1)}
                 </td>
