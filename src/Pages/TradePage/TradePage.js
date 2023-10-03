@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 import { getTodayTrades } from "apis/trade";
 import { getTimeFormatted } from "utils/util";
+import { arrowDownIcon, arrowUpIcon } from "utils/svgs";
 import bubbleSound from "assets/bubble.mp3";
 import secSound from "assets/10 Sec.mp3";
 
@@ -20,7 +21,7 @@ function TradePage({ socket }) {
   const audioElem = useRef();
 
   const [todayTrades, setTodayTrades] = useState([]);
-  const [stockData, setStockData] = useState({});
+  const [stockData, setStockData] = useState({ date: "", data: {} });
 
   const fetchTodayTrades = async () => {
     const res = await getTodayTrades();
@@ -54,6 +55,7 @@ function TradePage({ socket }) {
 
     socket.on("test", (data) => {
       console.log(data);
+
       if (Array.isArray(data) && data[0]?.analytic) {
         console.log(
           data
@@ -96,6 +98,24 @@ function TradePage({ socket }) {
     });
   };
 
+  const isGoingProfitable = (trade) => {
+    const isBuyTrade = trade.type.toLowerCase() === "buy";
+    const triggerPrice = parseFloat(trade.startPrice);
+    const currPrice = stockData.data[trade.symbol]?.c
+      ? stockData.data[trade.symbol].c[
+          stockData.data[trade.symbol].c.length - 1
+        ]
+      : "";
+
+    if (
+      (isBuyTrade && currPrice >= triggerPrice) ||
+      (!isBuyTrade && currPrice <= triggerPrice)
+    )
+      return true;
+
+    return false;
+  };
+
   useEffect(() => {
     fetchTodayTrades();
     if (socket) handleSocketEvents();
@@ -125,46 +145,74 @@ function TradePage({ socket }) {
 
         <table className={styles.table}>
           <tr>
+            <th></th>
             <th>Symbol</th>
             <th>Type</th>
             <th>Trigger</th>
+            <th>LRP</th>
             <th>Target</th>
             <th>SL</th>
             <th>Time</th>
             <th>Status</th>
           </tr>
-          {todayTrades.map((item) => (
-            <tr
-              key={item.symbol}
-              className={`${
-                item.status == "profit"
-                  ? styles.profitTrade
-                  : item.status == "loss"
-                  ? styles.lossTrade
-                  : ""
-              }`}
-            >
-              <td className={styles.name}>{item.name}</td>
-              <td className={styles.type}>{item.type}</td>
-              <td>{parseFloat(item.startPrice).toFixed(1)}</td>
-              <td className={styles.target}>
-                {parseFloat(item.target).toFixed(1)}
-              </td>
-              <td className={styles.sl}>{parseFloat(item.sl).toFixed(1)}</td>
-              <td className={styles.time}>{getTimeFormatted(item.time)}</td>
-              <td
-                className={`${styles.status} ${
+          {todayTrades
+            .sort((a, b) => (a.time < b.time ? -1 : 1))
+            .map((item, i) => (
+              <tr
+                key={item.symbol + i}
+                className={`${
                   item.status == "profit"
-                    ? styles.green
+                    ? styles.profitTrade
                     : item.status == "loss"
-                    ? styles.red
-                    : ""
+                    ? styles.lossTrade
+                    : isGoingProfitable(item)
+                    ? styles.goingProfit
+                    : styles.goingLoss
                 }`}
               >
-                {item.status}
-              </td>
-            </tr>
-          ))}
+                <td
+                  className={`${styles.icon} ${
+                    isGoingProfitable(item) ? styles.green : styles.red
+                  }`}
+                >
+                  {item.status === "profit"
+                    ? "🟢"
+                    : item.status === "loss"
+                    ? "🔴"
+                    : isGoingProfitable(item)
+                    ? arrowUpIcon
+                    : arrowDownIcon}
+                </td>
+                <td className={styles.name}>{item.name}</td>
+                <td className={styles.type}>{item.type}</td>
+                <td>{parseFloat(item.startPrice).toFixed(1)}</td>
+                <td>
+                  {parseFloat(
+                    stockData.data[item.symbol]?.c
+                      ? stockData.data[item.symbol].c[
+                          stockData.data[item.symbol].c.length - 1
+                        ]
+                      : ""
+                  ).toFixed(1)}
+                </td>
+                <td className={styles.target}>
+                  {parseFloat(item.target).toFixed(1)}
+                </td>
+                <td className={styles.sl}>{parseFloat(item.sl).toFixed(1)}</td>
+                <td className={styles.time}>{getTimeFormatted(item.time)}</td>
+                <td
+                  className={`${styles.status} ${
+                    item.status == "profit"
+                      ? styles.green
+                      : item.status == "loss"
+                      ? styles.red
+                      : ""
+                  }`}
+                >
+                  {item.status}
+                </td>
+              </tr>
+            ))}
         </table>
       </div>
       <div className={styles.section}>
@@ -178,15 +226,17 @@ function TradePage({ socket }) {
             <th>Price</th>
             <th>Time</th>
           </tr>
-          {parsedStockData.map((item) => (
-            <tr key={item.symbol}>
-              <td className={styles.name}>{item.symbol}</td>
-              <td className={styles.price}>{item.data.c}</td>
-              <td className={styles.time}>
-                {getTimeFormatted(item.data.t * 1000)}
-              </td>
-            </tr>
-          ))}
+          {parsedStockData
+            .sort((a, b) => (a.symbol < b.symbol ? -1 : 1))
+            .map((item) => (
+              <tr key={item.symbol}>
+                <td className={styles.name}>{item.symbol}</td>
+                <td className={styles.price}>{item.data.c}</td>
+                <td className={styles.time}>
+                  {getTimeFormatted(item.data.t * 1000)}
+                </td>
+              </tr>
+            ))}
         </table>
       </div>
     </div>
