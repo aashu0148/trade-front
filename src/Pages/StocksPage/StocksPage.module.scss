@@ -40,6 +40,10 @@
       box-shadow: $shadow-2;
       flex-wrap: wrap;
 
+      &:nth-child(odd) {
+        background-color: $white-1;
+      }
+
       .name {
         font-size: 16px;
         line-height: 25px;
