@@ -51,6 +51,15 @@
           width: 25px;
           transform: scale(1.4);
         }
+
+        span {
+          height: 25px;
+          width: fit-content;
+          min-width: 25px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
       }
 
       .icon.green {

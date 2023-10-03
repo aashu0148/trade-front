@@ -175,13 +175,15 @@ function TradePage({ socket }) {
                     isGoingProfitable(item) ? styles.green : styles.red
                   }`}
                 >
-                  {item.status === "profit"
-                    ? "🟢"
-                    : item.status === "loss"
-                    ? "🔴"
-                    : isGoingProfitable(item)
-                    ? arrowUpIcon
-                    : arrowDownIcon}
+                  {item.status === "profit" ? (
+                    <span>🟢</span>
+                  ) : item.status === "loss" ? (
+                    <span>🔴</span>
+                  ) : isGoingProfitable(item) ? (
+                    arrowUpIcon
+                  ) : (
+                    arrowDownIcon
+                  )}
                 </td>
                 <td className={styles.name}>{item.name}</td>
                 <td className={styles.type}>{item.type}</td>
