@@ -7,22 +7,30 @@ import { handleLogout } from "utils/util";
 function Navbar({ isAuthenticated = false, isAdmin = false }) {
   const navigate = useNavigate();
 
+  const handleNavigate = (event, path) => {
+    const isCtrl = event.ctrlKey;
+
+    if (isCtrl) return window.open(path, "_blank");
+
+    navigate(path);
+  };
+
   return (
     <div className="top-bar">
       <div className={"links"}>
-        <p className={`link`} onClick={() => navigate("/")}>
+        <p className={`link`} onClick={(e) => handleNavigate(e, "/")}>
           Home
         </p>
-        <p className={`link`} onClick={() => navigate("/configure")}>
+        <p className={`link`} onClick={(e) => handleNavigate(e, "/configure")}>
           Configure
         </p>
 
         {isAdmin ? (
           <>
-            <p className={`link`} onClick={() => navigate("/stocks")}>
+            <p className={`link`} onClick={(e) => handleNavigate(e, "/stocks")}>
               Stocks
             </p>
-            <p className={`link`} onClick={() => navigate("/test")}>
+            <p className={`link`} onClick={(e) => handleNavigate(e, "/test")}>
               Test
             </p>
           </>
