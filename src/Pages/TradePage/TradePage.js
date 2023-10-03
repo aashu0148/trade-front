@@ -219,7 +219,7 @@ function TradePage({ socket }) {
       </div>
       <div className={styles.section}>
         <p className={styles.heading}>
-          Last recorded data (updates every 5 min)
+          Last Recorded Price (updates every 5 min)
         </p>
 
         <table className={styles.table}>
