@@ -18,7 +18,7 @@ function Navbar({ isAuthenticated = false, isAdmin = false }) {
 
   return (
     <div className="top-bar">
-      <div className={"logo"} onClick={() => handleNavigate("/")}>
+      <div className={"logo"} onClick={(e) => handleNavigate(e, "/")}>
         {yotaIcon}
         <p>YOTA</p>
       </div>
