@@ -1,6 +1,7 @@
 import React from "react";
 import { LogOut } from "react-feather";
 import { useNavigate } from "react-router-dom";
+import { yotaIcon } from "utils/svgs";
 
 import { handleLogout } from "utils/util";
 
@@ -17,10 +18,12 @@ function Navbar({ isAuthenticated = false, isAdmin = false }) {
 
   return (
     <div className="top-bar">
+      <div className={"logo"} onClick={() => handleNavigate("/")}>
+        {yotaIcon}
+        <p>YOTA</p>
+      </div>
+
       <div className={"links"}>
-        <p className={`link`} onClick={(e) => handleNavigate(e, "/")}>
-          Home
-        </p>
         <p className={`link`} onClick={(e) => handleNavigate(e, "/configure")}>
           Configure
         </p>
