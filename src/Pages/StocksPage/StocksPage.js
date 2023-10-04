@@ -108,7 +108,7 @@ function StocksPage() {
                   <>
                     <p
                       className={
-                        parseInt(presets[s].result?.profitPercent) > 46
+                        parseInt(presets[s].result?.profitPercent) > 49
                           ? styles.green
                           : styles.red
                       }
