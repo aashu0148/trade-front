@@ -217,9 +217,9 @@ function ConfigurationPage() {
   const handleSavePresetToDb = async () => {
     const currentPercent = parseInt(tradeResults.profitPercent) || 0;
     const tradesTaken = parseInt(tradeResults.tradesTaken) || 0;
-    if (currentPercent < 50)
-      return toast.error("Profit percent must be greater than 45");
-    if (tradesTaken < 18) return toast.error("Take at least 18 trades");
+    if (currentPercent < 48)
+      return toast.error("Profit percent must be greater than 48");
+    if (tradesTaken < 25) return toast.error("Take at least 25 trades");
 
     setDisabledButtons((prev) => ({ ...prev, savePresetToDb: true }));
     const res = await createNewPreset({
@@ -894,7 +894,7 @@ function ConfigurationPage() {
                 </div>
               </div>
 
-              {parseInt(tradeResults.profitPercent) > 49 && (
+              {parseInt(tradeResults.profitPercent) >= 48 && (
                 <Button
                   style={{ margin: "15px auto 0 auto" }}
                   onClick={handleSavePresetToDb}
