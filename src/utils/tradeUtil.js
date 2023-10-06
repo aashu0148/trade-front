@@ -43,6 +43,7 @@ export const indicatorsWeightEnum = {
   williamR: 1,
   mfi: 1,
   vPs: 1,
+  br: 1,
 };
 const timeFrame = 5;
 const getDxForPrice = (price, time = timeFrame) => {
@@ -74,6 +75,162 @@ const timesPricesCrossedRange = (prices = [], rangeMin, rangeMax) => {
 
   return count;
 };
+
+// made to replace vPoint and range calculation but it takes same or more time than previous
+export class Range {
+  prices = [];
+  vPointOffset = 10;
+  vPoints = [];
+  ranges = [];
+
+  constructor({ vPointOffset }) {
+    if (!isNaN(vPointOffset)) this.vPointOffset = vPointOffset;
+  }
+
+  nextRangeValue({ price }) {
+    this.prices.push(price);
+    const pricesLength = this.prices.length;
+    const oldVpsLength = this.vPoints.length;
+
+    // vPoint calculation
+    const pointIndex = pricesLength - this.vPointOffset;
+    if (pointIndex < this.vPointOffset * 2) return { vPoints: [], ranges: [] };
+
+    const pointPrice = this.prices[pointIndex];
+    let max = 0,
+      min = 9999999;
+    for (let i = pointIndex - this.vPointOffset; i < pricesLength; ++i) {
+      const p = this.prices[i];
+      if (p < min) min = p;
+      if (p > max) max = p;
+    }
+
+    const upAllClear = pointPrice >= max;
+    const downAllClear = pointPrice <= min;
+    if (upAllClear || downAllClear) {
+      const previousVPoint = this.vPoints.length
+        ? this.vPoints[this.vPoints.length - 1]
+        : {};
+
+      if (previousVPoint.value !== pointPrice)
+        this.vPoints.push({
+          index: pointIndex,
+          value: pointPrice,
+        });
+    }
+
+    // ranges calculation
+    const getFormattedRanges = () => {
+      const goodRanges = this.ranges.filter((item) => item.points.length > 2);
+      const finalRanges = [];
+      // neglecting sub ranges
+      for (let i = 0; i < goodRanges.length; ++i) {
+        const currR = goodRanges[i];
+        const subRanges = [];
+
+        for (let j = 0; j < goodRanges.length; ++j) {
+          const r = goodRanges[j];
+
+          const isSubRange =
+            currR.start.index >= r.start.index &&
+            currR.end.index <= r.end.index &&
+            currR.min >= r.min &&
+            currR.max <= r.max;
+
+          if (isSubRange) subRanges.push(currR);
+        }
+
+        if (subRanges.length < 2) finalRanges.push(currR);
+      }
+
+      return finalRanges;
+    };
+
+    if (oldVpsLength == this.vPoints.length)
+      return { vPoints: this.vPoints, ranges: getFormattedRanges() };
+
+    const lastVPoint = this.vPoints[this.vPoints.length - 1];
+
+    let pointAddedInARange = false;
+    for (let i = 0; i < this.ranges.length; ++i) {
+      const currRange = this.ranges[i];
+
+      if (!currRange.stillStrong) continue;
+
+      const lastRangePoint = currRange.points[currRange.points.length - 1];
+      const avgPoints =
+        currRange.points.reduce((acc, curr) => acc + curr.value, 0) /
+        currRange.points.length;
+
+      const allowedDx = getDxForPrice(lastVPoint.value);
+      const isNearlyEqual = nearlyEquateNums(
+        avgPoints,
+        lastVPoint.value,
+        allowedDx
+      );
+      if (!isNearlyEqual) continue;
+
+      const rangePrices = this.prices.slice(
+        lastRangePoint.index,
+        lastVPoint.index
+      );
+
+      const crossedTimes = timesPricesCrossedRange(
+        rangePrices,
+        currRange.min,
+        currRange.max
+      );
+      if (crossedTimes > 3) {
+        currRange.stillStrong = false;
+        continue;
+      }
+
+      let min, max;
+      if (lastRangePoint.value < lastVPoint.value) {
+        min = lastRangePoint.value;
+        max = lastVPoint.value;
+      } else {
+        min = lastVPoint.value;
+        max = lastRangePoint.value;
+      }
+
+      if (min < currRange.min) currRange.min = min;
+      if (max > currRange.max) currRange.max = max;
+
+      currRange.end = lastVPoint;
+      currRange.points.push(lastVPoint);
+
+      pointAddedInARange = true;
+    }
+    for (let i = 0; i < this.ranges; ++i) {
+      const range = this.ranges[i];
+      if (!range.end) {
+        const tempEnd = range.points[range.points.length - 1];
+        range.end = tempEnd;
+
+        const crossedTillEnd = timesPricesCrossedRange(
+          this.prices.slice(tempEnd.index),
+          range.min,
+          range.max
+        );
+
+        if (crossedTillEnd > 3) range.stillStrong = false;
+      }
+    }
+    if (!pointAddedInARange) {
+      this.ranges.push({
+        min: lastVPoint.value,
+        max: lastVPoint.value,
+        start: lastVPoint,
+        end: lastVPoint,
+        points: [lastVPoint],
+        stillStrong: true,
+      });
+    }
+
+    return { vPoints: this.vPoints, ranges: getFormattedRanges() };
+  }
+}
 
 export const nearlyEquateNums = (a, b, dx = 1) => Math.abs(a - b) <= dx;
 
@@ -336,6 +493,8 @@ const getSmaCrossedSignal = ({ smaLow = [], smaHigh = [] }) => {
 
 export const takeTrades = async (
   priceData = {
+    t: [],
+    o: [],
     c: [],
     h: [],
     l: [],
@@ -350,6 +509,7 @@ export const takeTrades = async (
       stochastic: false,
       vwap: false,
       psar: false,
+      br: false,
     },
     decisionMakingPoints = 3,
     useSupportResistances = true,
@@ -382,6 +542,12 @@ export const takeTrades = async (
     vwapPeriod = 14,
     targetProfitPercent = 1.4,
     stopLossPercent = 0.7,
+    brTotalTrendLength = 24,
+    brLongTrendLength = 15,
+    brShortTrendLength = 7,
+    lastMoreCandleOffset = 40,
+    lastFewCandleOffset = 6,
+    lastCandlesMultiplier = 3,
   },
   takeOneRecentTrade = false
 ) => {
@@ -476,11 +642,14 @@ export const takeTrades = async (
     vps,
     priceData.c.slice(0, startTakingTradeIndex)
   );
+  indicators.vPs = vps;
+  indicators.ranges = ranges;
+
   const trends = getTrendEstimates(priceData.c.slice(0, startTakingTradeIndex));
-  const obv = await IXJIndicators.obv(
-    priceData.c.slice(0, startTakingTradeIndex),
-    priceData.v.slice(0, startTakingTradeIndex)
-  );
+  // const obv = await IXJIndicators.obv(
+  //   priceData.c.slice(0, startTakingTradeIndex),
+  //   priceData.v.slice(0, startTakingTradeIndex)
+  // );
   const williamRange = await IXJIndicators.willr(
     priceData.h.slice(0, startTakingTradeIndex),
     priceData.l.slice(0, startTakingTradeIndex),
@@ -501,10 +670,9 @@ export const takeTrades = async (
     priceData.v.slice(0, startTakingTradeIndex),
     mfiPeriod
   );
-  indicators.ranges = ranges;
+
   indicators.trends = trends;
-  indicators.vPs = vps;
-  indicators.obv = obv;
+  // indicators.obv = obv;
   indicators.vwap = vwap;
   indicators.mfi = moneyFlowIndex;
   indicators.williamR = williamRange;
@@ -578,6 +746,108 @@ export const takeTrades = async (
     });
   };
 
+  const getBreakOutDownSignal = (index) => {
+    const totalTrendLength = brTotalTrendLength;
+    const shortTrendLength = brShortTrendLength;
+    const longTrendLength = brLongTrendLength;
+
+    const currPrice = priceData.c[index];
+    const last3CandleLengths = [1, 1, 1].map(
+      (_e, i) => priceData.c[index - i] - priceData.o[index - i]
+    );
+    const allowedPercent = 0.21;
+    if (
+      last3CandleLengths.some(
+        (l) => (Math.abs(l) / currPrice) * 100 >= allowedPercent
+      )
+    )
+      return signalEnum.hold;
+
+    let recentHighCandleIndex, recentLowCandleIndex;
+    for (let i = index - 1; i > index - shortTrendLength; --i) {
+      const high = priceData.h[i];
+      const low = priceData.l[i];
+
+      if (
+        isNaN(recentHighCandleIndex) ||
+        high > priceData.h[recentHighCandleIndex]
+      )
+        recentHighCandleIndex = i;
+      else if (
+        isNaN(recentLowCandleIndex) ||
+        low < priceData.l[recentLowCandleIndex]
+      )
+        recentLowCandleIndex = i;
+    }
+
+    const recentHigh = priceData.h[recentHighCandleIndex] - currPrice;
+    const recentLow = priceData.l[recentLowCandleIndex] - currPrice;
+
+    const point5PercentOfPrice = (0.5 / 100) * currPrice;
+    const trendEstimate =
+      currPrice - priceData.c[index - totalTrendLength] > point5PercentOfPrice
+        ? "up"
+        : priceData.c[index - totalTrendLength] - currPrice >
+          point5PercentOfPrice
+        ? "down"
+        : "none";
+
+    if (trendEstimate == "none") return signalEnum.hold;
+
+    if (trendEstimate == "up") {
+      let recentUpTrendLength;
+      for (let i = recentHighCandleIndex; i > index - longTrendLength; --i) {
+        const len = Math.abs(
+          priceData.c[i] - priceData.h[recentHighCandleIndex]
+        );
+
+        if (isNaN(recentUpTrendLength) || len > recentUpTrendLength)
+          recentUpTrendLength = len;
+      }
+
+      if (recentUpTrendLength < recentHigh * 2.5) return signalEnum.hold;
+
+      const arr = priceData.c.slice(recentHighCandleIndex, index - 1);
+      const avgBreakoutPrice =
+        arr.reduce((acc, _curr, i) => {
+          const c = priceData.c[i];
+          const o = priceData.o[i];
+
+          const f = c > o ? c : o;
+
+          return acc + f;
+        }, 0) / arr.length;
+
+      if (currPrice > avgBreakoutPrice) return signalEnum.buy;
+      else return signalEnum.hold;
+    } else {
+      let recentDownTrendLength;
+      for (let i = recentLowCandleIndex; i > index - longTrendLength; --i) {
+        const len = Math.abs(
+          priceData.c[i] - priceData.l[recentLowCandleIndex]
+        );
+
+        if (isNaN(recentDownTrendLength) || len > recentDownTrendLength)
+          recentDownTrendLength = len;
+      }
+      if (recentDownTrendLength < recentLow * 2.5) return signalEnum.hold;
+
+      const arr = priceData.c.slice(recentLowCandleIndex, index - 1);
+      const avgBreakdownPrice =
+        arr.reduce((acc, _curr, i) => {
+          const c = priceData.c[i];
+          const o = priceData.o[i];
+
+          const f = c < o ? c : o;
+
+          return acc + f;
+        }, 0) / arr.length;
+
+      if (currPrice < avgBreakdownPrice) return signalEnum.sell;
+      else return signalEnum.hold;
+    }
+  };
+
   for (let i = startTakingTradeIndex; i < priceData.c.length; i++) {
     analyzeAllTradesForCompletion(i);
 
@@ -606,9 +876,11 @@ export const takeTrades = async (
       );
       indicators.ranges = ind_ranges;
     }
+    indicators.vPs = ind_vps;
+
     const ind_trends = getTrendEstimates(prices, i - 30);
     indicators.trends = ind_trends;
-    const ind_obv = await IXJIndicators.obv(prices, vols);
+    // const ind_obv = await IXJIndicators.obv(prices, vols);
     const ind_willR = await IXJIndicators.willr(
       highs,
       lows,
@@ -630,8 +902,7 @@ export const takeTrades = async (
       vwapPeriod
     );
 
-    indicators.vPs = ind_vps;
-    indicators.obv = ind_obv;
+    // indicators.obv = ind_obv;
     indicators.vwap = ind_vwap;
     indicators.mfi = ind_mfi;
     indicators.williamR = ind_willR;
@@ -727,6 +998,23 @@ export const takeTrades = async (
         ? signalEnum.sell
         : signalEnum.hold;
 
+    let brSignal;
+
+    // const lastMoreCandleDiff = prices[i] - prices[i - lastMoreCandleOffset];
+    // const lastFewCandleDiff = prices[i] - prices[i - lastFewCandleOffset];
+    // const lastFewCandlePercent = (lastFewCandleDiff / price) * 100;
+
+    // const breakOutDownSignal =
+    //   Math.abs(lastMoreCandleDiff) >=
+    //     Math.abs(lastFewCandleDiff) * lastCandlesMultiplier &&
+    //   lastFewCandlePercent > 0.15
+    //     ? lastMoreCandleDiff > 0 && lastFewCandleDiff < 0
+    //       ? signalEnum.buy
+    //       : lastMoreCandleDiff < 0 && lastFewCandleDiff > 0
+    //       ? signalEnum.sell
+    //       : signalEnum.hold
+    //     : signalEnum.hold;
+
     const initialSignal =
       signalWeight[srSignal] * indicatorsWeightEnum.sr +
       signalWeight[rsiSignal] * indicatorsWeightEnum.rsi +
@@ -735,6 +1023,13 @@ export const takeTrades = async (
       signalWeight[smaSignal] * indicatorsWeightEnum.movingAvg;
 
     const furtherIndicatorSignals = [];
+    if (additionalIndicators.br) {
+      brSignal = getBreakOutDownSignal(i);
+
+      furtherIndicatorSignals.push(
+        signalWeight[brSignal] * indicatorsWeightEnum.br
+      );
+    }
     if (additionalIndicators.cci)
       furtherIndicatorSignals.push(
         signalWeight[cciSignal] * indicatorsWeightEnum.cci
@@ -791,7 +1086,9 @@ export const takeTrades = async (
         willRSignal,
         mfiSignal,
         vwapSignal,
+        brSignal,
       },
+      totalPoints: initialSignal + additionalIndicatorsWeight,
       netSignal: isBuySignal
         ? signalEnum.buy
         : isSellSignal

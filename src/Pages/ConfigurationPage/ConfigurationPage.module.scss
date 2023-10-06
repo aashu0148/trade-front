@@ -33,6 +33,29 @@
       }
     }
 
+    .textBtn {
+      padding: 8px 10px;
+      text-align: center;
+      width: fit-content;
+      margin: 0 auto;
+      cursor: pointer;
+      color: $primary;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .tuning {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      height: 0;
+      overflow: hidden;
+    }
+
+    .tuning.open {
+      height: fit-content;
+    }
+
     .configs {
       display: flex;
       flex-direction: column;
@@ -155,6 +178,10 @@
       .label {
         font-size: 14px;
         line-height: 20px;
+      }
+
+      .tuning {
+        gap: 25px;
       }
 
       .footer {

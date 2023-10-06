@@ -20,16 +20,20 @@ import styles from "./ConfigurationPage.module.scss";
 
 const optionalIndicators = [
   {
+    label: "Break out/down (beta)" + ` (${indicatorsWeightEnum.br} point)`,
+    value: "br",
+  },
+  {
+    label: "Trend indicator (beta)" + ` (${indicatorsWeightEnum.trend} point)`,
+    value: "trend",
+  },
+  {
     label: "William % R" + ` (${indicatorsWeightEnum.williamR} point)`,
     value: "willR",
   },
   {
     label: "Money flow index" + ` (${indicatorsWeightEnum.mfi} point)`,
     value: "mfi",
-  },
-  {
-    label: "Trend indicator (beta)" + ` (${indicatorsWeightEnum.trend} point)`,
-    value: "trend",
   },
   {
     label: "Commodity channel index" + ` (${indicatorsWeightEnum.cci} point)`,
@@ -59,6 +63,8 @@ const defaultConfigs = {
     stochastic: false,
     vwap: false,
     psar: false,
+    br: false,
+    obv: false,
   },
   useSupportResistances: true,
   vPointOffset: 8,
@@ -90,6 +96,9 @@ const defaultConfigs = {
   vwapPeriod: 14,
   targetProfitPercent: 1.4,
   stopLossPercent: 0.7,
+  brTotalTrendLength: 24,
+  brLongTrendLength: 15,
+  brShortTrendLength: 7,
 };
 function ConfigurationPage() {
   const [stocksData, setStocksData] = useState({});
@@ -102,6 +111,7 @@ function ConfigurationPage() {
     savePresetToDb: false,
   });
   const [loadingPage, setLoadingPage] = useState(true);
+  const [isMoreTuningOpen, setIsMoreTuningOpen] = useState(false);
 
   const availableStocks = [
     ...Object.keys(stocksData).map((key) => ({
@@ -399,365 +409,431 @@ function ConfigurationPage() {
             />
           </div>
           <div className="col" style={{ gap: "10px" }}>
-            <p className={styles.label}>MACD </p>
+            <p className={styles.label}>Break out/down </p>
 
             <div className="row">
               <InputControl
                 placeholder="Enter number"
-                hintText="MACD - fast period"
+                hintText="total trend length"
                 numericInput
                 max={40}
                 min={5}
-                value={values.macdFastPeriod}
+                value={values.brTotalTrendLength}
                 onChange={(e) =>
                   setValues((prev) => ({
                     ...prev,
-                    macdFastPeriod: parseInt(e.target.value),
+                    brTotalTrendLength: parseInt(e.target.value),
                   }))
                 }
                 disabled={!selectedStock?.value}
               />
               <InputControl
                 placeholder="Enter number"
-                hintText="MACD - slow period"
+                hintText="long trend length"
                 numericInput
                 max={40}
                 min={5}
-                value={values.macdSlowPeriod}
+                value={values.brLongTrendLength}
                 onChange={(e) =>
                   setValues((prev) => ({
                     ...prev,
-                    macdSlowPeriod: parseInt(e.target.value),
+                    brLongTrendLength: parseInt(e.target.value),
                   }))
                 }
                 disabled={!selectedStock?.value}
               />
               <InputControl
                 placeholder="Enter number"
-                hintText="MACD - signal period"
+                hintText="short trend length"
                 numericInput
                 max={30}
                 min={4}
-                value={values.macdSignalPeriod}
+                value={values.brShortTrendLength}
                 onChange={(e) =>
                   setValues((prev) => ({
                     ...prev,
-                    macdSignalPeriod: parseInt(e.target.value),
+                    brShortTrendLength: parseInt(e.target.value),
                   }))
                 }
                 disabled={!selectedStock?.value}
               />
             </div>
           </div>
-          <div className="col" style={{ gap: "10px" }}>
-            <p className={styles.label}>Stochastic</p>
 
-            <div className="row">
-              <InputControl
-                placeholder="Enter number"
-                hintText="Stochastic - low"
-                numericInput
-                max={90}
-                min={10}
-                value={values.stochasticLow}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    stochasticLow: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
-              <InputControl
-                placeholder="Enter number"
-                hintText="Stochastic - high"
-                numericInput
-                max={90}
-                min={10}
-                value={values.stochasticHigh}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    stochasticHigh: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
-              <InputControl
-                placeholder="Enter number"
-                hintText="Stochastic - period"
-                numericInput
-                max={30}
-                min={4}
-                value={values.stochasticPeriod}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    stochasticPeriod: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
+          <p
+            className={styles.textBtn}
+            onClick={() => setIsMoreTuningOpen((prev) => !prev)}
+          >
+            {isMoreTuningOpen ? "Hide" : "Show"} more tuning
+          </p>
+          {isMoreTuningOpen ? (
+            <div className={`${styles.tuning} ${styles.open}`}>
+              <div className="col" style={{ gap: "10px" }}>
+                <p className={styles.label}>MACD </p>
+
+                <div className="row">
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="MACD - fast period"
+                    numericInput
+                    max={40}
+                    min={5}
+                    value={values.macdFastPeriod}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        macdFastPeriod: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="MACD - slow period"
+                    numericInput
+                    max={40}
+                    min={5}
+                    value={values.macdSlowPeriod}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        macdSlowPeriod: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="MACD - signal period"
+                    numericInput
+                    max={30}
+                    min={4}
+                    value={values.macdSignalPeriod}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        macdSignalPeriod: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                </div>
+              </div>
+              <div className="col" style={{ gap: "10px" }}>
+                <p className={styles.label}>Stochastic</p>
+
+                <div className="row">
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="Stochastic - low"
+                    numericInput
+                    max={90}
+                    min={10}
+                    value={values.stochasticLow}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        stochasticLow: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="Stochastic - high"
+                    numericInput
+                    max={90}
+                    min={10}
+                    value={values.stochasticHigh}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        stochasticHigh: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="Stochastic - period"
+                    numericInput
+                    max={30}
+                    min={4}
+                    value={values.stochasticPeriod}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        stochasticPeriod: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                </div>
+              </div>
+              <div className="col" style={{ gap: "10px" }}>
+                <p className={styles.label}>William % R</p>
+
+                <div className="row">
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="willR - low"
+                    numericInput
+                    max={90}
+                    min={10}
+                    value={values.willRLow}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        willRLow: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="willR - high"
+                    numericInput
+                    max={90}
+                    min={10}
+                    value={values.willRHigh}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        willRHigh: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="willR - period"
+                    numericInput
+                    max={30}
+                    min={4}
+                    value={values.willRPeriod}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        willRPeriod: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                </div>
+              </div>
+              <div className="col" style={{ gap: "10px" }}>
+                <p className={styles.label}>MFI (Money flow index)</p>
+
+                <div className="row">
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="MFI - low"
+                    numericInput
+                    max={90}
+                    min={10}
+                    value={values.mfiLow}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        mfiLow: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="MFI - high"
+                    numericInput
+                    max={90}
+                    min={10}
+                    value={values.mfiHigh}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        mfiHigh: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="MFI - period"
+                    numericInput
+                    max={30}
+                    min={4}
+                    value={values.mfiPeriod}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        mfiPeriod: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                </div>
+              </div>
+              <div className="col" style={{ gap: "10px" }}>
+                <p className={styles.label}>RSI (10-90)</p>
+
+                <div className="row">
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="RSI - low"
+                    numericInput
+                    max={90}
+                    min={10}
+                    value={values.rsiLow}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        rsiLow: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="RSI - high"
+                    numericInput
+                    max={90}
+                    min={10}
+                    value={values.rsiHigh}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        rsiHigh: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="RSI - period"
+                    numericInput
+                    max={30}
+                    min={4}
+                    value={values.rsiPeriod}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        rsiPeriod: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                </div>
+              </div>
+              <div className="col" style={{ gap: "10px" }}>
+                <p className={styles.label}>
+                  SMA (simple moving average) Period
+                </p>
+
+                <div className="row">
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="SMA - low period"
+                    numericInput
+                    max={150}
+                    min={10}
+                    value={values.smaLowPeriod}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        smaLowPeriod: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="SMA - high period"
+                    numericInput
+                    max={400}
+                    min={100}
+                    value={values.smaHighPeriod}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        smaHighPeriod: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                </div>
+              </div>
+              <div className="col" style={{ gap: "10px" }}>
+                <p className={styles.label}>Bollinger band</p>
+
+                <div className="row">
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="Period"
+                    numericInput
+                    max={40}
+                    min={5}
+                    value={values.bollingerBandPeriod}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        bollingerBandPeriod: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                  <InputControl
+                    placeholder="Enter number"
+                    hintText="Deviation"
+                    numericInput
+                    max={10}
+                    min={1}
+                    value={values.bollingerBandStdDev}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        bollingerBandStdDev: parseInt(e.target.value),
+                      }))
+                    }
+                    disabled={!selectedStock?.value}
+                  />
+                </div>
+              </div>
+              <div className="row">
+                <InputControl
+                  label="VWAP period"
+                  placeholder="Enter number"
+                  numericInput
+                  max={40}
+                  min={4}
+                  value={values.vwapPeriod}
+                  onChange={(e) =>
+                    setValues((prev) => ({
+                      ...prev,
+                      vwapPeriod: parseInt(e.target.value),
+                    }))
+                  }
+                  disabled={!selectedStock?.value}
+                />
+
+                <InputControl
+                  label="CCI period"
+                  placeholder="Enter number"
+                  numericInput
+                  max={40}
+                  min={4}
+                  value={values.cciPeriod}
+                  onChange={(e) =>
+                    setValues((prev) => ({
+                      ...prev,
+                      cciPeriod: parseInt(e.target.value),
+                    }))
+                  }
+                  disabled={!selectedStock?.value}
+                />
+              </div>
             </div>
-          </div>
-          <div className="col" style={{ gap: "10px" }}>
-            <p className={styles.label}>William % R</p>
-
-            <div className="row">
-              <InputControl
-                placeholder="Enter number"
-                hintText="willR - low"
-                numericInput
-                max={90}
-                min={10}
-                value={values.willRLow}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    willRLow: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
-              <InputControl
-                placeholder="Enter number"
-                hintText="willR - high"
-                numericInput
-                max={90}
-                min={10}
-                value={values.willRHigh}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    willRHigh: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
-              <InputControl
-                placeholder="Enter number"
-                hintText="willR - period"
-                numericInput
-                max={30}
-                min={4}
-                value={values.willRPeriod}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    willRPeriod: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
-            </div>
-          </div>
-          <div className="col" style={{ gap: "10px" }}>
-            <p className={styles.label}>MFI (Money flow index)</p>
-
-            <div className="row">
-              <InputControl
-                placeholder="Enter number"
-                hintText="MFI - low"
-                numericInput
-                max={90}
-                min={10}
-                value={values.mfiLow}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    mfiLow: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
-              <InputControl
-                placeholder="Enter number"
-                hintText="MFI - high"
-                numericInput
-                max={90}
-                min={10}
-                value={values.mfiHigh}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    mfiHigh: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
-              <InputControl
-                placeholder="Enter number"
-                hintText="MFI - period"
-                numericInput
-                max={30}
-                min={4}
-                value={values.mfiPeriod}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    mfiPeriod: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
-            </div>
-          </div>
-          <div className="col" style={{ gap: "10px" }}>
-            <p className={styles.label}>RSI (10-90)</p>
-
-            <div className="row">
-              <InputControl
-                placeholder="Enter number"
-                hintText="RSI - low"
-                numericInput
-                max={90}
-                min={10}
-                value={values.rsiLow}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    rsiLow: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
-              <InputControl
-                placeholder="Enter number"
-                hintText="RSI - high"
-                numericInput
-                max={90}
-                min={10}
-                value={values.rsiHigh}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    rsiHigh: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
-              <InputControl
-                placeholder="Enter number"
-                hintText="RSI - period"
-                numericInput
-                max={30}
-                min={4}
-                value={values.rsiPeriod}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    rsiPeriod: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
-            </div>
-          </div>
-          <div className="col" style={{ gap: "10px" }}>
-            <p className={styles.label}>SMA (simple moving average) Period</p>
-
-            <div className="row">
-              <InputControl
-                placeholder="Enter number"
-                hintText="SMA - low period"
-                numericInput
-                max={150}
-                min={10}
-                value={values.smaLowPeriod}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    smaLowPeriod: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
-              <InputControl
-                placeholder="Enter number"
-                hintText="SMA - high period"
-                numericInput
-                max={400}
-                min={100}
-                value={values.smaHighPeriod}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    smaHighPeriod: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
-            </div>
-          </div>
-          <div className="col" style={{ gap: "10px" }}>
-            <p className={styles.label}>Bollinger band</p>
-
-            <div className="row">
-              <InputControl
-                placeholder="Enter number"
-                hintText="Period"
-                numericInput
-                max={40}
-                min={5}
-                value={values.bollingerBandPeriod}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    bollingerBandPeriod: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
-              <InputControl
-                placeholder="Enter number"
-                hintText="Deviation"
-                numericInput
-                max={10}
-                min={1}
-                value={values.bollingerBandStdDev}
-                onChange={(e) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    bollingerBandStdDev: parseInt(e.target.value),
-                  }))
-                }
-                disabled={!selectedStock?.value}
-              />
-            </div>
-          </div>
-          <div className="row">
-            <InputControl
-              label="VWAP period"
-              placeholder="Enter number"
-              numericInput
-              max={40}
-              min={4}
-              value={values.vwapPeriod}
-              onChange={(e) =>
-                setValues((prev) => ({
-                  ...prev,
-                  vwapPeriod: parseInt(e.target.value),
-                }))
-              }
-              disabled={!selectedStock?.value}
-            />
-
-            <InputControl
-              label="CCI period"
-              placeholder="Enter number"
-              numericInput
-              max={40}
-              min={4}
-              value={values.cciPeriod}
-              onChange={(e) =>
-                setValues((prev) => ({
-                  ...prev,
-                  cciPeriod: parseInt(e.target.value),
-                }))
-              }
-              disabled={!selectedStock?.value}
-            />
-          </div>
+          ) : (
+            ""
+          )}
 
           {tradeResults?.profitPercent ? (
             <div>
@@ -832,7 +908,6 @@ function ConfigurationPage() {
           ) : (
             ""
           )}
-
           {savedConfigs?.length ? (
             <div className={styles.configs}>
               <p className={styles.label}>Saved configs</p>
@@ -876,7 +951,6 @@ function ConfigurationPage() {
           ) : (
             ""
           )}
-
           <div className={styles.footer}>
             {selectedStock.value ? (
               <div className={styles.right}>
