@@ -847,7 +847,7 @@ function ConfigurationPage() {
                 <div className={styles.card}>
                   <p
                     className={`${styles.title} ${
-                      parseInt(tradeResults.profitPercent) > 49
+                      parseInt(tradeResults.profitPercent) >= 48
                         ? styles.green
                         : styles.red
                     }`}
