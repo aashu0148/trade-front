@@ -96,9 +96,9 @@ const defaultConfigs = {
   vwapPeriod: 14,
   targetProfitPercent: 1.4,
   stopLossPercent: 0.7,
-  brTotalTrendLength: 24,
-  brLongTrendLength: 15,
-  brShortTrendLength: 7,
+  brTotalTrendLength: 20,
+  brLongTrendLength: 10,
+  brShortTrendLength: 6,
 };
 function ConfigurationPage() {
   const [stocksData, setStocksData] = useState({});
