@@ -28,6 +28,22 @@ const optionalIndicators = [
     value: "trend",
   },
   {
+    label: "Bollinger band" + ` (${indicatorsWeightEnum.bollingerBand} point)`,
+    value: "bollinger",
+  },
+  {
+    label: "Moving average" + ` (${indicatorsWeightEnum.sma} point)`,
+    value: "sma",
+  },
+  {
+    label: "RSI" + ` (${indicatorsWeightEnum.rsi} point)`,
+    value: "rsi",
+  },
+  {
+    label: "MACD" + ` (${indicatorsWeightEnum.macd} point)`,
+    value: "macd",
+  },
+  {
     label: "William % R" + ` (${indicatorsWeightEnum.williamR} point)`,
     value: "willR",
   },
@@ -64,6 +80,10 @@ const defaultConfigs = {
     vwap: false,
     psar: false,
     br: false,
+    rsi: false,
+    macd: true,
+    bollinger: true,
+    sma: true,
     obv: false,
   },
   useSupportResistances: true,
