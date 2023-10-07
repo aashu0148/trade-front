@@ -116,9 +116,9 @@ const defaultConfigs = {
   vwapPeriod: 14,
   targetProfitPercent: 1.4,
   stopLossPercent: 0.7,
-  brTotalTrendLength: 20,
-  brLongTrendLength: 10,
-  brShortTrendLength: 6,
+  brTotalTrendLength: 33,
+  brLongTrendLength: 21,
+  brShortTrendLength: 10,
   avoidingLatestSmallMovePercent: 0.9,
 };
 function ConfigurationPage() {
@@ -174,8 +174,7 @@ function ConfigurationPage() {
     const total = trades.length;
     const profitable = trades.filter((item) => item.status == "profit").length;
 
-    console.log(trades, (endTime - startTime) / 1000 + "s");
-    setTradeResults({
+    const analytics = {
       stock: selectedStock.label,
       symbol: selectedStock.value,
       profitPercent: `${((profitable / total) * 100).toFixed(2)}%`,
@@ -186,7 +185,13 @@ function ConfigurationPage() {
       lossMaking: total - profitable,
       buyTrades: trades.filter((item) => item.type == "buy").length,
       sellTrades: trades.filter((item) => item.type == "sell").length,
-    });
+    };
+
+    console.log(
+      { trades, analytics, config: values },
+      (endTime - startTime) / 1000 + "s"
+    );
+    setTradeResults(analytics);
     toast.success("Evaluation done");
   };
 

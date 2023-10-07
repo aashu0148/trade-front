@@ -547,9 +547,9 @@ export const takeTrades = async (
     vwapPeriod = 14,
     targetProfitPercent = 1.4,
     stopLossPercent = 0.7,
-    brTotalTrendLength = 20,
-    brLongTrendLength = 10,
-    brShortTrendLength = 6,
+    brTotalTrendLength = 33,
+    brLongTrendLength = 21,
+    brShortTrendLength = 10,
     avoidingLatestSmallMovePercent = 0.9,
     lastMoreCandleOffset = 40,
     lastFewCandleOffset = 6,
@@ -761,7 +761,7 @@ export const takeTrades = async (
     const last3CandleLengths = [1, 1, 1].map(
       (_e, i) => priceData.c[index - i] - priceData.o[index - i]
     );
-    const allowedPercent = 0.21;
+    const allowedPercent = 0.4;
     if (
       last3CandleLengths.some(
         (l) => (Math.abs(l) / currPrice) * 100 >= allowedPercent
@@ -789,18 +789,20 @@ export const takeTrades = async (
     const recentHigh = priceData.h[recentHighCandleIndex] - currPrice;
     const recentLow = priceData.l[recentLowCandleIndex] - currPrice;
 
-    const point5PercentOfPrice = (0.5 / 100) * currPrice;
+    const onePercentOfPrice = (1 / 100) * currPrice;
+    const point1PercentOfPrice = (0.11 / 100) * currPrice;
     const trendEstimate =
-      currPrice - priceData.c[index - totalTrendLength] > point5PercentOfPrice
+      currPrice - priceData.c[index - totalTrendLength] > onePercentOfPrice
         ? "up"
-        : priceData.c[index - totalTrendLength] - currPrice >
-          point5PercentOfPrice
+        : priceData.c[index - totalTrendLength] - currPrice > onePercentOfPrice
         ? "down"
         : "none";
 
     if (trendEstimate == "none") return signalEnum.hold;
 
     if (trendEstimate == "up") {
+      if (Math.abs(recentHigh) < point1PercentOfPrice) return signalEnum.hold;
+
       let recentUpTrendLength;
       for (let i = recentHighCandleIndex; i > index - longTrendLength; --i) {
         const len = Math.abs(
@@ -811,13 +813,17 @@ export const takeTrades = async (
           recentUpTrendLength = len;
       }
 
-      if (recentUpTrendLength < recentHigh * 2.5) return signalEnum.hold;
+      if (recentUpTrendLength < recentHigh * 2.5) {
+        return signalEnum.hold;
+      }
 
-      const arr = priceData.c.slice(recentHighCandleIndex, index - 1);
+      const arr = priceData.c
+        .slice(recentHighCandleIndex, index)
+        .map((item, i) => ({ index: i + recentHighCandleIndex, value: item }));
       const avgBreakoutPrice =
-        arr.reduce((acc, _curr, i) => {
-          const c = priceData.c[i];
-          const o = priceData.o[i];
+        arr.reduce((acc, item) => {
+          const c = priceData.c[item.index];
+          const o = priceData.o[item.index];
 
           const f = c > o ? c : o;
 
@@ -827,6 +833,8 @@ export const takeTrades = async (
       if (currPrice > avgBreakoutPrice) return signalEnum.buy;
       else return signalEnum.hold;
     } else {
+      if (Math.abs(recentLow) < point1PercentOfPrice) return signalEnum.hold;
+
       let recentDownTrendLength;
       for (let i = recentLowCandleIndex; i > index - longTrendLength; --i) {
         const len = Math.abs(
@@ -836,13 +844,16 @@ export const takeTrades = async (
         if (isNaN(recentDownTrendLength) || len > recentDownTrendLength)
           recentDownTrendLength = len;
       }
-      if (recentDownTrendLength < recentLow * 2.5) return signalEnum.hold;
 
-      const arr = priceData.c.slice(recentLowCandleIndex, index - 1);
+      if (recentDownTrendLength < recentLow * 2.1) return signalEnum.hold;
+
+      const arr = priceData.c
+        .slice(recentLowCandleIndex, index)
+        .map((item, i) => ({ index: i + recentLowCandleIndex, value: item }));
       const avgBreakdownPrice =
-        arr.reduce((acc, _curr, i) => {
-          const c = priceData.c[i];
-          const o = priceData.o[i];
+        arr.reduce((acc, item) => {
+          const c = priceData.c[item.index];
+          const o = priceData.o[item.index];
 
           const f = c < o ? c : o;
 
@@ -1081,7 +1092,7 @@ export const takeTrades = async (
       );
 
     const additionalIndicatorsWeight =
-      furtherIndicatorSignals.reduce((acc, curr) => curr + acc, 0) || 0;
+      furtherIndicatorSignals.reduce((acc, curr) => curr + acc || 0, 0) || 0;
 
     const decisionMakingPoint = decisionMakingPoints || 3;
 
