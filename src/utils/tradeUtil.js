@@ -770,7 +770,7 @@ export const takeTrades = async (
       return signalEnum.hold;
 
     let recentHighCandleIndex, recentLowCandleIndex;
-    for (let i = index - 1; i > index - shortTrendLength; --i) {
+    for (let i = index; i > index - shortTrendLength; --i) {
       const high = priceData.h[i];
       const low = priceData.l[i];
 
@@ -801,7 +801,11 @@ export const takeTrades = async (
     if (trendEstimate == "none") return signalEnum.hold;
 
     if (trendEstimate == "up") {
-      if (Math.abs(recentHigh) < point1PercentOfPrice) return signalEnum.hold;
+      if (
+        Math.abs(recentHigh) < point1PercentOfPrice ||
+        recentHighCandleIndex === index
+      )
+        return signalEnum.hold;
 
       let recentUpTrendLength;
       for (let i = recentHighCandleIndex; i > index - longTrendLength; --i) {
@@ -833,7 +837,11 @@ export const takeTrades = async (
       if (currPrice > avgBreakoutPrice) return signalEnum.buy;
       else return signalEnum.hold;
     } else {
-      if (Math.abs(recentLow) < point1PercentOfPrice) return signalEnum.hold;
+      if (
+        Math.abs(recentLow) < point1PercentOfPrice ||
+        recentLowCandleIndex === index
+      )
+        return signalEnum.hold;
 
       let recentDownTrendLength;
       for (let i = recentLowCandleIndex; i > index - longTrendLength; --i) {
@@ -1017,6 +1025,11 @@ export const takeTrades = async (
 
     let brSignal;
 
+    let analyticDetails = {
+      allowedIndicatorSignals: {},
+      index: i,
+      price,
+    };
     // const lastMoreCandleDiff = prices[i] - prices[i - lastMoreCandleOffset];
     // const lastFewCandleDiff = prices[i] - prices[i - lastFewCandleOffset];
     // const lastFewCandlePercent = (lastFewCandleDiff / price) * 100;
@@ -1032,28 +1045,37 @@ export const takeTrades = async (
     //       : signalEnum.hold
     //     : signalEnum.hold;
 
-    const initialSignal = signalWeight[srSignal] * indicatorsWeightEnum.sr;
+    const initialSignalWeight =
+      signalWeight[srSignal] * indicatorsWeightEnum.sr;
+
+    analyticDetails.allowedIndicatorSignals.sr = srSignal;
 
     const furtherIndicatorSignals = [];
     if (additionalIndicators.rsi) {
       furtherIndicatorSignals.push(
         signalWeight[rsiSignal] * indicatorsWeightEnum.rsi
       );
+
+      analyticDetails.allowedIndicatorSignals.rsi = rsiSignal;
     }
     if (additionalIndicators.macd) {
       furtherIndicatorSignals.push(
         signalWeight[macdSignal] * indicatorsWeightEnum.macd
       );
+
+      analyticDetails.allowedIndicatorSignals.macd = macdSignal;
     }
     if (additionalIndicators.sma) {
       furtherIndicatorSignals.push(
         signalWeight[smaSignal] * indicatorsWeightEnum.sma
       );
+      analyticDetails.allowedIndicatorSignals.sma = smaSignal;
     }
     if (additionalIndicators.bollinger) {
       furtherIndicatorSignals.push(
         signalWeight[bollingerBandSignal] * indicatorsWeightEnum.bollingerBand
       );
+      analyticDetails.allowedIndicatorSignals.bollinger = bollingerBandSignal;
     }
     if (additionalIndicators.br) {
       brSignal = getBreakOutDownSignal(i);
@@ -1061,35 +1083,50 @@ export const takeTrades = async (
       furtherIndicatorSignals.push(
         signalWeight[brSignal] * indicatorsWeightEnum.br
       );
+      analyticDetails.allowedIndicatorSignals.br = brSignal;
     }
-    if (additionalIndicators.cci)
+    if (additionalIndicators.cci) {
       furtherIndicatorSignals.push(
         signalWeight[cciSignal] * indicatorsWeightEnum.cci
       );
-    if (additionalIndicators.mfi)
+      analyticDetails.allowedIndicatorSignals.cci = cciSignal;
+    }
+    if (additionalIndicators.mfi) {
       furtherIndicatorSignals.push(
         signalWeight[mfiSignal] * indicatorsWeightEnum.mfi
       );
-    if (additionalIndicators.stochastic)
+      analyticDetails.allowedIndicatorSignals.mfi = mfiSignal;
+    }
+    if (additionalIndicators.stochastic) {
       furtherIndicatorSignals.push(
         signalWeight[stochasticSignal] * indicatorsWeightEnum.stochastic
       );
-    if (additionalIndicators.vwap)
+      analyticDetails.allowedIndicatorSignals.stochastic = stochasticSignal;
+    }
+    if (additionalIndicators.vwap) {
       furtherIndicatorSignals.push(
         signalWeight[vwapSignal] * indicatorsWeightEnum.vwap
       );
-    if (additionalIndicators.psar)
+      analyticDetails.allowedIndicatorSignals.vwap = vwapSignal;
+    }
+    if (additionalIndicators.psar) {
       furtherIndicatorSignals.push(
         signalWeight[psarSignal] * indicatorsWeightEnum.psar
       );
-    if (additionalIndicators.trend)
+      analyticDetails.allowedIndicatorSignals.psar = psarSignal;
+    }
+    if (additionalIndicators.trend) {
       furtherIndicatorSignals.push(
         signalWeight[trendSignal] * indicatorsWeightEnum.trend
       );
-    if (additionalIndicators.willR)
+      analyticDetails.allowedIndicatorSignals.trend = trendSignal;
+    }
+    if (additionalIndicators.willR) {
       furtherIndicatorSignals.push(
         signalWeight[willRSignal] * indicatorsWeightEnum.williamR
       );
+      analyticDetails.allowedIndicatorSignals.willR = willRSignal;
+    }
 
     const additionalIndicatorsWeight =
       furtherIndicatorSignals.reduce((acc, curr) => curr + acc || 0, 0) || 0;
@@ -1097,42 +1134,22 @@ export const takeTrades = async (
     const decisionMakingPoint = decisionMakingPoints || 3;
 
     let isBuySignal =
-      initialSignal + additionalIndicatorsWeight >= decisionMakingPoint;
+      initialSignalWeight + additionalIndicatorsWeight >= decisionMakingPoint;
     let isSellSignal =
-      initialSignal + additionalIndicatorsWeight <= -1 * decisionMakingPoint;
+      initialSignalWeight + additionalIndicatorsWeight <=
+      -1 * decisionMakingPoint;
 
-    const analytic = {
-      additionalIndicators,
-      mainSignals: {
-        rsiSignal,
-        macdSignal,
-        srSignal,
-        bollingerBandSignal,
-        smaSignal,
-      },
-      otherSignals: {
-        trend: trendSignal,
-        cci: cciSignal,
-        stochastic: stochasticSignal,
-        psarSignal,
-        willRSignal,
-        mfiSignal,
-        vwapSignal,
-        brSignal,
-      },
-      totalPoints: initialSignal + additionalIndicatorsWeight,
-      netSignal: isBuySignal
-        ? signalEnum.buy
-        : isSellSignal
-        ? signalEnum.sell
-        : signalEnum.hold,
-      index: i,
-      price,
-    };
+    analyticDetails.totalPoints =
+      initialSignalWeight + additionalIndicatorsWeight;
+    analyticDetails.netSignal = isBuySignal
+      ? signalEnum.buy
+      : isSellSignal
+      ? signalEnum.sell
+      : signalEnum.hold;
 
     if (!isBuySignal && !isSellSignal)
       analytics.push({
-        ...analytic,
+        ...analyticDetails,
       });
 
     const isAllowedToTakeThisTrade = (trade) => {
@@ -1188,12 +1205,12 @@ export const takeTrades = async (
         ? nearestResistance - price
         : targetProfit;
 
-      // updating analytic
-      analytic.nearestResistance = nearestResistance;
-      analytic.possibleProfit = possibleProfit;
-      analytic.targetProfit = targetProfit;
+      // updating analyticDetails
+      analyticDetails.nearestResistance = nearestResistance;
+      analyticDetails.possibleProfit = possibleProfit;
+      analyticDetails.targetProfit = targetProfit;
       analytics.push({
-        ...analytic,
+        ...analyticDetails,
       });
 
       if (possibleProfit < targetProfit && useSupportResistances) continue;
@@ -1205,7 +1222,7 @@ export const takeTrades = async (
         type: signalEnum.buy,
         target: price + targetProfit,
         sl: price - stopLoss,
-        analytics: analytic,
+        analytics: analyticDetails,
         nearestResistance,
         status: "taken",
       };
@@ -1232,12 +1249,12 @@ export const takeTrades = async (
         ? price - nearestSupport
         : targetProfit;
 
-      // updating analytic
-      analytic.nearestSupport = nearestSupport;
-      analytic.possibleProfit = possibleProfit;
-      analytic.targetProfit = targetProfit;
+      // updating analyticDetails
+      analyticDetails.nearestSupport = nearestSupport;
+      analyticDetails.possibleProfit = possibleProfit;
+      analyticDetails.targetProfit = targetProfit;
       analytics.push({
-        ...analytic,
+        ...analyticDetails,
       });
 
       if (possibleProfit < targetProfit && useSupportResistances) continue;
@@ -1249,7 +1266,7 @@ export const takeTrades = async (
         type: signalEnum.sell,
         target: price - targetProfit,
         sl: price + stopLoss,
-        analytics: analytic,
+        analytics: analyticDetails,
         nearestSupport,
         status: "taken",
       };
