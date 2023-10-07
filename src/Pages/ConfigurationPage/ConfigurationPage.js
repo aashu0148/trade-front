@@ -99,6 +99,7 @@ const defaultConfigs = {
   brTotalTrendLength: 20,
   brLongTrendLength: 10,
   brShortTrendLength: 6,
+  avoidingLatestSmallMovePercent: 0.9,
 };
 function ConfigurationPage() {
   const [stocksData, setStocksData] = useState({});
@@ -378,6 +379,28 @@ function ConfigurationPage() {
                 setValues((prev) => ({
                   ...prev,
                   stopLossPercent: val,
+                }));
+              }}
+              disabled={!selectedStock?.value}
+            />
+
+            <InputControl
+              placeholder="Enter number"
+              label="Avoiding last move percent (0.2 - 2)"
+              type="number"
+              max={4}
+              min={0.2}
+              value={values.avoidingLatestSmallMovePercent}
+              onChange={(e) => {
+                const val = isNaN(parseFloat(e.target.value))
+                  ? ""
+                  : parseFloat(e.target.value);
+
+                if (val < 0 || val > 4) return;
+
+                setValues((prev) => ({
+                  ...prev,
+                  avoidingLatestSmallMovePercent: val,
                 }));
               }}
               disabled={!selectedStock?.value}
