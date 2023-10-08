@@ -149,7 +149,7 @@ function TestPage() {
       const totalDays = parseInt((stock.data.c.length * 5) / 60 / 6);
       const total = trades.length;
       const profitable = trades.filter(
-        (item) => item.result == "profit"
+        (item) => item.status == "profit"
       ).length;
 
       const trade = {
