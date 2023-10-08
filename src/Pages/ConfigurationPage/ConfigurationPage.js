@@ -93,9 +93,9 @@ const defaultConfigs = {
   smaLowPeriod: 18,
   smaHighPeriod: 150,
   rsiPeriod: 8,
-  macdFastPeriod: 12,
-  macdSlowPeriod: 26,
-  macdSignalPeriod: 9,
+  macdFastPeriod: 14,
+  macdSlowPeriod: 24,
+  macdSignalPeriod: 8,
   bollingerBandPeriod: 23,
   bollingerBandStdDev: 4,
   cciPeriod: 20,
@@ -120,7 +120,7 @@ const defaultConfigs = {
   brLongTrendLength: 21,
   brShortTrendLength: 10,
   avoidingLatestSmallMovePercent: 0.9,
-  reverseTheTradingLogic: false,
+  trendCheckingLastFewCandles: 8,
 };
 function ConfigurationPage() {
   const [stocksData, setStocksData] = useState({});

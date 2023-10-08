@@ -44,7 +44,7 @@ export const indicatorsWeightEnum = {
   williamR: 1,
   mfi: 1,
   vPs: 1,
-  sma: 2,
+  sma: 1.5,
 };
 const timeFrame = 5;
 const getDxForPrice = (price, time = timeFrame) => {
@@ -1048,7 +1048,20 @@ export const takeTrades = async (
     const targetProfit = (targetProfitPercent / 100) * price;
     const stopLoss = (stopLossPercent / 100) * price;
 
-    const srSignal = getSrSignal(i, strongSupportResistances);
+    const isSRBreakout = strongSupportResistances.some(
+      (item) => item.max < price && item.max > prevPrice
+    );
+    const isSRBreakdown = strongSupportResistances.some(
+      (item) => item.min > price && item.min < prevPrice
+    );
+    const srSignal = isSRBreakout
+      ? signalEnum.buy
+      : isSRBreakdown
+      ? signalEnum.sell
+      : signalEnum.hold;
+
+    // const srSignal = getSrSignal(i, strongSupportResistances);
+
     const stochasticSignal =
       stochastic[i] < stochasticLow
         ? signalEnum.sell
@@ -1247,12 +1260,12 @@ export const takeTrades = async (
       )
         return false;
 
-      // if (avoidingLatestSmallMovePercent > 2)
-      //   avoidingLatestSmallMovePercent = 0.9;
-      // const smallMoveLength = (avoidingLatestSmallMovePercent / 100) * price;
+      if (avoidingLatestSmallMovePercent > 2)
+        avoidingLatestSmallMovePercent = 0.9;
+      const smallMoveLength = (avoidingLatestSmallMovePercent / 100) * price;
 
-      // const last3CandlesMove = Math.abs(price - priceData.o[i - 3]);
-      // if (last3CandlesMove > smallMoveLength) return false;
+      const last3CandlesMove = Math.abs(price - priceData.o[i - 3]);
+      if (last3CandlesMove > smallMoveLength) return false;
 
       return true;
     };
