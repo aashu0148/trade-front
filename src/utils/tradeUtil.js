@@ -505,7 +505,7 @@ export const takeTrades = async (
     additionalIndicators = {
       willR: false,
       mfi: false,
-      trend: false,
+      // trend: false,
       cci: false,
       stochastic: false,
       vwap: false,
@@ -551,6 +551,7 @@ export const takeTrades = async (
     brLongTrendLength = 21,
     brShortTrendLength = 10,
     avoidingLatestSmallMovePercent = 0.9,
+    trendCheckingLastFewCandles = 8,
     lastMoreCandleOffset = 40,
     lastFewCandleOffset = 6,
     lastCandlesMultiplier = 3,
@@ -651,7 +652,6 @@ export const takeTrades = async (
   indicators.vPs = vps;
   indicators.ranges = ranges;
 
-  const trends = getTrendEstimates(priceData.c.slice(0, startTakingTradeIndex));
   // const obv = await IXJIndicators.obv(
   //   priceData.c.slice(0, startTakingTradeIndex),
   //   priceData.v.slice(0, startTakingTradeIndex)
@@ -677,7 +677,6 @@ export const takeTrades = async (
     mfiPeriod
   );
 
-  indicators.trends = trends;
   // indicators.obv = obv;
   indicators.vwap = vwap;
   indicators.mfi = moneyFlowIndex;
@@ -873,6 +872,64 @@ export const takeTrades = async (
     }
   };
 
+  const getCandleTrendEstimate = (index) => {
+    const arr = priceData.c
+      .slice(index - trendCheckingLastFewCandles, index + 1)
+      .map((_e, i) => {
+        const idx = index - trendCheckingLastFewCandles + i;
+
+        return {
+          index: idx,
+          c: priceData.c[idx],
+          o: priceData.o[idx],
+          h: priceData.h[idx],
+          l: priceData.l[idx],
+        };
+      });
+
+    const currPrice = priceData.c[index];
+    const point3OfPrice = (0.3 / 100) * currPrice;
+    const point1OfPrice = (0.18 / 100) * currPrice;
+    const avgPrice = arr.reduce((acc, curr) => acc + curr.c, 0) / arr.length;
+    let rangeCandles = 0;
+    for (let i = 0; i < arr.length; ++i) {
+      const isNearlyEq = nearlyEquateNums(avgPrice, arr[i].c, point3OfPrice);
+
+      if (isNearlyEq) rangeCandles++;
+    }
+
+    if (arr.length - rangeCandles < 2) return trendEnum.range;
+
+    let redCandlesCount = 0,
+      greenCandlesCount = 0;
+
+    for (let i = 0; i < arr.length; ++i) {
+      const diff = arr[i].c - arr[i].o;
+      if (Math.abs(diff) < point1OfPrice) continue;
+
+      if (diff > 0) greenCandlesCount++;
+      else if (diff < 0) redCandlesCount++;
+    }
+
+    if (redCandlesCount < 2 && greenCandlesCount < 2) return trendEnum.range;
+
+    const longPeriodArr = priceData.c.slice(
+      index - trendCheckingLastFewCandles * 3,
+      index + 1
+    );
+    const longPeriodAvgPrice =
+      longPeriodArr.reduce((acc, curr) => acc + curr, 0) / longPeriodArr.length;
+
+    if (redCandlesCount > greenCandlesCount && currPrice < longPeriodAvgPrice)
+      return trendEnum.down;
+    else if (
+      greenCandlesCount > redCandlesCount &&
+      currPrice > longPeriodAvgPrice
+    )
+      return trendEnum.up;
+    else return trendEnum.range;
+  };
+
   for (let i = startTakingTradeIndex; i < priceData.c.length; i++) {
     analyzeAllTradesForCompletion(i);
 
@@ -903,8 +960,6 @@ export const takeTrades = async (
     }
     indicators.vPs = ind_vps;
 
-    const ind_trends = getTrendEstimates(prices, i - 30);
-    indicators.trends = ind_trends;
     // const ind_obv = await IXJIndicators.obv(prices, vols);
     const ind_willR = await IXJIndicators.willr(
       highs,
@@ -945,7 +1000,7 @@ export const takeTrades = async (
     const strongSupportResistances = indicators.ranges.filter(
       (item) => item?.stillStrong
     );
-    const trend = indicators.trends[i]?.trend;
+    // const trend = getCandleTrendEstimate(i);
     const rsi = RSI[i];
     const cci = CCI[i];
     const mfi = indicators.mfi[i];
@@ -1004,12 +1059,12 @@ export const takeTrades = async (
       smaLow: smallMA.slice(i - 2, i + 1),
       smaHigh: bigMA.slice(i - 2, i + 1),
     });
-    const trendSignal =
-      trend == trendEnum.down
-        ? signalEnum.sell
-        : trend == trendEnum.up
-        ? signalEnum.buy
-        : signalEnum.hold;
+    // const trendSignal =
+    //   trend == trendEnum.down
+    //     ? signalEnum.sell
+    //     : trend == trendEnum.up
+    //     ? signalEnum.buy
+    //     : signalEnum.hold;
     const bollingerBandSignal =
       price >= BB[i]?.upper
         ? signalEnum.sell
@@ -1115,12 +1170,12 @@ export const takeTrades = async (
       );
       analyticDetails.allowedIndicatorSignals.psar = psarSignal;
     }
-    if (additionalIndicators.trend) {
-      furtherIndicatorSignals.push(
-        signalWeight[trendSignal] * indicatorsWeightEnum.trend
-      );
-      analyticDetails.allowedIndicatorSignals.trend = trendSignal;
-    }
+    // if (additionalIndicators.trend) {
+    //   furtherIndicatorSignals.push(
+    //     signalWeight[trendSignal] * indicatorsWeightEnum.trend
+    //   );
+    //   analyticDetails.allowedIndicatorSignals.trend = trendSignal;
+    // }
     if (additionalIndicators.willR) {
       furtherIndicatorSignals.push(
         signalWeight[willRSignal] * indicatorsWeightEnum.williamR

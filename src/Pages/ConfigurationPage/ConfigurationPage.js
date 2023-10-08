@@ -23,10 +23,10 @@ const optionalIndicators = [
     label: "Break out/down (beta)" + ` (${indicatorsWeightEnum.br} point)`,
     value: "br",
   },
-  {
-    label: "Trend indicator (beta)" + ` (${indicatorsWeightEnum.trend} point)`,
-    value: "trend",
-  },
+  // {
+  //   label: "Trend indicator (beta)" + ` (${indicatorsWeightEnum.trend} point)`,
+  //   value: "trend",
+  // },
   {
     label: "Bollinger band" + ` (${indicatorsWeightEnum.bollingerBand} point)`,
     value: "bollinger",
@@ -74,7 +74,7 @@ const defaultConfigs = {
   additionalIndicators: {
     willR: false,
     mfi: false,
-    trend: false,
+    // trend: false,
     cci: false,
     stochastic: false,
     vwap: false,
