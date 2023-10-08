@@ -93,9 +93,9 @@ const defaultConfigs = {
   smaLowPeriod: 18,
   smaHighPeriod: 150,
   rsiPeriod: 8,
-  macdFastPeriod: 14,
-  macdSlowPeriod: 24,
-  macdSignalPeriod: 8,
+  macdFastPeriod: 12,
+  macdSlowPeriod: 26,
+  macdSignalPeriod: 9,
   bollingerBandPeriod: 23,
   bollingerBandStdDev: 4,
   cciPeriod: 20,
@@ -120,6 +120,7 @@ const defaultConfigs = {
   brLongTrendLength: 21,
   brShortTrendLength: 10,
   avoidingLatestSmallMovePercent: 0.9,
+  reverseTheTradingLogic: false,
 };
 function ConfigurationPage() {
   const [stocksData, setStocksData] = useState({});
@@ -245,7 +246,7 @@ function ConfigurationPage() {
     const tradesTaken = parseInt(tradeResults.tradesTaken) || 0;
     if (currentPercent < 48)
       return toast.error("Profit percent must be greater than 48");
-    if (tradesTaken < 25) return toast.error("Take at least 25 trades");
+    if (tradesTaken < 20) return toast.error("Take at least 20 trades");
 
     setDisabledButtons((prev) => ({ ...prev, savePresetToDb: true }));
     const res = await createNewPreset({
@@ -348,6 +349,24 @@ function ConfigurationPage() {
               }
             />
 
+            {/* <MultiSelect
+              id={JSON.stringify(values.reverseTheTradingLogic)}
+              options={[
+                {
+                  label: `Reverse trade taking logic`,
+                  value: "reverseTheTradingLogic",
+                  selected: values.reverseTheTradingLogic,
+                },
+              ]}
+              onChange={(obj) =>
+                setValues((prev) => ({
+                  ...prev,
+                  reverseTheTradingLogic: obj[0].selected,
+                }))
+              }
+            /> */}
+          </div>
+          <div className="row">
             <InputControl
               placeholder="Enter number"
               numericInput
@@ -363,8 +382,7 @@ function ConfigurationPage() {
               }
               disabled={!selectedStock?.value}
             />
-          </div>
-          <div className="row">
+
             <InputControl
               placeholder="Enter number"
               label="Target percentage (0.2 - 2)"
@@ -409,7 +427,7 @@ function ConfigurationPage() {
               disabled={!selectedStock?.value}
             />
 
-            <InputControl
+            {/* <InputControl
               placeholder="Enter number"
               label="Avoiding last move percent (0.2 - 2)"
               type="number"
@@ -429,7 +447,7 @@ function ConfigurationPage() {
                 }));
               }}
               disabled={!selectedStock?.value}
-            />
+            /> */}
           </div>
           <div className="col" style={{ gap: "10px" }}>
             <p className={styles.label}>Additional indicators</p>
