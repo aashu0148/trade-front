@@ -154,6 +154,18 @@ function ConfigurationPage() {
   ].filter((item) => item.data["5"]?.c?.length);
 
   const fetchStockData = async () => {
+    if (allTimeFrame.start > allTimeFrame.end) {
+      toast.error("start date must be smaller than end date");
+      return;
+    }
+    if (
+      allTimeFrame.end.getTime() - allTimeFrame.start.getTime() >
+      320 * 24 * 60 * 60 * 1000
+    ) {
+      toast.error("Interval can not be greater than 1 year");
+      return;
+    }
+
     setDisabledButtons((prev) => ({ ...prev, fetchStockData: true }));
     const res = await getStocksData(
       allTimeFrame.start.getTime(),
@@ -397,7 +409,7 @@ function ConfigurationPage() {
               datePicker
               datePickerProps={{
                 maxDate: new Date(),
-                minDate: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000),
+                // minDate: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000),
               }}
               value={allTimeFrame.start}
               onChange={(date) =>
@@ -411,7 +423,7 @@ function ConfigurationPage() {
               datePicker
               datePickerProps={{
                 maxDate: new Date(),
-                minDate: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000),
+                // minDate: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000),
               }}
               value={allTimeFrame.end}
               onChange={(date) =>
