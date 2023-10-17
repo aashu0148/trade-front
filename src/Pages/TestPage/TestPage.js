@@ -99,10 +99,12 @@ function TestPage() {
   const availableStocks = [
     ...Object.keys(stocksData).map((key) => ({
       value: key,
-      label: `${key} | ${stocksData[key].c.pop()}`,
+      label: `${key} | ${
+        stocksData[key]["5"].c[stocksData[key]["5"].c.length - 1]
+      }`,
       data: stocksData[key],
     })),
-  ].filter((item) => item.data?.c?.length);
+  ].filter((item) => item.data["5"]?.c?.length);
 
   const fetchStockData = async () => {
     const res = await getStocksData();

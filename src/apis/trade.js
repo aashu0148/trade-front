@@ -22,8 +22,30 @@ export const getTodayTrades = async () => {
   }
 };
 
-export const getStocksData = async () => {
-  const reqPath = `/trade/recent-data`;
+export const getRecentStockData = async (timestamp) => {
+  const reqPath = `/trade/recent-data?timestamp=${timestamp}`;
+  let response;
+
+  try {
+    response = await fetchWrapper(reqPath);
+    const data = await response.json();
+    if (!data?.success) {
+      errorToastLogger(
+        "getRecentStockData",
+        data?.message || "Failed to get stocks data",
+        data?.error
+      );
+      return false;
+    }
+    return data;
+  } catch (err) {
+    errorToastLogger("getRecentStockData", "Failed to get stocks data", err);
+    return false;
+  }
+};
+
+export const getStocksData = async (from, to) => {
+  const reqPath = `/trade/data?from=${from}&to=${to}`;
   let response;
 
   try {

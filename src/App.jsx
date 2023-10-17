@@ -17,6 +17,7 @@ import { getCurrentUser, sayHiToBackend } from "apis";
 import { handleLogout } from "utils/util";
 
 import "styles/global.scss";
+import "react-calendar/dist/Calendar.css";
 
 let socket;
 const backendUrl = process.env.REACT_APP_BACKEND_URL;

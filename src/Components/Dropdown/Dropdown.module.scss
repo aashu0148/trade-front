@@ -1,0 +1,34 @@
+@import "styles/variables";
+
+.dropDown {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 1px;
+  background-color: $white;
+  min-width: 140px;
+  width: fit-content;
+  max-width: 400px;
+  min-height: 50px;
+  height: fit-content;
+  max-height: 500px;
+  border: 1px solid $gray;
+  border-radius: 5px;
+  z-index: 50;
+  cursor: default;
+}
+
+.startFromRight {
+  right: 1px;
+  left: auto;
+}
+
+.startFromMiddle {
+  right: auto;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.startFromTop {
+  bottom: calc(100% + 5px);
+  top: auto;
+}

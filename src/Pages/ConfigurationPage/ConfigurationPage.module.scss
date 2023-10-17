@@ -44,6 +44,45 @@
       font-size: 16px;
     }
 
+    .button {
+      margin-top: 33px;
+      padding: 7px 18px;
+      height: fit-content;
+    }
+
+    .chips {
+      display: flex;
+      gap: 25px;
+      align-items: center;
+      justify-content: center;
+      row-gap: 10px;
+      flex-wrap: wrap;
+
+      .chip {
+        padding: 8px 16px;
+        border-radius: 5px;
+        border: 1px solid $white-2;
+        font-size: 16px;
+        line-height: 25px;
+        cursor: pointer;
+        background-color: $white-1;
+        transition: 200ms;
+
+        &:hover {
+          background-color: $white-2;
+        }
+
+        &.selected {
+          &,
+          &:hover {
+            border-color: $primary;
+            background-color: $primary;
+            color: white;
+          }
+        }
+      }
+    }
+
     .tuning {
       display: flex;
       flex-direction: column;

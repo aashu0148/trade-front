@@ -1,10 +1,12 @@
 import React, { forwardRef, useEffect, useRef, useState } from "react";
-import { Eye, EyeOff } from "react-feather";
+import { Calendar as CalendarIcon, Eye, EyeOff } from "react-feather";
+import Calendar from "react-calendar";
 
 import { handleNumericInputKeyDown } from "utils/util";
 import { arrowDownIcon, arrowUpIcon, autoIcon } from "utils/svgs";
 
 import styles from "./InputControl.module.scss";
+import Dropdown from "Components/Dropdown/Dropdown";
 
 const InputControl = forwardRef(
   (
@@ -21,6 +23,8 @@ const InputControl = forwardRef(
       hintText = "",
       icon,
       numericInput = false,
+      datePicker = false,
+      datePickerProps = {},
       value,
       disabled = false,
       onChange,
@@ -43,6 +47,7 @@ const InputControl = forwardRef(
 
     const [visible, setVisible] = useState(password ? false : true);
     const [autoActive, setAutoActive] = useState(showAuto && isAuto);
+    const [showPicker, setShowPicker] = useState(false);
 
     const handleAutoChange = () => {
       if (disabled) return;
@@ -203,9 +208,15 @@ const InputControl = forwardRef(
             onChange={(event) => {
               inputVal.current = event.target.value;
 
-              if (onChange) onChange(event);
+              if (onChange && !datePicker) onChange(event);
             }}
-            value={autoActive ? "auto" : value}
+            value={
+              autoActive
+                ? "auto"
+                : datePicker
+                ? new Date(value).toLocaleDateString("en-in")
+                : value
+            }
             disabled={autoActive ? true : disabled}
             {...props}
           />
@@ -228,6 +239,10 @@ const InputControl = forwardRef(
                 {arrowDownIcon}
               </div>
             </div>
+          ) : datePicker ? (
+            <div className={styles.icon} onClick={() => setShowPicker(true)}>
+              <CalendarIcon color="#73646f" style={{ cursor: "pointer" }} />
+            </div>
           ) : password ? (
             <div className={styles.eye} onClick={() => setVisible(!visible)}>
               {visible ? <Eye /> : <EyeOff />}
@@ -236,6 +251,23 @@ const InputControl = forwardRef(
             <div className={styles.icon}>{icon}</div>
           ) : (
             ""
+          )}
+
+          {showPicker && (
+            <Dropdown
+              onClose={() => setTimeout(() => setShowPicker(false))}
+              startFromRight
+            >
+              <Calendar
+                {...datePickerProps}
+                value={value}
+                onChange={(date) => {
+                  if (onChange) onChange(date);
+
+                  setShowPicker(false);
+                }}
+              />
+            </Dropdown>
           )}
         </div>
         {hintText ? (
