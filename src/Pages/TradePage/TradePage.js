@@ -200,9 +200,9 @@ function TradePage({ socket }) {
                 <td className={styles.name}>{item.name}</td>
                 <td className={styles.lrp}>
                   {parseFloat(
-                    stockData.data[item.symbol]?.c
-                      ? stockData.data[item.symbol].c[
-                          stockData.data[item.symbol].c.length - 1
+                    Object.keys(stockData.data[item.symbol]).length
+                      ? stockData.data[item.symbol]["5"].c[
+                          stockData.data[item.symbol]["5"].c.length - 1
                         ]
                       : ""
                   ).toFixed(1)}
