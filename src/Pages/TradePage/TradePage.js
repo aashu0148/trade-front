@@ -126,12 +126,24 @@ function TradePage({ socket }) {
       ? Object.keys(stockData.data).map((item) => ({
           symbol: item,
           data: {
-            t: stockData.data[item].t[stockData.data[item].t.length - 1],
-            c: stockData.data[item].c[stockData.data[item].c.length - 1],
-            l: stockData.data[item].l[stockData.data[item].l.length - 1],
-            v: stockData.data[item].v[stockData.data[item].v.length - 1],
-            h: stockData.data[item].h[stockData.data[item].h.length - 1],
-            o: stockData.data[item].o[stockData.data[item].o.length - 1],
+            t: stockData.data[item]["5"].t[
+              stockData.data[item]["5"].t.length - 1
+            ],
+            c: stockData.data[item]["5"].c[
+              stockData.data[item]["5"].c.length - 1
+            ],
+            l: stockData.data[item]["5"].l[
+              stockData.data[item]["5"].l.length - 1
+            ],
+            v: stockData.data[item]["5"].v[
+              stockData.data[item]["5"].v.length - 1
+            ],
+            h: stockData.data[item]["5"].h[
+              stockData.data[item]["5"].h.length - 1
+            ],
+            o: stockData.data[item]["5"].o[
+              stockData.data[item]["5"].o.length - 1
+            ],
           },
         }))
       : [];
