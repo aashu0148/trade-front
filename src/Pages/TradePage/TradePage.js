@@ -101,9 +101,9 @@ function TradePage({ socket }) {
   const isGoingProfitable = (trade) => {
     const isBuyTrade = trade.type.toLowerCase() === "buy";
     const triggerPrice = parseFloat(trade.startPrice);
-    const currPrice = stockData.data[trade.symbol]?.c
-      ? stockData.data[trade.symbol].c[
-          stockData.data[trade.symbol].c.length - 1
+    const currPrice = stockData.data[trade.symbol]["5"]
+      ? stockData.data[trade.symbol]["5"].c[
+          stockData.data[trade.symbol]["5"].c.length - 1
         ]
       : "";
 
