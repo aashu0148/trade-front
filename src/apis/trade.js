@@ -109,3 +109,25 @@ export const createNewPreset = async (values) => {
     return false;
   }
 };
+
+export const getAllTrades = async (values) => {
+  const reqPath = `/trade/all`;
+  let response;
+
+  try {
+    response = await fetchWrapper(reqPath, values);
+    const data = await response.json();
+    if (!data?.success) {
+      errorToastLogger(
+        "getAllTrades",
+        data?.message || "Failed to get all trades",
+        data?.error
+      );
+      return false;
+    }
+    return data;
+  } catch (err) {
+    errorToastLogger("getAllTrades", "Failed to get all trades", err);
+    return false;
+  }
+};

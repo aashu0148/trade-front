@@ -1,0 +1,201 @@
+@import "styles/variables";
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  padding: 25px;
+  min-height: 100vh;
+  height: fit-content;
+
+  .heading {
+    font-size: 22px;
+    line-height: 30px;
+  }
+
+  .boxes {
+    display: flex;
+    gap: 30px;
+    align-items: stretch;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+    position: relative;
+
+    .dayDetails {
+      position: fixed;
+      top: 0px;
+      left: 0px;
+      transition: all 200ms, opacity 500ms;
+      padding: 18px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 50;
+      background-color: $white;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%);
+
+      &.active {
+        opacity: 1;
+      }
+
+      .item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 25px;
+
+        label {
+          font-size: 14px;
+          font-weight: 600;
+          color: $gray;
+        }
+
+        span {
+          font-size: 14px;
+          font-weight: 600;
+          color: $black;
+        }
+      }
+
+      .green {
+        span {
+          color: $green;
+        }
+      }
+
+      .red {
+        span {
+          color: $red;
+        }
+      }
+    }
+
+    .calendar {
+      border-radius: 10px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background-color: $white-1;
+
+      &.reddish {
+        background-color: #fbe2e1;
+      }
+
+      &.greenish {
+        background-color: #d5ffe5;
+      }
+
+      .top {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        align-items: center;
+        position: relative;
+
+        &::after {
+          content: "";
+          position: absolute;
+          bottom: -10px;
+          left: 0;
+          width: 100%;
+          height: 1px;
+          background-color: $white-2;
+        }
+
+        .title {
+          font-size: 14px;
+          line-height: 18px;
+          font-weight: bold;
+        }
+
+        .right {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+
+          .total,
+          .profit,
+          .loss {
+            padding: 6px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            color: $black;
+            background-color: $white-2;
+            min-width: 30px;
+            text-align: center;
+          }
+
+          .profit {
+            background-color: $green;
+            color: $white;
+          }
+
+          .loss {
+            background-color: $red;
+            color: $white;
+          }
+        }
+      }
+
+      .days {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(7, 1fr);
+        justify-items: center;
+
+        .day {
+          height: 40px;
+          width: 40px;
+          background-color: $white-1;
+          border-radius: 5px;
+          padding: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          font-size: 600;
+          font-size: 14px;
+          transition: 300ms;
+        }
+
+        .green {
+          background-color: $green;
+          color: $white;
+          cursor: pointer;
+        }
+
+        .red {
+          background-color: $red;
+          color: $white;
+          cursor: pointer;
+        }
+      }
+    }
+  }
+
+  @media (max-width: $breakpoint-md) {
+    gap: 20px;
+    padding: 20px;
+
+    .heading {
+      font-size: 18px;
+    }
+
+    .boxes {
+      gap: 20px;
+
+      .calendar {
+        padding: 18px;
+
+        .days {
+          grid-template-columns: repeat(6, 1fr);
+        }
+      }
+    }
+  }
+}

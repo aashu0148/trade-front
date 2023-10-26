@@ -25,7 +25,10 @@ function Navbar({ isAuthenticated = false, isAdmin = false }) {
 
       <div className={"links"}>
         <p className={`link`} onClick={(e) => handleNavigate(e, "/configure")}>
-          Configure
+          Config
+        </p>
+        <p className={`link`} onClick={(e) => handleNavigate(e, "/calendar")}>
+          Calendar
         </p>
 
         {isAdmin ? (
@@ -33,9 +36,9 @@ function Navbar({ isAuthenticated = false, isAdmin = false }) {
             <p className={`link`} onClick={(e) => handleNavigate(e, "/stocks")}>
               Stocks
             </p>
-            <p className={`link`} onClick={(e) => handleNavigate(e, "/test")}>
+            {/* <p className={`link`} onClick={(e) => handleNavigate(e, "/test")}>
               Test
-            </p>
+            </p> */}
           </>
         ) : (
           ""

@@ -22,6 +22,14 @@ import styles from "./ConfigurationPage.module.scss";
 
 const optionalIndicators = [
   {
+    label: "SR" + ` (${indicatorsWeightEnum.sr} point)`,
+    value: "sr",
+  },
+  {
+    label: "SR long" + ` (${indicatorsWeightEnum.sr15min} point)`,
+    value: "sr15min",
+  },
+  {
     label: "Break out/down (beta)" + ` (${indicatorsWeightEnum.br} point)`,
     value: "br",
   },
@@ -363,6 +371,20 @@ function ConfigurationPage() {
   useEffect(() => {
     setTradeResults({});
   }, [selectedTimeFrame, selectedStock]);
+
+  useEffect(() => {
+    if (selectedStock.data && selectedStock.data["5"])
+      setSelectedTimeFrame({
+        name: {
+          long: "All months",
+          short: "all",
+        },
+        dayCount: parseInt(selectedStock.data["5"].t.length / 75),
+        startIndex: 0,
+        endIndex: selectedStock.data["5"].t.length - 1,
+        month: 99,
+      });
+  }, [selectedStock]);
 
   useEffect(() => {
     if (loadingPage) return;

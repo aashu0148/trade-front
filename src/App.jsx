@@ -12,6 +12,7 @@ import ConfigurationPage from "Pages/ConfigurationPage/ConfigurationPage";
 import TestPage from "Pages/TestPage/TestPage";
 import Navbar from "Components/Navbar/Navbar";
 import StocksPage from "Pages/StocksPage/StocksPage";
+import CalendarPage from "Pages/CalendarPage/CalendarPage";
 
 import { getCurrentUser, sayHiToBackend } from "apis";
 import { handleLogout } from "utils/util";
@@ -134,6 +135,7 @@ function App() {
               <Route path="/">
                 <Route path="/" element={<TradePage socket={socket} />} />
                 <Route path="/configure" element={<ConfigurationPage />} />
+                <Route path="/calendar" element={<CalendarPage />} />
 
                 {isUserAdmin ? (
                   <>
