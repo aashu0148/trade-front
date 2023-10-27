@@ -51,7 +51,7 @@ const timeFrame = 5;
 const getDxForPrice = (price, time = timeFrame) => {
   const dxPercentForTimeFrames = {
     5: 0.17 / 100,
-    15: 0.4 / 100,
+    15: 0.3 / 100,
     60: 1.9 / 100,
   };
 
@@ -241,6 +241,7 @@ export const getVPoints = ({
   offset = 10,
   startFrom = 0,
   previousOutput = [],
+  times = [],
 }) => {
   if (!prices.length) return [];
 
@@ -261,6 +262,7 @@ export const getVPoints = ({
       output.push({
         index: i,
         value: price,
+        timestamp: times[i],
       });
   }
 
@@ -278,7 +280,8 @@ export const getVPoints = ({
 
 export const getSupportResistanceRangesFromVPoints = (
   vPoints = [],
-  prices = []
+  prices = [],
+  is15minTimeFrame = false
 ) => {
   if (!vPoints.length || !prices.length) return [];
 
@@ -298,7 +301,10 @@ export const getSupportResistanceRangesFromVPoints = (
     for (let j = i + 1; j < vPoints.length; ++j) {
       const currPoint = vPoints[j];
 
-      const allowedDx = getDxForPrice(currPoint.value);
+      const allowedDx = getDxForPrice(
+        currPoint.value,
+        is15minTimeFrame == true ? 15 : 5
+      );
 
       const isNearlyEqual = nearlyEquateNums(
         startPoint.value,
