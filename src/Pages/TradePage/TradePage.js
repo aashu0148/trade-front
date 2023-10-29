@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
+import { AlertCircle } from "react-feather";
 
-import { getTodayTrades } from "apis/trade";
+import TradeApproveModal from "./TradeApproveModal/TradeApproveModal";
+
+import { getAllTrades, getTodayTrades } from "apis/trade";
 import { getTimeFormatted } from "utils/util";
 import { arrowDownIcon, arrowUpIcon } from "utils/svgs";
 import bubbleSound from "assets/bubble.mp3";
@@ -22,6 +25,7 @@ function TradePage({ socket }) {
 
   const [todayTrades, setTodayTrades] = useState([]);
   const [stockData, setStockData] = useState({ date: "", data: {} });
+  const [tradeToApprove, setTradeToApprove] = useState({});
 
   const fetchTodayTrades = async () => {
     const res = await getTodayTrades();
@@ -34,6 +38,7 @@ function TradePage({ socket }) {
     if (lastTradesLength && newTrades.length !== lastTradesLength) {
       console.log("NEW TRADE TAKEN");
 
+      setTradeToApprove(newTrades[newTrades.length - 1]);
       audioElem.current.src = secSound;
       audioElem.current.play();
     }
@@ -149,86 +154,122 @@ function TradePage({ socket }) {
         }))
       : [];
 
+  const getTradesTable = (trades = []) => {
+    return (
+      <table className={styles.table}>
+        <tr>
+          <th></th>
+          <th>Symbol</th>
+          <th>LRP</th>
+          <th>Type</th>
+          <th>Trigger</th>
+          <th>Target</th>
+          <th>SL</th>
+          <th>Time</th>
+          <th>Status</th>
+        </tr>
+        {trades
+          .sort((a, b) => (a.time < b.time ? -1 : 1))
+          .map((item, i) => (
+            <tr
+              key={item.symbol + i}
+              className={`${
+                item.status == "profit"
+                  ? styles.profitTrade
+                  : item.status == "loss"
+                  ? styles.lossTrade
+                  : isGoingProfitable(item)
+                  ? styles.goingProfit
+                  : styles.goingLoss
+              }`}
+            >
+              <td
+                className={`${styles.icon} ${
+                  typeof item.isApproved !== "boolean" &&
+                  Date.now() - item.time < 4 * 60 * 1000
+                    ? ""
+                    : isGoingProfitable(item)
+                    ? styles.green
+                    : styles.red
+                }`}
+              >
+                {item.isApproved == undefined &&
+                Date.now() - item.time < 4 * 60 * 1000 ? (
+                  <div
+                    className={styles.alert}
+                    onClick={() => setTradeToApprove(item)}
+                  >
+                    <AlertCircle />
+                  </div>
+                ) : item.status === "profit" ? (
+                  <span>🟢</span>
+                ) : item.status === "loss" ? (
+                  <span>🔴</span>
+                ) : isGoingProfitable(item) ? (
+                  arrowUpIcon
+                ) : (
+                  arrowDownIcon
+                )}
+              </td>
+              <td className={styles.name}>{item.name}</td>
+              <td className={styles.lrp}>
+                {parseFloat(
+                  Object.keys(stockData.data[item.symbol] || {}).length
+                    ? stockData.data[item.symbol]["5"].c[
+                        stockData.data[item.symbol]["5"].c.length - 1
+                      ]
+                    : ""
+                ).toFixed(1)}
+              </td>
+              <td className={styles.type}>{item.type}</td>
+              <td>{parseFloat(item.startPrice).toFixed(1)}</td>
+              <td className={styles.target}>
+                {parseFloat(item.target).toFixed(1)}
+              </td>
+              <td className={styles.sl}>{parseFloat(item.sl).toFixed(1)}</td>
+              <td className={styles.time}>{getTimeFormatted(item.time)}</td>
+              <td
+                className={`${styles.status} ${
+                  item.status == "profit"
+                    ? styles.green
+                    : item.status == "loss"
+                    ? styles.red
+                    : ""
+                }`}
+              >
+                {item.status}
+              </td>
+            </tr>
+          ))}
+      </table>
+    );
+  };
+
   return (
     <div className={styles.container}>
+      {tradeToApprove?._id && (
+        <TradeApproveModal
+          tradeDetails={tradeToApprove}
+          onClose={() => setTradeToApprove({})}
+          onSuccess={() => {
+            fetchTodayTrades();
+            setTradeToApprove({});
+          }}
+        />
+      )}
+
       <audio ref={audioElem} />
 
       <div className={styles.section}>
-        <p className={styles.heading}>Today's trades</p>
+        <p className={styles.heading}>Approved trades</p>
 
-        <table className={styles.table}>
-          <tr>
-            <th></th>
-            <th>Symbol</th>
-            <th>LRP</th>
-            <th>Type</th>
-            <th>Trigger</th>
-            <th>Target</th>
-            <th>SL</th>
-            <th>Time</th>
-            <th>Status</th>
-          </tr>
-          {todayTrades
-            .sort((a, b) => (a.time < b.time ? -1 : 1))
-            .map((item, i) => (
-              <tr
-                key={item.symbol + i}
-                className={`${
-                  item.status == "profit"
-                    ? styles.profitTrade
-                    : item.status == "loss"
-                    ? styles.lossTrade
-                    : isGoingProfitable(item)
-                    ? styles.goingProfit
-                    : styles.goingLoss
-                }`}
-              >
-                <td
-                  className={`${styles.icon} ${
-                    isGoingProfitable(item) ? styles.green : styles.red
-                  }`}
-                >
-                  {item.status === "profit" ? (
-                    <span>🟢</span>
-                  ) : item.status === "loss" ? (
-                    <span>🔴</span>
-                  ) : isGoingProfitable(item) ? (
-                    arrowUpIcon
-                  ) : (
-                    arrowDownIcon
-                  )}
-                </td>
-                <td className={styles.name}>{item.name}</td>
-                <td className={styles.lrp}>
-                  {parseFloat(
-                    Object.keys(stockData.data[item.symbol] || {}).length
-                      ? stockData.data[item.symbol]["5"].c[
-                          stockData.data[item.symbol]["5"].c.length - 1
-                        ]
-                      : ""
-                  ).toFixed(1)}
-                </td>
-                <td className={styles.type}>{item.type}</td>
-                <td>{parseFloat(item.startPrice).toFixed(1)}</td>
-                <td className={styles.target}>
-                  {parseFloat(item.target).toFixed(1)}
-                </td>
-                <td className={styles.sl}>{parseFloat(item.sl).toFixed(1)}</td>
-                <td className={styles.time}>{getTimeFormatted(item.time)}</td>
-                <td
-                  className={`${styles.status} ${
-                    item.status == "profit"
-                      ? styles.green
-                      : item.status == "loss"
-                      ? styles.red
-                      : ""
-                  }`}
-                >
-                  {item.status}
-                </td>
-              </tr>
-            ))}
-        </table>
+        {getTradesTable(todayTrades.filter((item) => item.isApproved))}
+      </div>
+
+      <div className={styles.section}>
+        <p className={styles.heading}>Unapproved trades</p>
+
+        {getTradesTable(todayTrades.filter((item) => !item.isApproved))}
       </div>
       <div className={styles.section}>
         <p className={styles.heading}>

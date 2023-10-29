@@ -98,8 +98,8 @@ const defaultConfigs = {
   },
   useSupportResistances: true,
   vPointOffset: 8,
-  rsiLow: 48,
-  rsiHigh: 63,
+  rsiLow: 40,
+  rsiHigh: 70,
   smaLowPeriod: 18,
   smaHighPeriod: 150,
   rsiPeriod: 8,
@@ -126,7 +126,7 @@ const defaultConfigs = {
   vwapPeriod: 14,
   targetProfitPercent: 1.4,
   stopLossPercent: 0.7,
-  brTotalTrendLength: 33,
+  brTotalTrendLength: 44,
   brLongTrendLength: 21,
   brShortTrendLength: 10,
   avoidingLatestSmallMovePercent: 0.9,
@@ -231,7 +231,11 @@ function ConfigurationPage() {
     }
 
     const startTime = Date.now();
-    const { trades } = await takeTrades(parsedStockData, values, false);
+    const { trades, indicators } = await takeTrades(
+      parsedStockData,
+      values,
+      false
+    );
     const endTime = Date.now();
 
     const totalDays = parseInt((parsedStockData["5"].c.length * 5) / 60 / 6);
@@ -254,7 +258,7 @@ function ConfigurationPage() {
     };
 
     console.log(
-      { trades, analytics, config: values },
+      { trades, indicators, analytics, config: values },
       (endTime - startTime) / 1000 + "s"
     );
     setTradeResults(analytics);

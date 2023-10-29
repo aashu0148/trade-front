@@ -1,0 +1,57 @@
+@import "styles/variables";
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  padding: 25px;
+  width: 600px;
+  max-width: 100%;
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    .details {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+
+      label {
+        min-width: 60px;
+        font-size: 16px;
+        font-weight: 400;
+        color: $gray;
+      }
+
+      span {
+        font-size: 16px;
+        font-weight: 600;
+        color: $black;
+      }
+
+      .small {
+        font-size: 14px;
+      }
+
+      .green {
+        font-weight: bold;
+        color: $green;
+        text-transform: uppercase;
+      }
+
+      .red {
+        font-weight: bold;
+        color: $red;
+        text-transform: uppercase;
+      }
+    }
+  }
+}

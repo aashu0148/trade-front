@@ -131,3 +131,25 @@ export const getAllTrades = async (values) => {
     return false;
   }
 };
+
+export const updateTrade = async (id, values) => {
+  const reqPath = `/trade/${id}`;
+  let response;
+
+  try {
+    response = await fetchWrapper(reqPath, values, "", "PATCH");
+    const data = await response.json();
+    if (!data?.success) {
+      errorToastLogger(
+        "updateTrade",
+        data?.message || "Failed to update trade",
+        data?.error
+      );
+      return false;
+    }
+    return data;
+  } catch (err) {
+    errorToastLogger("updateTrade", "Failed to update trade", err);
+    return false;
+  }
+};

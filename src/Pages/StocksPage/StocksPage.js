@@ -48,7 +48,7 @@ function StocksPage() {
     setErrMsg("");
 
     setAddingStock(true);
-    const res = await addNewStock({ symbol: stockSymbol.toUpperCase() });
+    const res = await addNewStock({ symbol: stockSymbol });
     setAddingStock(false);
     if (!res) return;
 

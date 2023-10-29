@@ -26,7 +26,6 @@ function Modal({
 
   const containerRef = useRef();
   const isMobileView = window.outerWidth < 768;
-  I;
 
   const [lastLocation, setLastLocation] = useState("");
 

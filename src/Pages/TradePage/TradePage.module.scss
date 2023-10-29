@@ -100,6 +100,23 @@
         font-style: italic;
       }
 
+      .alert {
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 50%;
+        background-color: $white-1;
+        width: fit-content;
+        height: fit-content;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+          height: 15px;
+          width: 15px;
+        }
+      }
+
       .status {
         text-transform: uppercase;
         color: #555;
