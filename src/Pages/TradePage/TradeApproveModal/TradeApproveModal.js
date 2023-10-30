@@ -11,7 +11,7 @@ import styles from "./TradeApproveModal.module.scss";
 
 function TradeApproveModal({ tradeDetails = {}, onClose, onSuccess, lrp }) {
   const [values, setValues] = useState({
-    trigger: tradeDetails.trigger,
+    startPrice: tradeDetails.startPrice,
     target: tradeDetails.target,
     sl: tradeDetails.sl,
   });
@@ -30,6 +30,7 @@ function TradeApproveModal({ tradeDetails = {}, onClose, onSuccess, lrp }) {
       isApproved: approved,
       target: values.target,
       sl: values.sl,
+      startPrice: values.startPrice,
     });
     setDisabledButtons((prev) => ({
       ...prev,
@@ -91,11 +92,11 @@ function TradeApproveModal({ tradeDetails = {}, onClose, onSuccess, lrp }) {
               placeholder="Enter trigger price"
               type="number"
               min={0}
-              value={values.trigger}
+              value={values.startPrice}
               onChange={(e) =>
                 setValues((prev) => ({
                   ...prev,
-                  trigger: parseFloat(e.target.value),
+                  startPrice: parseFloat(e.target.value),
                 }))
               }
             />
