@@ -1578,7 +1578,7 @@ export const takeTrades = async (
         ...analyticDetails,
       });
 
-      // if (possibleProfit < targetProfit && useSupportResistances) continue;
+      if (possibleProfit < targetProfit && useSupportResistances) continue;
 
       const trade = {
         time: priceData.t[i],
@@ -1622,7 +1622,7 @@ export const takeTrades = async (
         ...analyticDetails,
       });
 
-      // if (possibleProfit < targetProfit && useSupportResistances) continue;
+      if (possibleProfit < targetProfit && useSupportResistances) continue;
 
       const trade = {
         time: priceData.t[i],
