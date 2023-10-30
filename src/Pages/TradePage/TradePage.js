@@ -39,7 +39,7 @@ function TradePage({ socket }) {
       console.log("NEW TRADE TAKEN");
 
       setTradeToApprove(newTrades[newTrades.length - 1]);
-      audioElem.current.src = secSound;
+      audioElem.current.src = bubbleSound;
       audioElem.current.play();
     }
     lastTradesLength = newTrades.length;
