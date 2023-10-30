@@ -11,6 +11,7 @@ import styles from "./TradeApproveModal.module.scss";
 
 function TradeApproveModal({ tradeDetails = {}, onClose, onSuccess, lrp }) {
   const [values, setValues] = useState({
+    trigger: tradeDetails.trigger,
     target: tradeDetails.target,
     sl: tradeDetails.sl,
   });
@@ -82,6 +83,22 @@ function TradeApproveModal({ tradeDetails = {}, onClose, onSuccess, lrp }) {
                   : ""}
               </span>
             </div>
+          </div>
+
+          <div className="row">
+            <InputControl
+              label="Trigger price"
+              placeholder="Enter trigger price"
+              type="number"
+              min={0}
+              value={values.trigger}
+              onChange={(e) =>
+                setValues((prev) => ({
+                  ...prev,
+                  trigger: parseFloat(e.target.value),
+                }))
+              }
+            />
           </div>
 
           <div className="row">
