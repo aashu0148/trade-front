@@ -214,11 +214,8 @@ function ConfigurationPage() {
 
     const startTime = Date.now();
 
-    const { trades, indicators } = await takeTrades(
-      selectedStock.data,
-      values,
-      false
-    );
+    const tradesResponse = await takeTrades(selectedStock.data, values, false);
+    const { trades, indicators } = tradesResponse;
     const endTime = Date.now();
 
     const totalDays = parseInt((selectedStock.data["5"].c.length * 5) / 60 / 6);
@@ -237,6 +234,7 @@ function ConfigurationPage() {
       lossMaking: total - profitable,
       buyTrades: trades.filter((item) => item.type == "buy").length,
       sellTrades: trades.filter((item) => item.type == "sell").length,
+      tradesResponse,
     };
 
     console.log(
@@ -1023,6 +1021,7 @@ function ConfigurationPage() {
                 <StockChart
                   stockData={selectedStock?.data}
                   stockPreset={values}
+                  tradesResponse={tradeResults.tradesResponse}
                 />
               ) : (
                 ""
