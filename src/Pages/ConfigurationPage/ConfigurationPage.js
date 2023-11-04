@@ -30,6 +30,10 @@ const optionalIndicators = [
     value: "sr15min",
   },
   {
+    label: "Trend lines" + ` (${indicatorsWeightEnum.tl} point)`,
+    value: "tl",
+  },
+  {
     label: "Break out/down (beta)" + ` (${indicatorsWeightEnum.br} point)`,
     value: "br",
   },
@@ -89,6 +93,7 @@ const defaultConfigs = {
     stochastic: false,
     vwap: false,
     psar: false,
+    br: false,
     br: false,
     rsi: false,
     macd: true,
