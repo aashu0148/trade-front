@@ -1,0 +1,74 @@
+@import "styles/variables";
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  padding: 20px;
+  width: 100%;
+
+  .chartOuter {
+    position: relative;
+
+    .chart {
+      margin: 0 auto;
+      width: 1000px;
+      max-width: 100%;
+      height: 700px;
+    }
+
+    .shortChart {
+      height: 500px;
+    }
+
+    .tooltip {
+      position: absolute;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+      z-index: 100;
+      border-radius: 5px;
+      box-shadow: $shadow-2;
+      background-color: $white-1;
+      opacity: 0;
+      transition: opacity 500ms;
+      transform: translate(-45%, 35px);
+
+      .item {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+
+        label {
+          font-size: 12px;
+          color: $gray;
+          font-weight: 500;
+        }
+
+        span {
+          font-size: 12px;
+          font-weight: 600;
+          color: $black;
+          white-space: nowrap;
+        }
+      }
+    }
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: 0;
+
+    .chartOuter {
+      .chart {
+        height: 500px;
+      }
+
+      .shortChart {
+        height: 400px;
+      }
+    }
+  }
+}

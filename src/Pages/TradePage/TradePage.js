@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { AlertCircle } from "react-feather";
 
 import TradeApproveModal from "./TradeApproveModal/TradeApproveModal";
+import StockDetailsModal from "./StockDetailsModal/StockDetailsModal";
 
-import { getAllTrades, getTodayTrades } from "apis/trade";
+import { getAllTrades, getBestStockPresets, getTodayTrades } from "apis/trade";
 import { getTimeFormatted } from "utils/util";
 import { arrowDownIcon, arrowUpIcon } from "utils/svgs";
 import bubbleSound from "assets/bubble.mp3";
@@ -11,14 +12,6 @@ import secSound from "assets/10 Sec.mp3";
 
 import styles from "./TradePage.module.scss";
 
-const randomColors = [
-  "#EAE6CA",
-  "#84C3BE",
-  "#DC9D00",
-  "#C93C20",
-  "#84C3BE",
-  "#C35831",
-];
 let lastTradesLength = 0;
 function TradePage({ socket }) {
   const audioElem = useRef();
@@ -26,6 +19,10 @@ function TradePage({ socket }) {
   const [todayTrades, setTodayTrades] = useState([]);
   const [stockData, setStockData] = useState({ date: "", data: {} });
   const [tradeToApprove, setTradeToApprove] = useState({});
+  const [stockPresets, setStockPresets] = useState({});
+  const [stockDetailModal, setStockDetailModal] = useState({
+    symbol: "",
+  });
 
   const fetchTodayTrades = async () => {
     const res = await getTodayTrades();
@@ -33,12 +30,14 @@ function TradePage({ socket }) {
     if (!res?.data) return;
 
     const newTrades = res.data;
+    const lastTrade = newTrades[newTrades.length - 1];
     setTodayTrades(newTrades);
 
     if (lastTradesLength && newTrades.length !== lastTradesLength) {
       console.log("NEW TRADE TAKEN");
 
-      setTradeToApprove(newTrades[newTrades.length - 1]);
+      setTradeToApprove(lastTrade);
+      setStockDetailModal({ symbol: lastTrade.symbol });
       audioElem.current.src = bubbleSound;
       audioElem.current.play();
     }
@@ -103,6 +102,18 @@ function TradePage({ socket }) {
     });
   };
 
+  const fetchBestStockPreset = async () => {
+    const res = await getBestStockPresets();
+    if (!Array.isArray(res?.data)) return;
+
+    setStockPresets(
+      res.data.reduce((acc, curr) => {
+        acc[curr.symbol] = curr.preset;
+        return acc;
+      }, {})
+    );
+  };
+
   const isGoingProfitable = (trade) => {
     const isBuyTrade = trade.type.toLowerCase() === "buy";
     const triggerPrice = parseFloat(trade.startPrice);
@@ -124,6 +135,7 @@ function TradePage({ socket }) {
 
   useEffect(() => {
     fetchTodayTrades();
+    fetchBestStockPreset();
     if (socket) handleSocketEvents();
   }, [socket]);
 
@@ -255,7 +267,23 @@ function TradePage({ socket }) {
             fetchTodayTrades();
             setTradeToApprove({});
           }}
+          stockData={
+            stockData?.data ? stockData.data[stockDetailModal.symbol] : {}
+          }
+          stockPreset={stockPresets[stockDetailModal.symbol]}
         />
+      )}
+      {stockDetailModal?.show ? (
+        <StockDetailsModal
+          onClose={() => setStockDetailModal({})}
+          stockData={
+            stockData?.data ? stockData.data[stockDetailModal.symbol] : {}
+          }
+          stockPreset={stockPresets[stockDetailModal.symbol]}
+          name={stockDetailModal.symbol}
+        />
+      ) : (
+        ""
       )}
 
       <audio ref={audioElem} />
@@ -286,7 +314,14 @@ function TradePage({ socket }) {
             .sort((a, b) => (a.symbol < b.symbol ? -1 : 1))
             .map((item) => (
               <tr key={item.symbol}>
-                <td className={styles.name}>{item.symbol}</td>
+                <td
+                  className={styles.name}
+                  onClick={() =>
+                    setStockDetailModal({ symbol: item.symbol, show: true })
+                  }
+                >
+                  {item.symbol}
+                </td>
                 <td className={styles.price}>{item.data.c}</td>
                 <td className={styles.time}>
                   {getTimeFormatted(item.data.t * 1000)}

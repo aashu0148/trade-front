@@ -4,12 +4,20 @@ import { toast } from "react-hot-toast";
 import Modal from "Components/Modal/Modal";
 import Button from "Components/Button/Button";
 import InputControl from "Components/InputControl/InputControl";
+import StockChart from "../StockChart/StockChart";
 
 import { updateTrade } from "apis/trade";
 
 import styles from "./TradeApproveModal.module.scss";
 
-function TradeApproveModal({ tradeDetails = {}, onClose, onSuccess, lrp }) {
+function TradeApproveModal({
+  tradeDetails = {},
+  onClose,
+  onSuccess,
+  lrp,
+  stockData,
+  stockPreset,
+}) {
   const [values, setValues] = useState({
     startPrice: tradeDetails.startPrice,
     target: tradeDetails.target,
@@ -48,6 +56,11 @@ function TradeApproveModal({ tradeDetails = {}, onClose, onSuccess, lrp }) {
     <Modal onClose={onClose}>
       <div className={styles.container}>
         <p className="heading">Approve/Reject this trade</p>
+        <StockChart
+          stockData={stockData}
+          stockPreset={stockPreset}
+          shortChart
+        />
 
         <div className={styles.form}>
           <div className={styles.details}>
