@@ -8,6 +8,7 @@ import InputControl from "Components/InputControl/InputControl";
 import MultiSelect from "Components/MultiSelect/MultiSelect";
 import Button from "Components/Button/Button";
 import Spinner from "Components/Spinner/Spinner";
+import StockChart from "Pages/TradePage/StockChart/StockChart";
 
 import {
   createNewPreset,
@@ -93,7 +94,9 @@ const defaultConfigs = {
     stochastic: false,
     vwap: false,
     psar: false,
+    sr: true,
     br: false,
+    tl: true,
     br: false,
     rsi: false,
     macd: true,
@@ -103,6 +106,7 @@ const defaultConfigs = {
   },
   useSupportResistances: true,
   vPointOffset: 8,
+  trendLineVPointOffset: 7,
   rsiLow: 40,
   rsiHigh: 70,
   smaLowPeriod: 18,
@@ -150,7 +154,7 @@ function ConfigurationPage() {
   });
   const [loadingPage, setLoadingPage] = useState(true);
   const [isMoreTuningOpen, setIsMoreTuningOpen] = useState(false);
-  const [selectedTimeFrame, setSelectedTimeFrame] = useState({});
+  const [showChart, setShowChart] = useState(false);
   const [allTimeFrame, setAllTimeFrame] = useState({
     start: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
     end: new Date(),
@@ -205,45 +209,19 @@ function ConfigurationPage() {
     );
   };
 
-  const getStockDataForParticularTimeFrame = (
-    allData = { c: [], t: [], o: [], h: [], l: [], v: [] }
-  ) => {
-    if (!allData?.c?.length || isNaN(selectedTimeFrame?.month)) return {};
-
-    const start = selectedTimeFrame.startIndex;
-    const end = selectedTimeFrame.endIndex;
-
-    return {
-      c: allData.c.slice(start, end),
-      t: allData.t.slice(start, end),
-      o: allData.o.slice(start, end),
-      h: allData.h.slice(start, end),
-      l: allData.l.slice(start, end),
-      v: allData.v.slice(start, end),
-    };
-  };
-
   const handleEvaluation = async () => {
     if (!selectedStock?.data["5"]) return;
 
-    const parsedStockData = {};
-    for (let key in selectedStock.data) {
-      const val = selectedStock.data[key];
-
-      const parsed = getStockDataForParticularTimeFrame(val);
-
-      parsedStockData[key] = parsed;
-    }
-
     const startTime = Date.now();
+
     const { trades, indicators } = await takeTrades(
-      parsedStockData,
+      selectedStock.data,
       values,
       false
     );
     const endTime = Date.now();
 
-    const totalDays = parseInt((parsedStockData["5"].c.length * 5) / 60 / 6);
+    const totalDays = parseInt((selectedStock.data["5"].c.length * 5) / 60 / 6);
 
     const total = trades.length;
     const profitable = trades.filter((item) => item.status == "profit").length;
@@ -259,7 +237,6 @@ function ConfigurationPage() {
       lossMaking: total - profitable,
       buyTrades: trades.filter((item) => item.type == "buy").length,
       sellTrades: trades.filter((item) => item.type == "sell").length,
-      timeFrame: selectedTimeFrame,
     };
 
     console.log(
@@ -335,64 +312,8 @@ function ConfigurationPage() {
     fetchBestStockPreset();
   };
 
-  const getMonthlyTimeFrameIndices = (timeArr) => {
-    if (!Array.isArray(timeArr) || isNaN(timeArr[0])) return [];
-
-    const out = [];
-    let lastMonth;
-
-    timeArr.forEach((t, i) => {
-      const currMonth = new Date(t * 1000).getMonth();
-
-      if (lastMonth == undefined || lastMonth !== currMonth) {
-        lastMonth = currMonth;
-        const startIndex = out.length ? i : 0;
-
-        if (out.length > 0) {
-          out[out.length - 1].endIndex = startIndex;
-
-          const netCandles = i - out[out.length - 1].startIndex;
-
-          // days calculation is for 5 min resolution
-          const days = parseInt(netCandles / 75);
-          out[out.length - 1].dayCount = days;
-        }
-
-        out.push({
-          startIndex,
-          month: currMonth,
-          name: monthNameIndexMapping[currMonth],
-        });
-      }
-    });
-
-    out[out.length - 1].endIndex = timeArr.length - 1;
-    const lastMonthCandles =
-      timeArr.length - 1 - out[out.length - 1].startIndex;
-
-    // days calculation is for 5 min resolution
-    const days = parseInt(lastMonthCandles / 75);
-    out[out.length - 1].dayCount = days;
-
-    return out;
-  };
-
   useEffect(() => {
     setTradeResults({});
-  }, [selectedTimeFrame, selectedStock]);
-
-  useEffect(() => {
-    if (selectedStock.data && selectedStock.data["5"])
-      setSelectedTimeFrame({
-        name: {
-          long: "All months",
-          short: "all",
-        },
-        dayCount: parseInt(selectedStock.data["5"].t.length / 75),
-        startIndex: 0,
-        endIndex: selectedStock.data["5"].t.length - 1,
-        month: 99,
-      });
   }, [selectedStock]);
 
   useEffect(() => {
@@ -417,11 +338,6 @@ function ConfigurationPage() {
     fetchStockData();
     fetchBestStockPreset();
   }, []);
-
-  const monthIndices =
-    selectedStock?.data && selectedStock?.data["5"]
-      ? getMonthlyTimeFrameIndices(selectedStock.data["5"].t)
-      : [];
 
   return (
     <div className={styles.container}>
@@ -472,42 +388,6 @@ function ConfigurationPage() {
             </Button>
           </div>
 
-          {monthIndices.length ? (
-            <div className={styles.chips}>
-              <p
-                className={`${styles.chip} ${
-                  selectedTimeFrame.month == 99 ? styles.selected : ""
-                }`}
-                onClick={() =>
-                  setSelectedTimeFrame({
-                    name: {
-                      long: "All months",
-                      short: "all",
-                    },
-                    dayCount: parseInt(selectedStock.data["5"].t.length / 75),
-                    startIndex: 0,
-                    endIndex: selectedStock.data["5"].t.length - 1,
-                    month: 99,
-                  })
-                }
-              >
-                All
-              </p>
-
-              {monthIndices.map((item) => (
-                <p
-                  className={`${styles.chip} ${
-                    selectedTimeFrame.month == item.month ? styles.selected : ""
-                  }`}
-                  onClick={() => setSelectedTimeFrame(item)}
-                >
-                  {item.name?.short} (<span>{item.dayCount} days</span>)
-                </p>
-              ))}
-            </div>
-          ) : (
-            ""
-          )}
           <div className="row">
             <InputSelect
               placeholder="Select a stock"
@@ -541,9 +421,7 @@ function ConfigurationPage() {
                   decisionMakingPoints: parseInt(e.target.value),
                 }))
               }
-              disabled={
-                !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-              }
+              disabled={!selectedStock?.value}
             />
           </div>
           <div className="row" style={{ alignItems: "center" }}>
@@ -595,11 +473,26 @@ function ConfigurationPage() {
                   vPointOffset: parseInt(e.target.value),
                 }))
               }
-              disabled={
-                !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-              }
+              disabled={!selectedStock?.value}
             />
 
+            <InputControl
+              placeholder="Enter number"
+              numericInput
+              label="TrendLine V-point offset"
+              max={30}
+              min={1}
+              value={values.trendLineVPointOffset}
+              onChange={(e) =>
+                setValues((prev) => ({
+                  ...prev,
+                  trendLineVPointOffset: parseInt(e.target.value),
+                }))
+              }
+              disabled={!selectedStock?.value}
+            />
+          </div>
+          <div className="row">
             <InputControl
               placeholder="Enter number"
               label="Target percentage (0.2 - 2)"
@@ -619,9 +512,7 @@ function ConfigurationPage() {
                   targetProfitPercent: val,
                 }));
               }}
-              disabled={
-                !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-              }
+              disabled={!selectedStock?.value}
             />
 
             <InputControl
@@ -643,9 +534,7 @@ function ConfigurationPage() {
                   stopLossPercent: val,
                 }));
               }}
-              disabled={
-                !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-              }
+              disabled={!selectedStock?.value}
             />
 
             {/* <InputControl
@@ -667,7 +556,7 @@ function ConfigurationPage() {
                   avoidingLatestSmallMovePercent: val,
                 }));
               }}
-              disabled={!selectedStock?.value || isNaN(selectedTimeFrame?.month)}
+              disabled={!selectedStock?.value }
             /> */}
           </div>
           <div className="col" style={{ gap: "10px" }}>
@@ -712,9 +601,7 @@ function ConfigurationPage() {
                     brTotalTrendLength: parseInt(e.target.value),
                   }))
                 }
-                disabled={
-                  !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                }
+                disabled={!selectedStock?.value}
               />
               <InputControl
                 placeholder="Enter number"
@@ -729,9 +616,7 @@ function ConfigurationPage() {
                     brLongTrendLength: parseInt(e.target.value),
                   }))
                 }
-                disabled={
-                  !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                }
+                disabled={!selectedStock?.value}
               />
               <InputControl
                 placeholder="Enter number"
@@ -746,9 +631,7 @@ function ConfigurationPage() {
                     brShortTrendLength: parseInt(e.target.value),
                   }))
                 }
-                disabled={
-                  !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                }
+                disabled={!selectedStock?.value}
               />
             </div>
           </div>
@@ -778,9 +661,7 @@ function ConfigurationPage() {
                         macdFastPeriod: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                   <InputControl
                     placeholder="Enter number"
@@ -795,9 +676,7 @@ function ConfigurationPage() {
                         macdSlowPeriod: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                   <InputControl
                     placeholder="Enter number"
@@ -812,9 +691,7 @@ function ConfigurationPage() {
                         macdSignalPeriod: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                 </div>
               </div>
@@ -835,9 +712,7 @@ function ConfigurationPage() {
                         stochasticLow: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                   <InputControl
                     placeholder="Enter number"
@@ -852,9 +727,7 @@ function ConfigurationPage() {
                         stochasticHigh: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                   <InputControl
                     placeholder="Enter number"
@@ -869,9 +742,7 @@ function ConfigurationPage() {
                         stochasticPeriod: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                 </div>
               </div>
@@ -892,9 +763,7 @@ function ConfigurationPage() {
                         willRLow: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                   <InputControl
                     placeholder="Enter number"
@@ -909,9 +778,7 @@ function ConfigurationPage() {
                         willRHigh: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                   <InputControl
                     placeholder="Enter number"
@@ -926,9 +793,7 @@ function ConfigurationPage() {
                         willRPeriod: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                 </div>
               </div>
@@ -949,9 +814,7 @@ function ConfigurationPage() {
                         mfiLow: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                   <InputControl
                     placeholder="Enter number"
@@ -966,9 +829,7 @@ function ConfigurationPage() {
                         mfiHigh: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                   <InputControl
                     placeholder="Enter number"
@@ -983,9 +844,7 @@ function ConfigurationPage() {
                         mfiPeriod: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                 </div>
               </div>
@@ -1006,9 +865,7 @@ function ConfigurationPage() {
                         rsiLow: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                   <InputControl
                     placeholder="Enter number"
@@ -1023,9 +880,7 @@ function ConfigurationPage() {
                         rsiHigh: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                   <InputControl
                     placeholder="Enter number"
@@ -1040,9 +895,7 @@ function ConfigurationPage() {
                         rsiPeriod: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                 </div>
               </div>
@@ -1065,9 +918,7 @@ function ConfigurationPage() {
                         smaLowPeriod: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                   <InputControl
                     placeholder="Enter number"
@@ -1082,9 +933,7 @@ function ConfigurationPage() {
                         smaHighPeriod: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                 </div>
               </div>
@@ -1105,9 +954,7 @@ function ConfigurationPage() {
                         bollingerBandPeriod: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                   <InputControl
                     placeholder="Enter number"
@@ -1122,9 +969,7 @@ function ConfigurationPage() {
                         bollingerBandStdDev: parseInt(e.target.value),
                       }))
                     }
-                    disabled={
-                      !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                    }
+                    disabled={!selectedStock?.value}
                   />
                 </div>
               </div>
@@ -1142,9 +987,7 @@ function ConfigurationPage() {
                       vwapPeriod: parseInt(e.target.value),
                     }))
                   }
-                  disabled={
-                    !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                  }
+                  disabled={!selectedStock?.value}
                 />
 
                 <InputControl
@@ -1160,9 +1003,7 @@ function ConfigurationPage() {
                       cciPeriod: parseInt(e.target.value),
                     }))
                   }
-                  disabled={
-                    !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                  }
+                  disabled={!selectedStock?.value}
                 />
               </div>
             </div>
@@ -1173,11 +1014,25 @@ function ConfigurationPage() {
           {tradeResults?.profitPercent ? (
             <div>
               <p
+                className={styles.textBtn}
+                onClick={() => setShowChart((prev) => !prev)}
+              >
+                {showChart ? "Hide" : "Show"} chart
+              </p>
+              {showChart ? (
+                <StockChart
+                  stockData={selectedStock?.data}
+                  stockPreset={values}
+                />
+              ) : (
+                ""
+              )}
+
+              <p
                 className={styles.heading}
                 style={{ textAlign: "center", marginBottom: "15px" }}
               >
-                Results: {selectedStock.label} | {selectedTimeFrame.name?.long}(
-                {selectedTimeFrame.dayCount} days)
+                Results: {selectedStock.label} | ({tradeResults.totalDays} days)
               </p>
               <div className={styles.results}>
                 <div className={styles.card}>
@@ -1325,9 +1180,7 @@ function ConfigurationPage() {
               )}
 
               <Button
-                disabled={
-                  !selectedStock?.value || isNaN(selectedTimeFrame?.month)
-                }
+                disabled={!selectedStock?.value}
                 onClick={handleEvaluation}
               >
                 Evaluate

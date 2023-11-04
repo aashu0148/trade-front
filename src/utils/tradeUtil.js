@@ -496,9 +496,14 @@ const timePricesCrossedTrendLine = ({ line, prices = [] }) => {
   return count;
 };
 
-const getTrendLinesFromVPoints = ({ index, allPrices, allTimes }) => {
+const getTrendLinesFromVPoints = ({
+  index,
+  allPrices,
+  allTimes,
+  vpOffset = 7,
+}) => {
   const points = getVPoints({
-    offset: 7,
+    offset: vpOffset,
     prices: allPrices,
     times: allTimes,
     startFrom: index - 180,
@@ -695,6 +700,7 @@ export const takeTrades = async (
     reverseTheTradingLogic = false,
     useSupportResistances = true,
     vPointOffset = 8,
+    trendLineVPointOffset = 7,
     rsiLow = 40,
     rsiHigh = 70,
     smaLowPeriod = 18,
@@ -860,6 +866,7 @@ export const takeTrades = async (
       priceData.c.slice(0, startTakingTradeIndex)
     );
     const trendLines = getTrendLinesFromVPoints({
+      vpOffset: trendLineVPointOffset,
       index: startTakingTradeIndex,
       allPrices: priceData.c.slice(0, startTakingTradeIndex),
       allTimes: priceData.t.slice(0, startTakingTradeIndex),
@@ -1391,6 +1398,7 @@ export const takeTrades = async (
         index: i,
         allPrices: prices,
         allTimes: times,
+        vpOffset: trendLineVPointOffset,
       });
       indicators.trendLines = [...indicators.trendLines, ...ind_t_lines]
         .filter(

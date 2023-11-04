@@ -5,7 +5,12 @@ import { getDateFormatted, getTimeFormatted } from "utils/util";
 
 import styles from "./StockChart.module.scss";
 
-function StockChart({ stockData = {}, stockPreset = {}, shortChart = false }) {
+function StockChart({
+  stockData = {},
+  stockPreset = {},
+  shortChart = false,
+  tradesResponse = {},
+}) {
   const [tooltipDetails, setTooltipDetails] = useState({
     style: {},
     data: {},
@@ -111,11 +116,10 @@ function StockChart({ stockData = {}, stockPreset = {}, shortChart = false }) {
     const colors = ["#a6b8ff50", "#ffd4a650", "#e0a6ff50", "#ffa6e050"];
 
     // trades
-    const { trades, indicators = {} } = await takeTrades(
-      stockData,
-      stockPreset,
-      false
-    );
+    const { trades, indicators = {} } =
+      tradesResponse?.trades && tradesResponse?.indicators
+        ? tradesResponse
+        : await takeTrades(stockData, stockPreset, false);
 
     // trade marks
     trades.forEach((trade, i) => {
