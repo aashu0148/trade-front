@@ -9,7 +9,8 @@
   // max-width: min(100%, 100vw);
 
   .chartOuter {
-    width: 100%;
+    margin: 0 auto;
+    width: fit-content;
     position: relative;
 
     .chart {
@@ -64,6 +65,8 @@
     padding: 0;
 
     .chartOuter {
+      width: 100%;
+
       .chart {
         height: 500px;
       }
