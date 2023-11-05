@@ -1024,6 +1024,7 @@ function ConfigurationPage() {
                   stockData={selectedStock?.data}
                   stockPreset={values}
                   tradesResponse={tradeResults.tradesResponse}
+                  showIndexInTooltip
                 />
               ) : (
                 ""

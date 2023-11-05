@@ -1786,7 +1786,7 @@ export const takeTrades = async (
 
     const isAllowedToTakeThisTrade = (trade) => {
       const existingSimilarTrades = trades.filter(
-        (item) => item.status == "taken" && item.type == trade.type
+        (item) => item.status == "taken"
       );
 
       if (existingSimilarTrades.length > 0) return false;

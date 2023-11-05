@@ -10,6 +10,7 @@ function StockChart({
   stockPreset = {},
   shortChart = false,
   tradesResponse = {},
+  showIndexInTooltip = false,
 }) {
   const [tooltipDetails, setTooltipDetails] = useState({
     style: {},
@@ -224,6 +225,14 @@ function StockChart({
 
   const tooltipDiv = (
     <div className={styles.tooltip} style={{ ...tooltipDetails.style }}>
+      {showIndexInTooltip ? (
+        <div className={styles.item}>
+          <label>Index</label>
+          <span>{tooltipDetails.index}</span>
+        </div>
+      ) : (
+        ""
+      )}
       <div className={styles.item}>
         <label>Open</label>
         <span>{tooltipDetails.data?.open}</span>
