@@ -298,10 +298,12 @@ function ConfigurationPage() {
     // if (tradesTaken < 20) return toast.error("Take at least 20 trades");
 
     setDisabledButtons((prev) => ({ ...prev, savePresetToDb: true }));
+    const result = { ...tradeResults };
+    delete result.tradesResponse;
     const res = await createNewPreset({
       preset: values,
       symbol: selectedStock.value,
-      result: tradeResults,
+      result,
     });
     setDisabledButtons((prev) => ({ ...prev, savePresetToDb: false }));
     if (!res) return;
