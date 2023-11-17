@@ -209,7 +209,10 @@ function TradePage({ socket }) {
                 Date.now() - item.time < 4 * 60 * 1000 ? (
                   <div
                     className={styles.alert}
-                    onClick={() => setTradeToApprove(item)}
+                    onClick={() => {
+                      setStockDetailModal({ symbol: item.symbol });
+                      setTradeToApprove(item);
+                    }}
                   >
                     <AlertCircle />
                   </div>
