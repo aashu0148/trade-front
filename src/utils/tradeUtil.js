@@ -1344,130 +1344,96 @@ export const takeTrades = async (
   };
 
   for (let i = startTakingTradeIndex; i < priceData.c.length; i++) {
+    const startI = i - 300 < 0 ? 0 : i - 300;
     analyzeAllTradesForCompletion(i);
 
-    const prices15min = priceData15min.c.slice(0, i + 1);
-    const times15min = priceData15min.t.slice(0, i + 1);
-    const prices = priceData.c.slice(0, i + 1);
-    const times = priceData.t.slice(0, i + 1);
-    const highs = priceData.h.slice(0, i + 1);
-    const lows = priceData.l.slice(0, i + 1);
-    const vols = priceData.v.slice(0, i + 1);
+    const times = priceData.t.slice(startI, i + 1);
+    const prices = priceData.c.slice(startI, i + 1);
+    const opens = priceData.o.slice(startI, i + 1);
+    const highs = priceData.h.slice(startI, i + 1);
+    const lows = priceData.l.slice(startI, i + 1);
+    const vols = priceData.v.slice(startI, i + 1);
 
-    const prevPrice = prices[i - 1];
-    const price = prices[i];
-    const time = times[i];
-    const high = priceData.h[i];
-    const low = priceData.l[i];
-    const day = new Date(time * 1000).getDate();
-    if (
-      !indicators.prevDaysStart.length ||
-      indicators.prevDaysStart[indicators.prevDaysStart.length - 1].day !== day
-    )
-      indicators.prevDaysStart.push({
-        index: i,
-        price,
-        day,
-        open: priceData.o[i],
-      });
+    const effectiveI = i - startI;
+
+    const price = prices[effectiveI];
+    const time = times[effectiveI];
+    const high = highs[effectiveI];
+    const low = lows[effectiveI];
 
     updateIndicatorValues(high, low, price);
-
     const ind_vps = getVPoints({
       offset: vPointOffset,
       prices: prices,
       times: times,
-      startFrom: i - 220,
-      // previousOutput: indicators.vPs.filter((item) => item?.index < i - 40),
     });
-    const ind_vps15min = getVPoints({
-      offset: vPointOffset,
-      prices: prices15min,
-      times: times15min,
-      startFrom: i - 220,
-      // previousOutput: indicators.vPs15min.filter(
-      //   (item) => item?.index < i - 20
-      // ),
-    });
-    if (ind_vps.length !== indicators.vPs.length) {
-      const ind_ranges = getSupportResistanceRangesFromVPoints(
-        indicators.vPs,
-        prices
-      );
+
+    // getting effective last vPoint index
+    const lastVPointIndex = ind_vps[ind_vps.length - 1].index + startI;
+    if (lastVPointIndex !== indicators.vPs[indicators.vPs.length - 1].index) {
+      // new V-point found
+      indicators.vPs.push({
+        ...ind_vps[ind_vps.length - 1],
+        index: lastVPointIndex,
+      });
+
+      const ind_ranges = getSupportResistanceRangesFromVPoints(ind_vps, prices);
+
       const ind_t_lines = getTrendLinesFromVPoints({
         index: i,
-        allPrices: prices,
-        allTimes: times,
+        allPrices: priceData.c.slice(0, i + 1),
+        allTimes: priceData.t.slice(0, i + 1),
         vpOffset: trendLineVPointOffset,
       });
-      indicators.trendLines = [...indicators.trendLines, ...ind_t_lines]
-        .filter(
-          (item, index, self) =>
-            self.findIndex((t) => t.id == item.id) == index &&
-            !self.some((t) => t.id !== item.id && t.id.includes(item.id))
-        )
-        .map((item) => ({
-          ...item,
-          stillStrong: item.points[0].index < i - 250 ? false : true,
-        }));
+      // indicators.trendLines = [...indicators.trendLines, ...ind_t_lines]
+      //   .filter(
+      //     (item, index, self) =>
+      //       self.findIndex((t) => t.id == item.id) == index &&
+      //       !self.some((t) => t.id !== item.id && t.id.includes(item.id))
+      //   )
+      //   .map((item) => ({
+      //     ...item,
+      //     stillStrong: item.points[0].index < i - 250 ? false : true,
+      //   }));
 
-      indicators.ranges = [...indicators.ranges, ...ind_ranges]
-        .filter(
-          (item, index, self) =>
-            self.findIndex((r) => r.start.index == item.start.index) == index
-        )
-        .map((item) =>
-          item.start.index < i - 300
-            ? { ...item, stillStrong: false, reason: "old SR" }
-            : item
-        );
+      // indicators.ranges = [...indicators.ranges, ...ind_ranges]
+      //   .filter(
+      //     (item, index, self) =>
+      //       self.findIndex((r) => r.start.index == item.start.index) == index
+      //   )
+      //   .map((item) =>
+      //     item.start.index < i - 300
+      //       ? { ...item, stillStrong: false, reason: "old SR" }
+      //       : item
+      //   );
 
-      const ind_ranges15min = getSupportResistanceRangesFromVPoints(
-        indicators.vPs15min,
-        prices15min,
-        true
-      );
-      indicators.ranges15min = ind_ranges15min.map((item) => {
-        let endAdjusted = times.findIndex((t) => t == item.end.timestamp);
-        if (endAdjusted == -1) endAdjusted = priceData.t.length - 1;
-
-        return {
-          ...item,
-          start: {
-            ...item.start,
-            oldIndex: item.start.index,
-            index: times.findIndex((t) => t == item.start.timestamp),
-          },
-          end: {
-            ...item.end,
-            oldIndex: item.end.index,
-            index: endAdjusted,
-          },
-        };
-      });
+      indicators.ranges = ind_ranges.map((item) => ({
+        ...item,
+        start: { ...item.start, index: item.start.index + startI },
+        end: { ...item.end, index: item.end.index + startI },
+      }));
+      indicators.trendLines = ind_t_lines.map((item) => ({ ...item }));
     }
-    indicators.vPs = ind_vps;
-    indicators.vPs15min = ind_vps15min;
 
     // const ind_obv = await IXJIndicators.obv(prices, vols);
     const ind_willR = await IXJIndicators.willr(
-      highs,
-      lows,
-      prices,
+      priceData.h.slice(0, i + 1),
+      priceData.l.slice(0, i + 1),
+      priceData.c.slice(0, i + 1),
       willRPeriod
     );
     const ind_mfi = await IXJIndicators.mfi(
-      highs,
-      lows,
-      prices,
-      vols,
+      priceData.h.slice(0, i + 1),
+      priceData.l.slice(0, i + 1),
+      priceData.c.slice(0, i + 1),
+      priceData.v.slice(0, i + 1),
       mfiPeriod
     );
     const ind_vwap = await IXJIndicators.vwap(
-      highs,
-      lows,
-      prices,
-      vols,
+      priceData.h.slice(0, i + 1),
+      priceData.l.slice(0, i + 1),
+      priceData.c.slice(0, i + 1),
+      priceData.v.slice(0, i + 1),
       vwapPeriod
     );
 
