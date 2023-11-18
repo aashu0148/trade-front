@@ -13,6 +13,21 @@
     flex-direction: column;
     gap: 20px;
 
+    .label {
+      font-size: 16px;
+      line-height: 21px;
+      font-weight: 400;
+      color: $gray;
+
+      span {
+        font-size: 0.875rem;
+      }
+    }
+
+    .toggle {
+      min-width: 160px;
+    }
+
     .details {
       display: flex;
       flex-direction: column;

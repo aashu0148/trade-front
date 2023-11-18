@@ -9,6 +9,7 @@ import StockChart from "../StockChart/StockChart";
 import { updateTrade } from "apis/trade";
 
 import styles from "./TradeApproveModal.module.scss";
+import Toggle from "Components/Toggle/Toggle";
 
 function TradeApproveModal({
   tradeDetails = {},
@@ -20,6 +21,7 @@ function TradeApproveModal({
 }) {
   const [values, setValues] = useState({
     startPrice: tradeDetails.startPrice,
+    type: tradeDetails.type,
     target: tradeDetails.target,
     sl: tradeDetails.sl,
   });
@@ -36,6 +38,7 @@ function TradeApproveModal({
     }));
     const res = await updateTrade(tradeDetails._id, {
       isApproved: approved,
+      type: values.type,
       target: values.target,
       sl: values.sl,
       startPrice: values.startPrice,
@@ -98,6 +101,7 @@ function TradeApproveModal({
               </span>
             </div>
           </div>
+          {console.log(values)}
 
           <div className="row">
             <InputControl
@@ -112,7 +116,26 @@ function TradeApproveModal({
                   startPrice: parseFloat(e.target.value),
                 }))
               }
+              onWheel={(event) => event.target.blur()}
             />
+
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "6px" }}
+            >
+              <label className={styles.label}>Type</label>
+
+              <Toggle
+                className={styles.toggle}
+                options={[
+                  { label: "BUY", value: "buy" },
+                  { label: "SELL", value: "sell" },
+                ]}
+                selected={values.type}
+                onChange={(obj) =>
+                  setValues((prev) => ({ ...prev, type: obj.value }))
+                }
+              />
+            </div>
           </div>
 
           <div className="row">
@@ -128,6 +151,7 @@ function TradeApproveModal({
                   target: parseFloat(e.target.value),
                 }))
               }
+              onWheel={(event) => event.target.blur()}
             />
 
             <InputControl
@@ -142,6 +166,7 @@ function TradeApproveModal({
                   sl: parseFloat(e.target.value),
                 }))
               }
+              onWheel={(event) => event.target.blur()}
             />
           </div>
         </div>
