@@ -867,8 +867,22 @@ export const takeTrades = async (
     });
 
     indicators.vPs = vps;
-    indicators.ranges = ranges;
-    indicators.trendLines = trendLines;
+    indicators.ranges = ranges.map((item) => {
+      if (item.start.index < startTakingTradeIndex - 300) {
+        item.stillStrong = false;
+        item.reason = "old SR";
+      }
+
+      return item;
+    });
+    indicators.trendLines = trendLines((item) => {
+      if (item.points[0].index < startTakingTradeIndex - 300) {
+        item.stillStrong = false;
+        item.reason = "old SR";
+      }
+
+      return item;
+    });
 
     // const obv = await IXJIndicators.obv(
     //   priceData.c.slice(0, startTakingTradeIndex),
@@ -1327,7 +1341,8 @@ export const takeTrades = async (
   };
 
   for (let i = startTakingTradeIndex; i < priceData.c.length; i++) {
-    const startI = i - 250 < 0 ? 0 : i - 250;
+    const priceIntervalLength = 260;
+    const startI = i - priceIntervalLength < 0 ? 0 : i - priceIntervalLength;
     analyzeAllTradesForCompletion(i);
 
     const times = priceData.t.slice(startI, i + 1);
@@ -1387,7 +1402,7 @@ export const takeTrades = async (
           )
         );
         indicators.ranges.forEach((item) => {
-          if (item.start.index < i - 300) {
+          if (item.start.index < i - priceIntervalLength) {
             item.stillStrong = false;
             item.reason = "old SR";
           }
@@ -1426,9 +1441,9 @@ export const takeTrades = async (
           )
         );
         indicators.trendLines.forEach((item) => {
-          if (item.points[0].index < i - 300) {
+          if (item.points[0].index < i - priceIntervalLength) {
             item.stillStrong = false;
-            item.reason = "old SR";
+            item.reason = "old TL";
           }
         });
       }
@@ -1470,7 +1485,7 @@ export const takeTrades = async (
     const stochastic = indicators.stochastic;
 
     const strongSupportResistances = indicators.ranges.filter(
-      (item) => item?.stillStrong && item.start.index > i - 250
+      (item) => item?.stillStrong
     );
     // const strongSupportResistances15min = indicators.ranges15min.filter(
     //   (item) => item?.stillStrong
