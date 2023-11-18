@@ -496,17 +496,11 @@ const timePricesCrossedTrendLine = ({ line, prices = [] }) => {
   return count;
 };
 
-const getTrendLinesFromVPoints = ({
-  index,
-  allPrices,
-  allTimes,
-  vpOffset = 7,
-}) => {
+const getTrendLinesFromVPoints = ({ allPrices, allTimes, vpOffset = 7 }) => {
   const points = getVPoints({
     offset: vpOffset,
     prices: allPrices,
     times: allTimes,
-    startFrom: index - 180,
   });
   if (points.length < 3) return [];
 
@@ -683,7 +677,7 @@ export const takeTrades = async (
       willR: false,
       mfi: false,
       sr: false,
-      sr15min: false,
+      // sr15min: false,
       // trend: false,
       cci: false,
       stochastic: false,
@@ -698,7 +692,7 @@ export const takeTrades = async (
     },
     decisionMakingPoints = 3,
     reverseTheTradingLogic = false,
-    useSupportResistances = true,
+    useSRsToNeglectTrades = true,
     vPointOffset = 8,
     trendLineVPointOffset = 7,
     rsiLow = 40,
@@ -743,7 +737,7 @@ export const takeTrades = async (
   if (!stockData || !stockData["5"]?.c?.length)
     return { trades: [], analytics: [] };
   let priceData = stockData["5"];
-  let priceData15min = stockData["15"];
+  // let priceData15min = stockData["15"];
   if (!priceData.c?.length) return { trades: [], analytics: [] };
 
   if (targetProfitPercent <= 0) targetProfitPercent = 0.1;
@@ -797,8 +791,8 @@ export const takeTrades = async (
     ranges: [],
     trendLines: [],
     trends: [],
-    vPs15min: [],
-    ranges15min: [],
+    // vPs15min: [],
+    // ranges15min: [],
     prevDaysStart: [],
     allSignals: [],
   };
@@ -834,26 +828,26 @@ export const takeTrades = async (
     indicators.superTrend.push(superTrend);
   };
 
-  const filterLongerTimeFrameWRTShorter = () => {
-    const shortPrices = priceData.c;
+  // const filterLongerTimeFrameWRTShorter = () => {
+  //   const shortPrices = priceData.c;
 
-    let lastPresentIndex = 0;
-    for (let i = 0; i < priceData15min.c.length; ++i) {
-      const item = priceData15min.c[i];
-      if (shortPrices.includes(item)) ++lastPresentIndex;
-      else break;
-    }
+  //   let lastPresentIndex = 0;
+  //   for (let i = 0; i < priceData15min.c.length; ++i) {
+  //     const item = priceData15min.c[i];
+  //     if (shortPrices.includes(item)) ++lastPresentIndex;
+  //     else break;
+  //   }
 
-    priceData15min = {
-      c: priceData15min.c.slice(0, lastPresentIndex),
-      v: priceData15min.v.slice(0, lastPresentIndex),
-      t: priceData15min.t.slice(0, lastPresentIndex),
-      h: priceData15min.h.slice(0, lastPresentIndex),
-      l: priceData15min.l.slice(0, lastPresentIndex),
-      o: priceData15min.o.slice(0, lastPresentIndex),
-    };
-  };
-  filterLongerTimeFrameWRTShorter();
+  //   priceData15min = {
+  //     c: priceData15min.c.slice(0, lastPresentIndex),
+  //     v: priceData15min.v.slice(0, lastPresentIndex),
+  //     t: priceData15min.t.slice(0, lastPresentIndex),
+  //     h: priceData15min.h.slice(0, lastPresentIndex),
+  //     l: priceData15min.l.slice(0, lastPresentIndex),
+  //     o: priceData15min.o.slice(0, lastPresentIndex),
+  //   };
+  // };
+  // filterLongerTimeFrameWRTShorter();
 
   const calculateIndicatorsBeforeStartingIndex = async () => {
     const vps = getVPoints({
@@ -871,18 +865,7 @@ export const takeTrades = async (
       allPrices: priceData.c.slice(0, startTakingTradeIndex),
       allTimes: priceData.t.slice(0, startTakingTradeIndex),
     });
-    const vps15min = getVPoints({
-      offset: vPointOffset,
-      prices: priceData15min.c.slice(0, startTakingTradeIndex / 3),
-      times: priceData15min.t.slice(0, startTakingTradeIndex / 3),
-    });
-    const ranges15min = getSupportResistanceRangesFromVPoints(
-      vps15min,
-      priceData15min.c.slice(0, startTakingTradeIndex / 3),
-      true
-    );
-    indicators.vPs15min = vps15min;
-    indicators.ranges15min = ranges15min;
+
     indicators.vPs = vps;
     indicators.ranges = ranges;
     indicators.trendLines = trendLines;
@@ -1344,7 +1327,7 @@ export const takeTrades = async (
   };
 
   for (let i = startTakingTradeIndex; i < priceData.c.length; i++) {
-    const startI = i - 300 < 0 ? 0 : i - 300;
+    const startI = i - 250 < 0 ? 0 : i - 250;
     analyzeAllTradesForCompletion(i);
 
     const times = priceData.t.slice(startI, i + 1);
@@ -1377,70 +1360,104 @@ export const takeTrades = async (
         index: lastVPointIndex,
       });
 
-      const ind_ranges = getSupportResistanceRangesFromVPoints(ind_vps, prices);
-
-      const ind_t_lines = getTrendLinesFromVPoints({
-        index: i,
-        allPrices: priceData.c.slice(0, i + 1),
-        allTimes: priceData.t.slice(0, i + 1),
-        vpOffset: trendLineVPointOffset,
-      });
-      // indicators.trendLines = [...indicators.trendLines, ...ind_t_lines]
-      //   .filter(
-      //     (item, index, self) =>
-      //       self.findIndex((t) => t.id == item.id) == index &&
-      //       !self.some((t) => t.id !== item.id && t.id.includes(item.id))
-      //   )
-      //   .map((item) => ({
-      //     ...item,
-      //     stillStrong: item.points[0].index < i - 250 ? false : true,
-      //   }));
-
-      // indicators.ranges = [...indicators.ranges, ...ind_ranges]
-      //   .filter(
-      //     (item, index, self) =>
-      //       self.findIndex((r) => r.start.index == item.start.index) == index
-      //   )
-      //   .map((item) =>
-      //     item.start.index < i - 300
-      //       ? { ...item, stillStrong: false, reason: "old SR" }
-      //       : item
-      //   );
-
-      indicators.ranges = ind_ranges.map((item) => ({
+      // calculate ranges with effective index
+      const ind_ranges = getSupportResistanceRangesFromVPoints(
+        ind_vps,
+        prices
+      ).map((item) => ({
         ...item,
         start: { ...item.start, index: item.start.index + startI },
-        end: { ...item.end, index: item.end.index + startI },
+        end: item.end ? { ...item.end, index: item.end.index + startI } : "",
+        points: item.points.map((p) => ({ ...p, index: p.index + startI })),
       }));
-      indicators.trendLines = ind_t_lines.map((item) => ({ ...item }));
+
+      const lastFewRanges = ind_ranges.slice(-5);
+      const lastStoredRangesIndex =
+        indicators.ranges[indicators.ranges.length - 1]?.start?.index;
+      let isNewRangeFound =
+        lastFewRanges?.length &&
+        (!lastStoredRangesIndex ||
+          lastFewRanges[lastFewRanges.length - 1].start.index !==
+            lastStoredRangesIndex);
+
+      if (isNewRangeFound) {
+        indicators.ranges.push(
+          ...lastFewRanges.filter(
+            (item) => item.start.index > lastStoredRangesIndex
+          )
+        );
+        indicators.ranges.forEach((item) => {
+          if (item.start.index < i - 300) {
+            item.stillStrong = false;
+            item.reason = "old SR";
+          }
+        });
+      }
+
+      // calculate trend lines with effective index
+      const ind_t_lines = getTrendLinesFromVPoints({
+        allPrices: prices,
+        allTimes: times,
+        vpOffset: trendLineVPointOffset,
+      }).map((item) => ({
+        ...item,
+        id: item.id
+          .split(",")
+          .map((idx) => parseInt(idx) + startI)
+          .join(","),
+        points: item.points.map((p) => ({ ...p, index: p.index + startI })),
+      }));
+
+      const lastFewTLs = ind_t_lines.slice(-7);
+      const lastStoredTLStartIndex = indicators.trendLines.length
+        ? indicators.trendLines[indicators.trendLines.length - 1]?.points[0]
+            ?.index
+        : 0;
+      let isNewTLFound =
+        lastFewTLs?.length &&
+        (!lastStoredTLStartIndex ||
+          lastFewTLs[lastFewTLs.length - 1].points[0].index !==
+            lastStoredTLStartIndex);
+
+      if (isNewTLFound) {
+        indicators.trendLines.push(
+          ...lastFewTLs.filter(
+            (item) => item.points[0].index > lastStoredTLStartIndex
+          )
+        );
+        indicators.trendLines.forEach((item) => {
+          if (item.points[0].index < i - 300) {
+            item.stillStrong = false;
+            item.reason = "old SR";
+          }
+        });
+      }
     }
 
-    // const ind_obv = await IXJIndicators.obv(prices, vols);
     const ind_willR = await IXJIndicators.willr(
-      priceData.h.slice(0, i + 1),
-      priceData.l.slice(0, i + 1),
-      priceData.c.slice(0, i + 1),
+      highs,
+      lows,
+      prices,
       willRPeriod
     );
     const ind_mfi = await IXJIndicators.mfi(
-      priceData.h.slice(0, i + 1),
-      priceData.l.slice(0, i + 1),
-      priceData.c.slice(0, i + 1),
-      priceData.v.slice(0, i + 1),
+      highs,
+      lows,
+      prices,
+      vols,
       mfiPeriod
     );
     const ind_vwap = await IXJIndicators.vwap(
-      priceData.h.slice(0, i + 1),
-      priceData.l.slice(0, i + 1),
-      priceData.c.slice(0, i + 1),
-      priceData.v.slice(0, i + 1),
+      highs,
+      lows,
+      prices,
+      vols,
       vwapPeriod
     );
 
-    // indicators.obv = ind_obv;
-    indicators.vwap = ind_vwap;
-    indicators.mfi = ind_mfi;
-    indicators.williamR = ind_willR;
+    indicators.vwap.push(ind_vwap[ind_vwap.length - 1]);
+    indicators.mfi.push(ind_mfi[ind_mfi.length - 1]);
+    indicators.williamR.push(ind_willR[ind_willR.length - 1]);
 
     const smallMA = indicators.smallMA;
     const bigMA = indicators.bigMA;
@@ -1453,11 +1470,11 @@ export const takeTrades = async (
     const stochastic = indicators.stochastic;
 
     const strongSupportResistances = indicators.ranges.filter(
-      (item) => item?.stillStrong
+      (item) => item?.stillStrong && item.start.index > i - 250
     );
-    const strongSupportResistances15min = indicators.ranges15min.filter(
-      (item) => item?.stillStrong
-    );
+    // const strongSupportResistances15min = indicators.ranges15min.filter(
+    //   (item) => item?.stillStrong
+    // );
     // const trend = getCandleTrendEstimate(i);
     const rsi = RSI[i];
     const cci = CCI[i];
@@ -1483,7 +1500,7 @@ export const takeTrades = async (
     //   : signalEnum.hold;
 
     const srSignal = getSrSignal(i, strongSupportResistances);
-    const srSignal15min = getSrSignal(i, strongSupportResistances15min);
+    // const srSignal15min = getSrSignal(i, strongSupportResistances15min);
 
     const stochasticSignal =
       stochastic[i] < stochasticLow
@@ -1584,23 +1601,23 @@ export const takeTrades = async (
 
       analyticDetails.allowedIndicatorSignals.sr = finalSrSignal;
     }
-    if (additionalIndicators.sr15min) {
-      let finalSr15minSignal = srSignal15min;
-      if (finalSr15minSignal == signalEnum.hold) {
-        const srMinus1 = indicators.allSignals[i - 1].srSignal15min;
-        const srMinus2 = indicators.allSignals[i - 1].srSignal15min;
+    // if (additionalIndicators.sr15min) {
+    //   let finalSr15minSignal = srSignal15min;
+    //   if (finalSr15minSignal == signalEnum.hold) {
+    //     const srMinus1 = indicators.allSignals[i - 1].srSignal15min;
+    //     const srMinus2 = indicators.allSignals[i - 1].srSignal15min;
 
-        if (srMinus1 && srMinus1 !== signalEnum.hold)
-          finalSr15minSignal = srMinus1;
-        else if (srMinus2 && srMinus2 !== signalEnum.hold)
-          finalSr15minSignal = srMinus2;
-      }
+    //     if (srMinus1 && srMinus1 !== signalEnum.hold)
+    //       finalSr15minSignal = srMinus1;
+    //     else if (srMinus2 && srMinus2 !== signalEnum.hold)
+    //       finalSr15minSignal = srMinus2;
+    //   }
 
-      furtherIndicatorSignals.push(
-        signalWeight[finalSr15minSignal] * indicatorsWeightEnum.sr15min
-      );
-      analyticDetails.allowedIndicatorSignals.sr15min = finalSr15minSignal;
-    }
+    //   furtherIndicatorSignals.push(
+    //     signalWeight[finalSr15minSignal] * indicatorsWeightEnum.sr15min
+    //   );
+    //   analyticDetails.allowedIndicatorSignals.sr15min = finalSr15minSignal;
+    // }
     if (additionalIndicators.tl) {
       tlSignal = getTLBreakOutDownSignal(i).signal;
       // console.log(tlSignal);
@@ -1719,7 +1736,7 @@ export const takeTrades = async (
 
     indicators.allSignals.push({
       srSignal,
-      srSignal15min,
+      // srSignal15min,
       macdSignal,
       rsiSignal,
       tlSignal,
@@ -1859,7 +1876,7 @@ export const takeTrades = async (
         ...analyticDetails,
       });
 
-      if (possibleProfit < targetProfit && useSupportResistances) continue;
+      if (possibleProfit < targetProfit && useSRsToNeglectTrades) continue;
 
       const trade = {
         time: priceData.t[i],
@@ -1903,7 +1920,7 @@ export const takeTrades = async (
         ...analyticDetails,
       });
 
-      if (possibleProfit < targetProfit && useSupportResistances) continue;
+      if (possibleProfit < targetProfit && useSRsToNeglectTrades) continue;
 
       const trade = {
         time: priceData.t[i],
