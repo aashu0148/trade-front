@@ -26,10 +26,10 @@ const optionalIndicators = [
     label: "SR" + ` (${indicatorsWeightEnum.sr} point)`,
     value: "sr",
   },
-  {
-    label: "SR long" + ` (${indicatorsWeightEnum.sr15min} point)`,
-    value: "sr15min",
-  },
+  // {
+  //   label: "SR long" + ` (${indicatorsWeightEnum.sr15min} point)`,
+  //   value: "sr15min",
+  // },
   {
     label: "Trend lines" + ` (${indicatorsWeightEnum.tl} point)`,
     value: "tl",
@@ -104,7 +104,7 @@ const defaultConfigs = {
     sma: true,
     obv: false,
   },
-  useSupportResistances: true,
+  useSRsToNeglectTrades: true,
   vPointOffset: 8,
   trendLineVPointOffset: 7,
   rsiLow: 40,
@@ -426,18 +426,18 @@ function ConfigurationPage() {
           </div>
           <div className="row" style={{ alignItems: "center" }}>
             <MultiSelect
-              id={JSON.stringify(values.useSupportResistances)}
+              id={JSON.stringify(values.useSRsToNeglectTrades)}
               options={[
                 {
-                  label: `Use support resistances`,
-                  value: "useSupportResistances",
-                  selected: values.useSupportResistances,
+                  label: `Use SR to neglect trades`,
+                  value: "useSRsToNeglectTrades",
+                  selected: values.useSRsToNeglectTrades,
                 },
               ]}
               onChange={(obj) =>
                 setValues((prev) => ({
                   ...prev,
-                  useSupportResistances: obj[0].selected,
+                  useSRsToNeglectTrades: obj[0].selected,
                 }))
               }
             />
