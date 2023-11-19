@@ -1170,7 +1170,11 @@ function ConfigurationPage() {
                       JSON.stringify({
                         preset: { ...values },
                         symbol: selectedStock.value,
-                        result: tradeResults,
+                        result: {
+                          ...Object.keys(tradeResults)
+                            .filter((key) => key !== "tradesResponse")
+                            .map((k) => tradeResults[k]),
+                        },
                       })
                     )
                   }
