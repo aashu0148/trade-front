@@ -5,11 +5,11 @@ import Modal from "Components/Modal/Modal";
 import Button from "Components/Button/Button";
 import InputControl from "Components/InputControl/InputControl";
 import StockChart from "../StockChart/StockChart";
+import Toggle from "Components/Toggle/Toggle";
 
 import { updateTrade } from "apis/trade";
 
 import styles from "./TradeApproveModal.module.scss";
-import Toggle from "Components/Toggle/Toggle";
 
 function TradeApproveModal({
   tradeDetails = {},
@@ -101,7 +101,6 @@ function TradeApproveModal({
               </span>
             </div>
           </div>
-          {console.log(values)}
 
           <div className="row">
             <InputControl
