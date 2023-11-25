@@ -146,7 +146,10 @@ function ConfigurationPage() {
   const [savedConfigs, setSavedConfigs] = useState([]);
   const [values, setValues] = useState({ ...defaultConfigs });
   const [selectedStock, setSelectedStock] = useState({});
-  const [tradeResults, setTradeResults] = useState({});
+  const [tradeResults, setTradeResults] = useState({
+    analytics: {},
+    tradesResponse: {},
+  });
   const [stockPresets, setStockPresets] = useState({});
   const [disabledButtons, setDisabledButtons] = useState({
     savePresetToDb: false,
@@ -222,6 +225,10 @@ function ConfigurationPage() {
 
     const total = trades.length;
     const profitable = trades.filter((item) => item.status == "profit").length;
+    const lost = trades.filter((item) => item.status == "loss").length;
+    const unfinished = trades.filter(
+      (item) => item.status == "unfinished"
+    ).length;
 
     const analytics = {
       stock: selectedStock.label,
@@ -231,17 +238,17 @@ function ConfigurationPage() {
       totalDays,
       tradesTaken: total,
       profitMaking: profitable,
-      lossMaking: total - profitable,
+      lossMaking: lost,
+      unfinished,
       buyTrades: trades.filter((item) => item.type == "buy").length,
       sellTrades: trades.filter((item) => item.type == "sell").length,
-      tradesResponse,
     };
 
     console.log(
       { trades, indicators, analytics, config: values },
       (endTime - startTime) / 1000 + "s"
     );
-    setTradeResults(analytics);
+    setTradeResults({ analytics, tradesResponse });
     toast.success("Evaluation done");
   };
 
@@ -266,7 +273,7 @@ function ConfigurationPage() {
         stock: selectedStock.value,
         name: `${selectedStock.value} ${correspondingConfigs.length + 1}`,
         config: values,
-        result: tradeResults,
+        result: tradeResults.analytics,
       },
     ]);
   };
@@ -291,15 +298,14 @@ function ConfigurationPage() {
   };
 
   const handleSavePresetToDb = async () => {
-    const currentPercent = parseInt(tradeResults.profitPercent) || 0;
-    const tradesTaken = parseInt(tradeResults.tradesTaken) || 0;
+    const currentPercent = parseInt(tradeResults.analytics?.profitPercent) || 0;
+    const tradesTaken = parseInt(tradeResults.analytics?.tradesTaken) || 0;
     if (currentPercent < 44)
       return toast.error("Profit percent must be greater than 44");
     // if (tradesTaken < 20) return toast.error("Take at least 20 trades");
 
     setDisabledButtons((prev) => ({ ...prev, savePresetToDb: true }));
-    const result = { ...tradeResults };
-    delete result.tradesResponse;
+    const result = { ...tradeResults.analytics };
     const res = await createNewPreset({
       preset: values,
       symbol: selectedStock.value,
@@ -313,7 +319,7 @@ function ConfigurationPage() {
   };
 
   useEffect(() => {
-    setTradeResults({});
+    setTradeResults({ analytics: {}, tradesResponse: {} });
   }, [selectedStock]);
 
   useEffect(() => {
@@ -1011,7 +1017,7 @@ function ConfigurationPage() {
             ""
           )}
 
-          {tradeResults?.profitPercent ? (
+          {tradeResults.analytics?.profitPercent ? (
             <div>
               <p
                 className={styles.textBtn}
@@ -1034,60 +1040,65 @@ function ConfigurationPage() {
                 className={styles.heading}
                 style={{ textAlign: "center", marginBottom: "15px" }}
               >
-                Results: {selectedStock.label} | ({tradeResults.totalDays} days)
+                Results: {selectedStock.label} | ({tradeResults.analytics?.totalDays} days)
               </p>
               <div className={styles.results}>
                 <div className={styles.card}>
                   <p
                     className={`${styles.title} ${
-                      parseInt(tradeResults.profitPercent) >= 48
+                      parseInt(tradeResults.analytics?.profitPercent) >= 48
                         ? styles.green
                         : styles.red
                     }`}
                   >
-                    {tradeResults.profitPercent}
+                    {tradeResults.analytics?.profitPercent}
                   </p>
                   <p className={styles.desc}>Profit Percent 💸</p>
                 </div>
 
                 <div className={styles.card}>
-                  <p className={`${styles.title}`}>{tradeResults.totalDays}</p>
+                  <p className={`${styles.title}`}>{tradeResults.analytics?.totalDays}</p>
                   <p className={styles.desc}>Total days</p>
                 </div>
 
                 <div className={styles.card}>
                   <p className={`${styles.title}`}>
-                    {tradeResults.tradesTaken}
+                    {tradeResults.analytics?.tradesTaken}
                   </p>
                   <p className={styles.desc}>Trades taken</p>
                 </div>
 
                 <div className={styles.card}>
                   <p className={`${styles.title} ${styles.green}`}>
-                    {tradeResults.profitMaking}
+                    {tradeResults.analytics?.profitMaking}
                   </p>
                   <p className={styles.desc}>Profit making trades</p>
                 </div>
 
                 <div className={styles.card}>
                   <p className={`${styles.title} ${styles.red}`}>
-                    {tradeResults.lossMaking}
+                    {tradeResults.analytics?.lossMaking}
                   </p>
                   <p className={styles.desc}>Loss making trades</p>
                 </div>
 
                 <div className={styles.card}>
-                  <p className={`${styles.title}`}>{tradeResults.buyTrades}</p>
+                  <p className={`${styles.title}`}>{tradeResults.analytics?.unfinished}</p>
+                  <p className={styles.desc}>Unfinished trades</p>
+                </div>
+
+                {/* <div className={styles.card}>
+                  <p className={`${styles.title}`}>{tradeResults.analytics?.buyTrades}</p>
                   <p className={styles.desc}>BUY trades</p>
                 </div>
 
                 <div className={styles.card}>
-                  <p className={`${styles.title}`}>{tradeResults.sellTrades}</p>
+                  <p className={`${styles.title}`}>{tradeResults.analytics?.sellTrades}</p>
                   <p className={styles.desc}>SELL trades</p>
-                </div>
+                </div> */}
               </div>
 
-              {parseInt(tradeResults.profitPercent) > 44 && (
+              {parseInt(tradeResults.analytics?.profitPercent) > 44 && (
                 <Button
                   style={{ margin: "15px auto 0 auto" }}
                   onClick={handleSavePresetToDb}
@@ -1147,11 +1158,11 @@ function ConfigurationPage() {
           <div className={styles.footer}>
             {selectedStock.value ? (
               <div className={styles.right}>
-                {tradeResults.profitPercent && (
+                {/* {tradeResults.analytics?.profitPercent && (
                   <Button outlineButton onClick={() => handleSaveConfig()}>
                     <Bookmark /> Save this config
                   </Button>
-                )}
+                )} */}
 
                 <Button onClick={() => handleApplyBestPreset()}>
                   Apply preset
@@ -1162,7 +1173,7 @@ function ConfigurationPage() {
             )}
 
             <div className={styles.right}>
-              {tradeResults.profitPercent ? (
+              {tradeResults.analytics?.profitPercent ? (
                 <Button
                   outlineButton
                   onClick={() =>
@@ -1170,11 +1181,7 @@ function ConfigurationPage() {
                       JSON.stringify({
                         preset: { ...values },
                         symbol: selectedStock.value,
-                        result: {
-                          ...Object.keys(tradeResults)
-                            .filter((key) => key !== "tradesResponse")
-                            .map((k) => tradeResults[k]),
-                        },
+                        result: tradeResults.analytics,
                       })
                     )
                   }
