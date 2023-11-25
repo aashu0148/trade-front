@@ -16,7 +16,11 @@ import {
   getStocksData,
 } from "apis/trade";
 import { copyToClipboard } from "utils/util";
-import { indicatorsWeightEnum, takeTrades } from "utils/tradeUtil";
+import {
+  defaultTradePreset,
+  indicatorsWeightEnum,
+  takeTrades,
+} from "utils/tradeUtil";
 import { monthNameIndexMapping } from "utils/constants";
 
 import styles from "./ConfigurationPage.module.scss";
@@ -84,67 +88,10 @@ const optionalIndicators = [
   },
 ];
 
-const defaultConfigs = {
-  decisionMakingPoints: 3,
-  additionalIndicators: {
-    willR: false,
-    mfi: false,
-    // trend: false,
-    cci: false,
-    stochastic: false,
-    vwap: false,
-    psar: false,
-    sr: true,
-    br: false,
-    tl: true,
-    br: false,
-    rsi: false,
-    macd: true,
-    bollinger: true,
-    sma: true,
-    obv: false,
-  },
-  useSRsToNeglectTrades: true,
-  vPointOffset: 8,
-  trendLineVPointOffset: 7,
-  rsiLow: 40,
-  rsiHigh: 70,
-  smaLowPeriod: 18,
-  smaHighPeriod: 150,
-  rsiPeriod: 8,
-  macdFastPeriod: 14,
-  macdSlowPeriod: 24,
-  macdSignalPeriod: 8,
-  bollingerBandPeriod: 23,
-  bollingerBandStdDev: 4,
-  cciPeriod: 20,
-  stochasticPeriod: 14,
-  stochasticMA: 3,
-  stochasticLow: 23,
-  stochasticHigh: 83,
-  willRPeriod: 14,
-  willRLow: -90,
-  willRHigh: -10,
-  psarStart: 0.02,
-  psarAcceleration: 0.02,
-  psarMaxValue: 0.2,
-  superTrendMultiplier: 3,
-  mfiPeriod: 14,
-  mfiLow: 23,
-  mfiHigh: 83,
-  vwapPeriod: 14,
-  targetProfitPercent: 1.4,
-  stopLossPercent: 0.7,
-  brTotalTrendLength: 44,
-  brLongTrendLength: 21,
-  brShortTrendLength: 10,
-  avoidingLatestSmallMovePercent: 0.9,
-  trendCheckingLastFewCandles: 8,
-};
 function ConfigurationPage() {
   const [stocksData, setStocksData] = useState({});
   const [savedConfigs, setSavedConfigs] = useState([]);
-  const [values, setValues] = useState({ ...defaultConfigs });
+  const [values, setValues] = useState({ ...defaultTradePreset });
   const [selectedStock, setSelectedStock] = useState({});
   const [tradeResults, setTradeResults] = useState({
     analytics: {},
@@ -292,10 +239,28 @@ function ConfigurationPage() {
     }
   };
 
+  const handlePasteConfig = async () => {
+    const text = await window.navigator.clipboard.readText();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (err) {}
+    if (typeof parsed?.preset !== "object" || !parsed?.symbol) {
+      toast.error("Invalid config");
+      return;
+    }
+
+    const finalPreset = { ...parsed.preset, ...defaultTradePreset };
+    setValues(finalPreset);
+
+    toast.success("Preset pasted");
+  };
+
   const handleApplyBestPreset = () => {
     const preset = stockPresets[selectedStock.value] || {};
 
-    setValues({ ...defaultConfigs, ...preset });
+    setValues({ ...defaultTradePreset, ...preset });
     toast.success("Preset applied");
   };
 
@@ -1174,6 +1139,10 @@ function ConfigurationPage() {
                 <Button onClick={() => handleApplyBestPreset()}>
                   Apply preset
                 </Button>
+
+                <Button onClick={() => handlePasteConfig()} outlineButton>
+                  Paste config
+                </Button>
               </div>
             ) : (
               <div />
@@ -1193,7 +1162,7 @@ function ConfigurationPage() {
                     )
                   }
                 >
-                  <Copy /> copy configuration
+                  <Copy /> copy config
                 </Button>
               ) : (
                 ""
