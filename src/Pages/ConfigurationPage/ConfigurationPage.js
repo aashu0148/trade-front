@@ -159,7 +159,7 @@ function ConfigurationPage() {
   const [isMoreTuningOpen, setIsMoreTuningOpen] = useState(false);
   const [showChart, setShowChart] = useState(false);
   const [allTimeFrame, setAllTimeFrame] = useState({
-    start: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
+    start: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000),
     end: new Date(),
   });
 
@@ -233,7 +233,9 @@ function ConfigurationPage() {
     const analytics = {
       stock: selectedStock.label,
       symbol: selectedStock.value,
-      profitPercent: `${((profitable / total) * 100).toFixed(2)}%`,
+      profitPercent: `${((profitable / (profitable + lost)) * 100).toFixed(
+        2
+      )}%`,
       tradesNeeded: totalDays * 2,
       totalDays,
       tradesTaken: total,
@@ -1040,7 +1042,8 @@ function ConfigurationPage() {
                 className={styles.heading}
                 style={{ textAlign: "center", marginBottom: "15px" }}
               >
-                Results: {selectedStock.label} | ({tradeResults.analytics?.totalDays} days)
+                Results: {selectedStock.label} | (
+                {tradeResults.analytics?.totalDays} days)
               </p>
               <div className={styles.results}>
                 <div className={styles.card}>
@@ -1057,7 +1060,9 @@ function ConfigurationPage() {
                 </div>
 
                 <div className={styles.card}>
-                  <p className={`${styles.title}`}>{tradeResults.analytics?.totalDays}</p>
+                  <p className={`${styles.title}`}>
+                    {tradeResults.analytics?.totalDays}
+                  </p>
                   <p className={styles.desc}>Total days</p>
                 </div>
 
@@ -1083,7 +1088,9 @@ function ConfigurationPage() {
                 </div>
 
                 <div className={styles.card}>
-                  <p className={`${styles.title}`}>{tradeResults.analytics?.unfinished}</p>
+                  <p className={`${styles.title}`}>
+                    {tradeResults.analytics?.unfinished}
+                  </p>
                   <p className={styles.desc}>Unfinished trades</p>
                 </div>
 
