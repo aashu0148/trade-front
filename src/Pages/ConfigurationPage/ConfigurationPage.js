@@ -251,7 +251,7 @@ function ConfigurationPage() {
       return;
     }
 
-    const finalPreset = { ...parsed.preset, ...defaultTradePreset };
+    const finalPreset = { ...defaultTradePreset, ...parsed.preset };
     setValues(finalPreset);
 
     toast.success("Preset pasted");
