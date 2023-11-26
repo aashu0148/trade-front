@@ -21,7 +21,6 @@ import {
   indicatorsWeightEnum,
   takeTrades,
 } from "utils/tradeUtil";
-import { monthNameIndexMapping } from "utils/constants";
 
 import styles from "./ConfigurationPage.module.scss";
 

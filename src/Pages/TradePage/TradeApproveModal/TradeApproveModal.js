@@ -131,7 +131,12 @@ function TradeApproveModal({
                 ]}
                 selected={values.type}
                 onChange={(obj) =>
-                  setValues((prev) => ({ ...prev, type: obj.value }))
+                  setValues((prev) => ({
+                    ...prev,
+                    type: obj.value,
+                    target: prev.sl,
+                    sl: prev.target,
+                  }))
                 }
               />
             </div>
