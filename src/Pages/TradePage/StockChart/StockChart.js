@@ -218,7 +218,7 @@ function StockChart({
   };
 
   useEffect(() => {
-    if (stockData["5"] && stockData["15"] && stockData["5"]?.c?.length) {
+    if (stockData["5"] && stockData["5"]?.c?.length) {
       setTimeout(renderChart, 500);
     }
   }, [stockData, stockPreset]);
