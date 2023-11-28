@@ -226,7 +226,14 @@ function TradePage({ socket }) {
                   arrowDownIcon
                 )}
               </td>
-              <td className={styles.name}>{item.name}</td>
+              <td
+                className={styles.name}
+                onClick={() =>
+                  setStockDetailModal({ symbol: item.symbol, show: true })
+                }
+              >
+                {item.name}
+              </td>
               <td className={styles.lrp}>
                 {parseFloat(
                   Object.keys(stockData.data[item.symbol] || {}).length
