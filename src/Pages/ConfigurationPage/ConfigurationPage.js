@@ -29,10 +29,6 @@ const optionalIndicators = [
     label: "SR" + ` (${indicatorsWeightEnum.sr} point)`,
     value: "sr",
   },
-  // {
-  //   label: "SR long" + ` (${indicatorsWeightEnum.sr15min} point)`,
-  //   value: "sr15min",
-  // },
   {
     label: "Trend lines" + ` (${indicatorsWeightEnum.tl} point)`,
     value: "tl",
@@ -40,6 +36,10 @@ const optionalIndicators = [
   {
     label: "Break out/down (beta)" + ` (${indicatorsWeightEnum.br} point)`,
     value: "br",
+  },
+  {
+    label: "Engulfing candle" + ` (${indicatorsWeightEnum.engulf} point)`,
+    value: "engulf",
   },
   // {
   //   label: "Trend indicator (beta)" + ` (${indicatorsWeightEnum.trend} point)`,
