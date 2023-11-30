@@ -233,18 +233,13 @@ function StockChart({
       ) : (
         ""
       )}
-      <div className={styles.item}>
-        <label>Open</label>
-        <span>{tooltipDetails.data?.open}</span>
-      </div>
-      <div className={styles.item}>
-        <label>Close</label>
-        <span>{tooltipDetails.data?.close}</span>
-      </div>
-      <div className={styles.item}>
-        <label>Date</label>
-        <span>{tooltipDetails.date}</span>
-      </div>
+
+      {["close", "open", "high", "low", "date"].map((item) => (
+        <div className={styles.item} key={item}>
+          <label>{item}</label>
+          <span>{tooltipDetails[item] || tooltipDetails.data[item]}</span>
+        </div>
+      ))}
     </div>
   );
 

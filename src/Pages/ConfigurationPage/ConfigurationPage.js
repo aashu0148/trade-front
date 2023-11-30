@@ -193,7 +193,17 @@ function ConfigurationPage() {
     };
 
     console.log(
-      { trades, indicators, analytics, config: values },
+      {
+        trades: trades.map((item) => ({
+          reasons: Object.keys(item.analytics.allowedIndicatorSignals)
+            .filter((k) => item.analytics.allowedIndicatorSignals[k] !== "hold")
+            .join(", "),
+          ...item,
+        })),
+        indicators,
+        analytics,
+        config: values,
+      },
       (endTime - startTime) / 1000 + "s"
     );
     setTradeResults({ analytics, tradesResponse });

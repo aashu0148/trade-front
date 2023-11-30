@@ -1229,15 +1229,17 @@ export const takeTrades = async (
       currCandleColor == "red" ? currClose - currLow : currOpen - currLow;
     const upperWick =
       currCandleColor == "green" ? currHigh - currClose : currHigh - currOpen;
+    const prevCandleLen = prevHigh - prevLow;
     const candleLen = currHigh - currLow;
 
     const lowerWickPercent = (lowerWick / candleLen) * 100;
     const upperWickPercent = (upperWick / candleLen) * 100;
 
     const isValidEngulf =
-      currCandleColor == "green"
+      prevCandleLen * 2 >= candleLen &&
+      (currCandleColor == "green"
         ? lowerWickPercent < 28
-        : upperWickPercent < 28;
+        : upperWickPercent < 28);
 
     const signal =
       isEngulfed && isValidEngulf
@@ -1756,7 +1758,7 @@ export const takeTrades = async (
         signalWeight[finalEngulfSignal] * indicatorsWeightEnum.engulf
       );
 
-      analyticDetails.allowedIndicatorSignals.macd = finalEngulfSignal;
+      analyticDetails.allowedIndicatorSignals.engulf = finalEngulfSignal;
     }
     if (additionalIndicators.macd) {
       let finalMacdSignal = macdSignal;
