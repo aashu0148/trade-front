@@ -1898,12 +1898,7 @@ export const takeTrades = async (
 
       const [hour, min, sec] = timeStr.split(":").map((item) => parseInt(item));
 
-      if (
-        hour < 9 ||
-        hour >= 15 ||
-        (hour == 9 && min < 25) ||
-        (hour == 14 && min > 30)
-      )
+      if (hour < 9 || hour >= 15 || (hour == 9 && min < 25) || hour >= 14 )
         return false;
 
       // check if it is not testing the SR
