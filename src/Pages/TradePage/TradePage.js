@@ -172,13 +172,13 @@ function TradePage({ socket }) {
         <tr>
           <th></th>
           <th>Symbol</th>
-          <th>LRP</th>
           <th>Type</th>
           <th>Trigger</th>
           <th>Target</th>
           <th>SL</th>
+          <th>Trade High</th>
+          <th>Trade Low</th>
           <th>Time</th>
-          <th>Status</th>
         </tr>
         {trades
           .sort((a, b) => (a.time < b.time ? -1 : 1))
@@ -233,34 +233,34 @@ function TradePage({ socket }) {
                 }
               >
                 {item.name}
+                <span>
+                  (
+                  {parseFloat(
+                    Object.keys(stockData.data[item.symbol] || {}).length
+                      ? stockData.data[item.symbol]["5"].c[
+                          stockData.data[item.symbol]["5"].c.length - 1
+                        ]
+                      : ""
+                  ).toFixed(1)}
+                  )
+                </span>
               </td>
-              <td className={styles.lrp}>
-                {parseFloat(
-                  Object.keys(stockData.data[item.symbol] || {}).length
-                    ? stockData.data[item.symbol]["5"].c[
-                        stockData.data[item.symbol]["5"].c.length - 1
-                      ]
-                    : ""
-                ).toFixed(1)}
+              <td
+                className={`${styles.type} ${
+                  item.type == "sell" ? styles.red : ""
+                }`}
+              >
+                {item.type}
               </td>
-              <td className={styles.type}>{item.type}</td>
               <td>{parseFloat(item.startPrice).toFixed(1)}</td>
               <td className={styles.target}>
                 {parseFloat(item.target).toFixed(1)}
               </td>
               <td className={styles.sl}>{parseFloat(item.sl).toFixed(1)}</td>
+              <td>{item.tradeHigh ? item.tradeHigh.toFixed(2) : ""}</td>
+              <td>{item.tradeLow ? item.tradeLow.toFixed(2) : ""}</td>
+
               <td className={styles.time}>{getTimeFormatted(item.time)}</td>
-              <td
-                className={`${styles.status} ${
-                  item.status == "profit"
-                    ? styles.green
-                    : item.status == "loss"
-                    ? styles.red
-                    : ""
-                }`}
-              >
-                {item.status}
-              </td>
             </tr>
           ))}
       </table>

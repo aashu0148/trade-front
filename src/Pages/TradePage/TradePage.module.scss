@@ -134,7 +134,9 @@
       }
 
       .type {
+        color: $green;
         text-transform: uppercase;
+        font-weight: bold !important;
       }
 
       .sl,
@@ -146,6 +148,14 @@
       .name {
         color: $black;
         font-weight: bold;
+        cursor: pointer;
+
+        span {
+          margin-left: 12px;
+          font: inherit;
+          font-size: 0.9em;
+          font-weight: 500;
+        }
       }
 
       .price {
