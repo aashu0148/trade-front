@@ -139,6 +139,10 @@ function TradePage({ socket }) {
     if (socket) handleSocketEvents();
   }, [socket]);
 
+  useEffect(() => {
+    setInterval(fetchTodayTrades, 70 * 1000);
+  }, []);
+
   const parsedStockData =
     typeof stockData?.data == "object"
       ? Object.keys(stockData.data).map((item) => ({
