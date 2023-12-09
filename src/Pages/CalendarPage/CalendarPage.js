@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import Spinner from "Components/Spinner/Spinner";
+import TradesModal from "./TradesModal/TradesModal";
 
 import { getAllTrades } from "apis/trade";
 import { monthNameIndexMapping } from "utils/constants";
@@ -11,6 +12,8 @@ function CalendarPage() {
   const [allTrades, setAllTrades] = useState([]);
   const [loadingPage, setLoadingPage] = useState(true);
   const [dayDetails, setDayDetails] = useState({});
+  const [showTradesModal, setShowTradesModal] = useState(false);
+  const [selectedTrades, setSelectedTrades] = useState([]);
 
   const monthWiseSegregatedTrades = allTrades.reduce(
     (acc, curr, i) =>
@@ -43,7 +46,7 @@ function CalendarPage() {
     );
   };
 
-  const handleDayTradeHove = (event, dayTrades = []) => {
+  const handleDayTradeHover = (event, dayTrades = []) => {
     const rect = event.target.getBoundingClientRect();
 
     const profitable = dayTrades.filter((item) => item.status == "profit");
@@ -199,9 +202,13 @@ function CalendarPage() {
                     : ""
                 }`}
                 onMouseEnter={(e) =>
-                  todayTrades.length ? handleDayTradeHove(e, todayTrades) : ""
+                  todayTrades.length ? handleDayTradeHover(e, todayTrades) : ""
                 }
                 onMouseLeave={() => setDayDetails({})}
+                onClick={() => {
+                  setShowTradesModal(true);
+                  setSelectedTrades(todayTrades);
+                }}
               >
                 {i + 1}
               </div>
@@ -218,6 +225,18 @@ function CalendarPage() {
     </div>
   ) : (
     <div className={styles.container}>
+      {showTradesModal ? (
+        <TradesModal
+          onClose={() => {
+            setSelectedTrades([]);
+            setShowTradesModal(false);
+          }}
+          trades={selectedTrades}
+        />
+      ) : (
+        ""
+      )}
+
       <p className={styles.heading}>Trades calendar</p>
 
       <div className={styles.boxes}>

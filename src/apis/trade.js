@@ -1,7 +1,7 @@
 import { errorToastLogger, fetchWrapper } from "utils/util";
 
 export const getTodayTrades = async () => {
-  const reqPath = `/trade/today?day=yesterday`;
+  const reqPath = `/trade/today?day=`;
   let response;
 
   try {

@@ -3,21 +3,16 @@ import { AlertCircle } from "react-feather";
 
 import TradeApproveModal from "./TradeApproveModal/TradeApproveModal";
 import StockDetailsModal from "./StockDetailsModal/StockDetailsModal";
+import TradeCard from "Components/TradeCard/TradeCard";
 
-import { getAllTrades, getBestStockPresets, getTodayTrades } from "apis/trade";
-import { getRandomNumberBetween, getTimeFormatted } from "utils/util";
+import { getBestStockPresets, getTodayTrades } from "apis/trade";
+import { getTimeFormatted } from "utils/util";
 import { arrowDownIcon, arrowUpIcon } from "utils/svgs";
 import bubbleSound from "assets/bubble.mp3";
 import secSound from "assets/10 Sec.mp3";
 
 import styles from "./TradePage.module.scss";
 
-const colors = {
-  red: "#fa3f35",
-  green: "#21ac56",
-  blue: "#27a5f3",
-  primary: "#1c65db",
-};
 let lastTradesLength = 0;
 function TradePage({ socket }) {
   const audioElem = useRef();
@@ -139,15 +134,15 @@ function TradePage({ socket }) {
     return false;
   };
 
-  // useEffect(() => {
-  //   fetchTodayTrades();
-  //   fetchBestStockPreset();
-  //   if (socket) handleSocketEvents();
-  // }, [socket]);
+  useEffect(() => {
+    fetchTodayTrades();
+    fetchBestStockPreset();
+    if (socket) handleSocketEvents();
+  }, [socket]);
 
   useEffect(() => {
     fetchTodayTrades();
-    // setInterval(fetchTodayTrades, 70 * 1000);
+    setInterval(fetchTodayTrades, 70 * 1000);
   }, []);
 
   const parsedStockData =
@@ -176,159 +171,6 @@ function TradePage({ socket }) {
           },
         }))
       : [];
-
-  const getTradeCard = (trade = {}, lrp) => {
-    const isBuyTrade = trade.type == "buy";
-
-    const { startPrice: trigger, tradeHigh, tradeLow, target, sl } = trade;
-    let targetPercent = isBuyTrade
-      ? ((tradeHigh - trigger) / (target - trigger)) * 100
-      : ((trigger - tradeLow) / (trigger - target)) * 100;
-    if (!targetPercent) targetPercent = 0;
-    if (targetPercent > 100) targetPercent = 100;
-
-    let slPercent = isBuyTrade
-      ? ((trigger - tradeLow) / (trigger - sl)) * 100
-      : ((tradeHigh - trigger) / (sl - trigger)) * 100;
-
-    if (!slPercent) slPercent = 0;
-    if (slPercent > 100) slPercent = 100;
-
-    const tradeBar = (
-      <div className={styles.bar}>
-        <div
-          className={`${styles.piece} ${
-            isBuyTrade ? styles.red : styles.green
-          }`}
-        >
-          <div
-            className={styles.inner}
-            style={{
-              width: `${
-                (isBuyTrade && trade.status == "loss") ||
-                (!isBuyTrade && trade.status == "profit")
-                  ? 100
-                  : lrp < trigger && !isBuyTrade
-                  ? ((trigger - lrp) / (trigger - target)) * 100
-                  : lrp < trigger && isBuyTrade
-                  ? ((trigger - lrp) / (trigger - sl)) * 100
-                  : 0
-              }%`,
-            }}
-          />
-        </div>
-        <div
-          className={`${styles.piece} ${
-            isBuyTrade ? styles.green : styles.red
-          }`}
-        >
-          <div
-            className={styles.inner}
-            style={{
-              width: `${
-                (isBuyTrade && trade.status == "profit") ||
-                (!isBuyTrade && trade.status == "loss")
-                  ? 100
-                  : lrp > trigger && isBuyTrade
-                  ? ((lrp - trigger) / (target - trigger)) * 100
-                  : lrp > trigger && !isBuyTrade
-                  ? ((lrp - trigger) / (sl - trigger)) * 100
-                  : 0
-              }%`,
-            }}
-          />
-        </div>
-
-        <div className={`${styles.stick}`} style={{ left: "50%" }}>
-          <span>{trigger.toFixed(1)}</span>
-        </div>
-
-        <div
-          className={`${styles.stick} ${
-            isBuyTrade ? styles.redStick : styles.greenStick
-          }`}
-          style={{ left: "0%", background: "transparent" }}
-        >
-          <span>{(isBuyTrade ? sl : target).toFixed(1)}</span>
-        </div>
-
-        <div
-          className={`${styles.stick} ${
-            isBuyTrade ? styles.greenStick : styles.redStick
-          }`}
-          style={{ left: "100%", background: "transparent" }}
-        >
-          <span>{(isBuyTrade ? target : sl).toFixed(1)}</span>
-        </div>
-
-        {/* target stick */}
-        {tradeHigh && tradeLow ? (
-          <div
-            className={`${styles.stick}  ${styles.greenStick}`}
-            style={{
-              left: `${
-                isBuyTrade
-                  ? 50 + (targetPercent / 100) * 50
-                  : 50 - (targetPercent / 100) * 50
-              }%`,
-            }}
-          >
-            <label>{(isBuyTrade ? tradeHigh : tradeLow).toFixed(1)}</label>
-          </div>
-        ) : (
-          ""
-        )}
-
-        {/* sl stick */}
-        {tradeLow && tradeLow ? (
-          <div
-            className={`${styles.stick} ${styles.redStick}`}
-            style={{
-              left: `${
-                isBuyTrade
-                  ? 50 - (slPercent / 100) * 50
-                  : 50 + (slPercent / 100) * 50
-              }%`,
-            }}
-          >
-            <label>{(isBuyTrade ? tradeLow : tradeHigh).toFixed(1)}</label>
-          </div>
-        ) : (
-          ""
-        )}
-      </div>
-    );
-
-    return (
-      <div
-        className={`${styles.tradeCard} ${
-          trade.status == "profit"
-            ? styles.profitCard
-            : trade.status == "loss"
-            ? styles.lossCard
-            : ""
-        }`}
-        key={trade._id}
-      >
-        {tradeBar}
-
-        <div className={styles.top}>
-          <p
-            className={styles.type}
-            style={{ color: isBuyTrade ? colors.green : colors.red }}
-          >
-            {trade.type}
-          </p>
-
-          <p className={styles.name}>{trade.name}</p>
-
-          <p className={styles.price}>@{trigger.toFixed(2)}</p>
-        </div>
-
-        <p className={styles.time}>{getTimeFormatted(trade.time)}</p>
-      </div>
-    );
-  };
 
   const getTradesTable = (trades = []) => {
     return (
@@ -468,7 +310,26 @@ function TradePage({ socket }) {
         <div className={styles.cards}>
           {todayTrades
             .filter((item) => item.isApproved)
-            .map((item) => getTradeCard(item))}
+            .map((item) => (
+              <TradeCard
+                key={item.id}
+                trade={item}
+                lrp={parseFloat(
+                  Object.keys(stockData.data[item.symbol] || {}).length
+                    ? stockData.data[item.symbol]["5"].c[
+                        stockData.data[item.symbol]["5"].c.length - 1
+                      ]
+                    : ""
+                ).toFixed(1)}
+                onViewChart={() =>
+                  setStockDetailModal({ symbol: item.symbol, show: true })
+                }
+                onApprove={() => {
+                  setStockDetailModal({ symbol: item.symbol });
+                  setTradeToApprove(item);
+                }}
+              />
+            ))}
         </div>
 
         {/* {getTradesTable(todayTrades.filter((item) => item.isApproved))} */}
@@ -480,9 +341,27 @@ function TradePage({ socket }) {
         <div className={styles.cards}>
           {todayTrades
             .filter((item) => !item.isApproved)
-            .map((item) => getTradeCard(item))}
+            .map((item) => (
+              <TradeCard
+                key={item.id}
+                trade={item}
+                lrp={parseFloat(
+                  Object.keys(stockData.data[item.symbol] || {}).length
+                    ? stockData.data[item.symbol]["5"].c[
+                        stockData.data[item.symbol]["5"].c.length - 1
+                      ]
+                    : ""
+                ).toFixed(1)}
+                onViewChart={() =>
+                  setStockDetailModal({ symbol: item.symbol, show: true })
+                }
+                onApprove={() => {
+                  setStockDetailModal({ symbol: item.symbol });
+                  setTradeToApprove(item);
+                }}
+              />
+            ))}
         </div>
-        {/* {getTradesTable(todayTrades.filter((item) => !item.isApproved))} */}
       </div>
       <div className={styles.section}>
         <p className={styles.heading}>

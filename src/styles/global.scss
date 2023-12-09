@@ -315,15 +315,49 @@ a {
   gap: 15px;
 }
 
-.heading {
-  font-size: 24px;
-  font-weight: bold;
-}
-
 .footer {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
   gap: 25px;
+}
+
+.heading-small {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.heading {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+}
+
+.heading-big {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 36px;
+}
+
+.title {
+  font-size: 18px;
+  line-height: 30px;
+  font-weight: 600;
+}
+.title-small {
+  font-size: 16px;
+  line-height: 25px;
+  font-weight: 600;
+}
+.desc {
+  font-size: 16px;
+  line-height: 25px;
+  color: $gray;
+}
+.desc-small {
+  font-size: 14px;
+  line-height: 20px;
+  color: $gray;
 }
