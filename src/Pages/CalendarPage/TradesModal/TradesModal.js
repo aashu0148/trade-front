@@ -17,7 +17,7 @@ function TradesModal({ onClose, trades = [] }) {
 
         <div className={styles.cards}>
           {trades.map((item) => (
-            <TradeCard key={item.id} trade={item} />
+            <TradeCard key={item.id} trade={item} hideChartButton />
           ))}
         </div>
       </div>
