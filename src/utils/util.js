@@ -24,6 +24,9 @@ export const handleNumericInputKeyDown = (event) => {
   }
 };
 
+export const getRandomNumberBetween = (min, max) =>
+  Math.floor(Math.random() * (max - min + 1) + min);
+
 export const copyToClipboard = (text, hideToast = false) => {
   if (!text) return;
   if (!hideToast) toast.success("Copied");
