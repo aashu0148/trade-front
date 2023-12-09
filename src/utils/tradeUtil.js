@@ -51,7 +51,7 @@ export const defaultTradePreset = {
     sr: true,
     tl: true,
     engulf: true,
-    bollinger: true,
+    bollinger: false,
     sma: true,
     willR: false,
     mfi: false,
