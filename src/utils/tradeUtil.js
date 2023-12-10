@@ -935,10 +935,10 @@ export const takeTrades = async (
     return {
       isPin,
       isInvertedPin,
-      lowerWick,
-      upperWick,
-      upperWickPercent,
-      lowerWickPercent,
+      // lowerWick,
+      // upperWick,
+      // upperWickPercent,
+      // lowerWickPercent,
     };
   };
 
@@ -1009,6 +1009,7 @@ export const takeTrades = async (
     const currClose = priceData.c[index];
     const currOpen = priceData.o[index];
     const prevOpen = priceData.o[index - 1];
+    const prevToPrevOpen = priceData.o[index - 2];
 
     const point3OfPrice = ((currClose > 350 ? 0.2 : 0.3) / 100) * currClose;
     const point05OfPrice = ((currClose > 350 ? 0.04 : 0.03) / 100) * currClose;
@@ -1031,14 +1032,22 @@ export const takeTrades = async (
       const m = (y2 - y1) / (x2 - x1);
       const c = y1 - m * x1;
 
-      const isAboveLine = (p, i) => {
+      const isAboveLineFunc = (p, i) => {
         const potentialY = m * i + c;
         return p > potentialY ? true : false;
       };
 
+      const isAboveLine = {
+        currClose: isAboveLineFunc(currClose, index),
+        currOpen: isAboveLineFunc(currOpen, index),
+        prevOpen: isAboveLineFunc(prevOpen, index - 1),
+        prevToPrevOpen: isAboveLineFunc(prevToPrevOpen, index - 2),
+      };
+
       const bigBreakout =
-        isAboveLine(currClose, index) &&
-        !isAboveLine(currOpen, index) &&
+        isAboveLine.currClose &&
+        !isAboveLine.currOpen &&
+        !isAboveLine.prevOpen &&
         isBigCandle;
       if (bigBreakout)
         return {
@@ -1048,14 +1057,13 @@ export const takeTrades = async (
           currClose,
           currOpen,
           prevOpen,
-          // ccAbove: isAboveLine(currClose, index),
-          // coAbove: isAboveLine(currOpen, index),
-          // poAbove: isAboveLine(prevOpen, index - 1),
+          isAboveLine,
         };
 
       const bigBreakdown =
-        !isAboveLine(currClose, index) &&
-        isAboveLine(currOpen, index) &&
+        !isAboveLine.currClose &&
+        isAboveLine.currOpen &&
+        isAboveLine.prevOpen &&
         isBigCandle;
       if (bigBreakdown)
         return {
@@ -1065,15 +1073,14 @@ export const takeTrades = async (
           currClose,
           currOpen,
           prevOpen,
-          // ccAbove: isAboveLine(currClose, index),
-          // coAbove: isAboveLine(currOpen, index),
-          // poAbove: isAboveLine(prevOpen, index - 1),
+          isAboveLine,
         };
 
       const normalBreakout =
-        isAboveLine(currClose, index) &&
-        isAboveLine(currOpen, index) &&
-        !isAboveLine(prevOpen, index - 1) &&
+        isAboveLine.currClose &&
+        isAboveLine.currOpen &&
+        !isAboveLine.prevOpen &&
+        !isAboveLine.prevToPrevOpen &&
         !isBigCandle;
       if (normalBreakout)
         return {
@@ -1083,15 +1090,14 @@ export const takeTrades = async (
           currClose,
           currOpen,
           prevOpen,
-          // ccAbove: isAboveLine(currClose, index),
-          // coAbove: isAboveLine(currOpen, index),
-          // poAbove: isAboveLine(prevOpen, index - 1),
+          isAboveLine,
         };
 
       const normalBreakdown =
-        !isAboveLine(currClose, index) &&
-        !isAboveLine(currOpen, index) &&
-        isAboveLine(prevOpen, index - 1) &&
+        !isAboveLine.currClose &&
+        !isAboveLine.currOpen &&
+        isAboveLine.prevOpen &&
+        isAboveLine.prevToPrevOpen &&
         !isBigCandle;
       if (normalBreakdown)
         return {
@@ -1101,9 +1107,7 @@ export const takeTrades = async (
           currClose,
           currOpen,
           prevOpen,
-          // ccAbove: isAboveLine(currClose, index),
-          // coAbove: isAboveLine(currOpen, index),
-          // poAbove: isAboveLine(prevOpen, index - 1),
+          isAboveLine,
         };
     }
 
@@ -1193,7 +1197,7 @@ export const takeTrades = async (
       : signalEnum.hold;
   };
 
-  const isMarketSideways = (index) => {
+  const isStockSideways = (index) => {
     if (!index || index < 10) return true;
 
     const rsi = indicators.rsi[index];
@@ -1571,7 +1575,7 @@ export const takeTrades = async (
 
     const srSignal = getSrSignal(i, strongSupportResistances);
     const engulfSignal = indicators.engulf[i];
-    // const isSideways = isMarketSideways(i);
+    // const isSideways = isStockSideways(i);
 
     const stochasticSignal =
       stochastic[i] < stochasticLow
@@ -1795,7 +1799,7 @@ export const takeTrades = async (
         [indicatorEnum.tl]: tlSignal,
         [indicatorEnum.br]: brSignal,
         [indicatorEnum.engulf]: engulfSignal,
-        // tlFull: getTLBreakOutDownSignal(i),
+        tlFull: getTLBreakOutDownSignal(i),
         // brFull: getBreakOutDownSignal(i),
         [indicatorEnum.cci]: cciSignal,
         [indicatorEnum.mfi]: mfiSignal,
@@ -1837,7 +1841,7 @@ export const takeTrades = async (
 
       const [hour, min, sec] = timeStr.split(":").map((item) => parseInt(item));
 
-      if (hour < 9 || hour >= 15 || (hour == 9 && min < 25) || hour >= 14)
+      if (hour < 9 || hour >= 15 || (hour == 9 && min <= 25) || hour >= 14)
         return false;
 
       // check if it is not testing the SR
@@ -1895,6 +1899,10 @@ export const takeTrades = async (
       : isSellSignal
       ? signalEnum.sell
       : signalEnum.hold;
+
+    analyticDetails.furtherIndicatorSignals = furtherIndicatorSignals;
+    analyticDetails.initialSignalWeight = initialSignalWeight;
+    analyticDetails.additionalIndicatorsWeight = additionalIndicatorsWeight;
 
     if (isBuySignal) {
       let nearestResistance;
