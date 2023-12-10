@@ -689,6 +689,7 @@ export const takeTrades = async (
     bigMA: [],
     rsi: [],
     cci: [],
+    adx: [],
     macd: [],
     bollingerBand: [],
     stochastic: [],
@@ -1192,6 +1193,25 @@ export const takeTrades = async (
       : signalEnum.hold;
   };
 
+  const isMarketSideways = (index) => {
+    if (!index || index < 10) return true;
+
+    const rsi = indicators.rsi[index];
+    const adx = indicators.adx[index];
+
+    const lastFewRsiCount = 4;
+    const prev4Rsi = indicators.rsi.slice(index - lastFewRsiCount, index);
+
+    let isSidewaysRsiCount = 0;
+    prev4Rsi.forEach((r) => (r < 60 && r > 40 ? ++isSidewaysRsiCount : ""));
+    const isRsiSideways =
+      rsi < 60 && rsi > 40 && isSidewaysRsiCount >= lastFewRsiCount - 2;
+
+    const isAdxSideways = adx.adx <= 20;
+
+    return isAdxSideways && isRsiSideways;
+  };
+
   const updateIndicatorValues = (index) => {
     const high = priceData.h[index];
     const low = priceData.l[index];
@@ -1208,13 +1228,12 @@ export const takeTrades = async (
     const psar = indicatorPSAR.nextValue(high, low, price);
     const engulfSignal = getEngulfSignal(index);
 
-    // console.log(adx);
-
     indicators.engulf.push(engulfSignal);
     indicators.smallMA.push(smaL);
     indicators.bigMA.push(smaH);
     indicators.rsi.push(rsi);
     indicators.cci.push(cci);
+    indicators.adx.push(adx);
     indicators.macd.push(macd || {});
     indicators.bollingerBand.push(bollingerBand || {});
     indicators.stochastic.push(stochastic);
@@ -1552,6 +1571,7 @@ export const takeTrades = async (
 
     const srSignal = getSrSignal(i, strongSupportResistances);
     const engulfSignal = indicators.engulf[i];
+    // const isSideways = isMarketSideways(i);
 
     const stochasticSignal =
       stochastic[i] < stochasticLow
@@ -1632,158 +1652,160 @@ export const takeTrades = async (
 
     const initialSignalWeight = 0;
 
-    analyticDetails.allowedIndicatorSignals.sr = srSignal;
-
     const furtherIndicatorSignals = [];
-    if (additionalIndicators.sr) {
-      let finalSrSignal = getNetSignalConsideringPrevSignals(
-        indicatorEnum.sr,
-        srSignal
-      );
 
-      furtherIndicatorSignals.push(
-        signalWeight[finalSrSignal] * indicatorsWeightEnum.sr
-      );
+    const calculateFurtherIndicatorsSignals = () => {
+      if (additionalIndicators.sr) {
+        let finalSrSignal = getNetSignalConsideringPrevSignals(
+          indicatorEnum.sr,
+          srSignal
+        );
 
-      analyticDetails.allowedIndicatorSignals.sr = finalSrSignal;
-    }
-    if (additionalIndicators.tl) {
-      tlSignal = getTLBreakOutDownSignal(i).signal;
-      let finalTlSignal = getNetSignalConsideringPrevSignals(
-        indicatorEnum.tl,
-        tlSignal
-      );
+        furtherIndicatorSignals.push(
+          signalWeight[finalSrSignal] * indicatorsWeightEnum.sr
+        );
 
-      furtherIndicatorSignals.push(
-        signalWeight[finalTlSignal] * indicatorsWeightEnum.tl
-      );
-      analyticDetails.allowedIndicatorSignals.tl = finalTlSignal;
-    }
-    if (additionalIndicators.rsi) {
-      furtherIndicatorSignals.push(
-        signalWeight[rsiSignal] * indicatorsWeightEnum.rsi
-      );
+        analyticDetails.allowedIndicatorSignals.sr = finalSrSignal;
+      }
+      if (additionalIndicators.tl) {
+        tlSignal = getTLBreakOutDownSignal(i).signal;
+        let finalTlSignal = getNetSignalConsideringPrevSignals(
+          indicatorEnum.tl,
+          tlSignal
+        );
 
-      analyticDetails.allowedIndicatorSignals.rsi = rsiSignal;
-    }
-    if (additionalIndicators.engulf) {
-      let finalEngulfSignal = getNetSignalConsideringPrevSignals(
-        indicatorEnum.engulf,
-        engulfSignal
-      );
+        furtherIndicatorSignals.push(
+          signalWeight[finalTlSignal] * indicatorsWeightEnum.tl
+        );
+        analyticDetails.allowedIndicatorSignals.tl = finalTlSignal;
+      }
+      if (additionalIndicators.rsi) {
+        furtherIndicatorSignals.push(
+          signalWeight[rsiSignal] * indicatorsWeightEnum.rsi
+        );
 
-      furtherIndicatorSignals.push(
-        signalWeight[finalEngulfSignal] * indicatorsWeightEnum.engulf
-      );
+        analyticDetails.allowedIndicatorSignals.rsi = rsiSignal;
+      }
+      if (additionalIndicators.engulf) {
+        let finalEngulfSignal = getNetSignalConsideringPrevSignals(
+          indicatorEnum.engulf,
+          engulfSignal
+        );
 
-      analyticDetails.allowedIndicatorSignals.engulf = finalEngulfSignal;
-    }
-    if (additionalIndicators.macd) {
-      let finalMacdSignal = getNetSignalConsideringPrevSignals(
-        indicatorEnum.macd,
-        macdSignal
-      );
+        furtherIndicatorSignals.push(
+          signalWeight[finalEngulfSignal] * indicatorsWeightEnum.engulf
+        );
 
-      furtherIndicatorSignals.push(
-        signalWeight[finalMacdSignal] * indicatorsWeightEnum.macd
-      );
+        analyticDetails.allowedIndicatorSignals.engulf = finalEngulfSignal;
+      }
+      if (additionalIndicators.macd) {
+        let finalMacdSignal = getNetSignalConsideringPrevSignals(
+          indicatorEnum.macd,
+          macdSignal
+        );
 
-      analyticDetails.allowedIndicatorSignals.macd = finalMacdSignal;
-    }
-    if (additionalIndicators.sma) {
-      furtherIndicatorSignals.push(
-        signalWeight[smaSignal] * indicatorsWeightEnum.sma
-      );
-      analyticDetails.allowedIndicatorSignals.sma = smaSignal;
-    }
-    if (additionalIndicators.bollinger) {
-      furtherIndicatorSignals.push(
-        signalWeight[bollingerBandSignal] * indicatorsWeightEnum.bollingerBand
-      );
-      analyticDetails.allowedIndicatorSignals.bollinger = bollingerBandSignal;
-    }
-    if (additionalIndicators.br) {
-      brSignal = getBreakOutDownSignal(i).signal;
+        furtherIndicatorSignals.push(
+          signalWeight[finalMacdSignal] * indicatorsWeightEnum.macd
+        );
 
-      let finalBrSignal = getNetSignalConsideringPrevSignals(
-        indicatorEnum.br,
-        brSignal
-      );
+        analyticDetails.allowedIndicatorSignals.macd = finalMacdSignal;
+      }
+      if (additionalIndicators.sma) {
+        furtherIndicatorSignals.push(
+          signalWeight[smaSignal] * indicatorsWeightEnum.sma
+        );
+        analyticDetails.allowedIndicatorSignals.sma = smaSignal;
+      }
+      if (additionalIndicators.bollinger) {
+        furtherIndicatorSignals.push(
+          signalWeight[bollingerBandSignal] * indicatorsWeightEnum.bollingerBand
+        );
+        analyticDetails.allowedIndicatorSignals.bollinger = bollingerBandSignal;
+      }
+      if (additionalIndicators.br) {
+        brSignal = getBreakOutDownSignal(i).signal;
 
-      furtherIndicatorSignals.push(
-        signalWeight[finalBrSignal] * indicatorsWeightEnum.br
-      );
-      analyticDetails.allowedIndicatorSignals.br = finalBrSignal;
-    }
-    if (additionalIndicators.cci) {
-      furtherIndicatorSignals.push(
-        signalWeight[cciSignal] * indicatorsWeightEnum.cci
-      );
-      analyticDetails.allowedIndicatorSignals.cci = cciSignal;
-    }
-    if (additionalIndicators.mfi) {
-      furtherIndicatorSignals.push(
-        signalWeight[mfiSignal] * indicatorsWeightEnum.mfi
-      );
-      analyticDetails.allowedIndicatorSignals.mfi = mfiSignal;
-    }
-    if (additionalIndicators.stochastic) {
-      furtherIndicatorSignals.push(
-        signalWeight[stochasticSignal] * indicatorsWeightEnum.stochastic
-      );
-      analyticDetails.allowedIndicatorSignals.stochastic = stochasticSignal;
-    }
-    if (additionalIndicators.vwap) {
-      let finalSignal = getNetSignalConsideringPrevSignals(
-        indicatorEnum.vwap,
-        vwapSignal
-      );
+        let finalBrSignal = getNetSignalConsideringPrevSignals(
+          indicatorEnum.br,
+          brSignal
+        );
 
-      furtherIndicatorSignals.push(
-        signalWeight[finalSignal] * indicatorsWeightEnum.vwap
-      );
-      analyticDetails.allowedIndicatorSignals.vwap = finalSignal;
-    }
-    if (additionalIndicators.psar) {
-      let finalSignal = getNetSignalConsideringPrevSignals(
-        indicatorEnum.psar,
-        psarSignal
-      );
+        furtherIndicatorSignals.push(
+          signalWeight[finalBrSignal] * indicatorsWeightEnum.br
+        );
+        analyticDetails.allowedIndicatorSignals.br = finalBrSignal;
+      }
+      if (additionalIndicators.cci) {
+        furtherIndicatorSignals.push(
+          signalWeight[cciSignal] * indicatorsWeightEnum.cci
+        );
+        analyticDetails.allowedIndicatorSignals.cci = cciSignal;
+      }
+      if (additionalIndicators.mfi) {
+        furtherIndicatorSignals.push(
+          signalWeight[mfiSignal] * indicatorsWeightEnum.mfi
+        );
+        analyticDetails.allowedIndicatorSignals.mfi = mfiSignal;
+      }
+      if (additionalIndicators.stochastic) {
+        furtherIndicatorSignals.push(
+          signalWeight[stochasticSignal] * indicatorsWeightEnum.stochastic
+        );
+        analyticDetails.allowedIndicatorSignals.stochastic = stochasticSignal;
+      }
+      if (additionalIndicators.vwap) {
+        let finalSignal = getNetSignalConsideringPrevSignals(
+          indicatorEnum.vwap,
+          vwapSignal
+        );
 
-      furtherIndicatorSignals.push(
-        signalWeight[finalSignal] * indicatorsWeightEnum.psar
-      );
-      analyticDetails.allowedIndicatorSignals.psar = finalSignal;
-    }
-    // if (additionalIndicators.trend) {
-    //   furtherIndicatorSignals.push(
-    //     signalWeight[trendSignal] * indicatorsWeightEnum.trend
-    //   );
-    //   analyticDetails.allowedIndicatorSignals.trend = trendSignal;
-    // }
-    if (additionalIndicators.willR) {
-      furtherIndicatorSignals.push(
-        signalWeight[willRSignal] * indicatorsWeightEnum.williamR
-      );
-      analyticDetails.allowedIndicatorSignals.willR = willRSignal;
-    }
+        furtherIndicatorSignals.push(
+          signalWeight[finalSignal] * indicatorsWeightEnum.vwap
+        );
+        analyticDetails.allowedIndicatorSignals.vwap = finalSignal;
+      }
+      if (additionalIndicators.psar) {
+        let finalSignal = getNetSignalConsideringPrevSignals(
+          indicatorEnum.psar,
+          psarSignal
+        );
 
-    indicators.allSignals.push({
-      [indicatorEnum.sr]: srSignal,
-      [indicatorEnum.macd]: macdSignal,
-      [indicatorEnum.rsi]: rsiSignal,
-      [indicatorEnum.tl]: tlSignal,
-      [indicatorEnum.br]: brSignal,
-      [indicatorEnum.engulf]: engulfSignal,
-      // tlFull: getTLBreakOutDownSignal(i),
-      // brFull: getBreakOutDownSignal(i),
-      [indicatorEnum.cci]: cciSignal,
-      [indicatorEnum.mfi]: mfiSignal,
-      [indicatorEnum.sma]: smaSignal,
-      [indicatorEnum.psar]: psarSignal,
-      [indicatorEnum.vwap]: vwapSignal,
-      [indicatorEnum.williamR]: willRSignal,
-    });
+        furtherIndicatorSignals.push(
+          signalWeight[finalSignal] * indicatorsWeightEnum.psar
+        );
+        analyticDetails.allowedIndicatorSignals.psar = finalSignal;
+      }
+      // if (additionalIndicators.trend) {
+      //   furtherIndicatorSignals.push(
+      //     signalWeight[trendSignal] * indicatorsWeightEnum.trend
+      //   );
+      //   analyticDetails.allowedIndicatorSignals.trend = trendSignal;
+      // }
+      if (additionalIndicators.willR) {
+        furtherIndicatorSignals.push(
+          signalWeight[willRSignal] * indicatorsWeightEnum.williamR
+        );
+        analyticDetails.allowedIndicatorSignals.willR = willRSignal;
+      }
+
+      indicators.allSignals.push({
+        [indicatorEnum.sr]: srSignal,
+        [indicatorEnum.macd]: macdSignal,
+        [indicatorEnum.rsi]: rsiSignal,
+        [indicatorEnum.tl]: tlSignal,
+        [indicatorEnum.br]: brSignal,
+        [indicatorEnum.engulf]: engulfSignal,
+        // tlFull: getTLBreakOutDownSignal(i),
+        // brFull: getBreakOutDownSignal(i),
+        [indicatorEnum.cci]: cciSignal,
+        [indicatorEnum.mfi]: mfiSignal,
+        [indicatorEnum.sma]: smaSignal,
+        [indicatorEnum.psar]: psarSignal,
+        [indicatorEnum.vwap]: vwapSignal,
+        [indicatorEnum.williamR]: willRSignal,
+      });
+    };
+    calculateFurtherIndicatorsSignals();
 
     const additionalIndicatorsWeight =
       furtherIndicatorSignals.reduce((acc, curr) => curr + acc || 0, 0) || 0;
