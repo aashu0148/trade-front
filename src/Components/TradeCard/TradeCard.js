@@ -2,7 +2,7 @@ import React from "react";
 
 import Button from "Components/Button/Button";
 
-import { getTimeFormatted } from "utils/util";
+import { getDateFormatted, getTimeFormatted } from "utils/util";
 
 import styles from "./TradeCard.module.scss";
 
@@ -18,10 +18,16 @@ function TradeCard({
   onApprove,
   onViewChart,
   hideChartButton = false,
+  showDateWithTime = false,
 }) {
   const isBuyTrade = trade.type == "buy";
 
   const { startPrice: trigger, tradeHigh, tradeLow, target, sl } = trade;
+
+  let timestamp = trade.time;
+  // if timestamp in seconds
+  if (timestamp < Date.now() / 100) timestamp *= 1000;
+
   let targetPercent = isBuyTrade
     ? ((tradeHigh - trigger) / (target - trigger)) * 100
     : ((trigger - tradeLow) / (trigger - target)) * 100;
@@ -173,7 +179,10 @@ function TradeCard({
           </p>
         )}
 
-        <p className={styles.time}>{getTimeFormatted(trade.time)}</p>
+        <p className={styles.time}>
+          {getTimeFormatted(timestamp)}{" "}
+          {showDateWithTime ? getDateFormatted(timestamp, true) : ""}
+        </p>
       </div>
 
       {typeof trade.isApproved !== "boolean" &&

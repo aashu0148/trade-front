@@ -23,6 +23,7 @@ import {
 } from "utils/tradeUtil";
 
 import styles from "./ConfigurationPage.module.scss";
+import TradesModal from "Pages/CalendarPage/TradesModal/TradesModal";
 
 const optionalIndicators = [
   {
@@ -104,6 +105,7 @@ function ConfigurationPage() {
   const [loadingPage, setLoadingPage] = useState(true);
   const [isMoreTuningOpen, setIsMoreTuningOpen] = useState(false);
   const [showChart, setShowChart] = useState(false);
+  const [showTradesModal, setShowTradesModal] = useState(false);
   const [allTimeFrame, setAllTimeFrame] = useState({
     start: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000),
     end: new Date(),
@@ -323,6 +325,17 @@ function ConfigurationPage() {
 
   return (
     <div className={styles.container}>
+      {showTradesModal ? (
+        <TradesModal
+          trades={tradeResults?.tradesResponse?.trades}
+          hideTime
+          onClose={() => setShowTradesModal(false)}
+          showDateInCard
+        />
+      ) : (
+        ""
+      )}
+
       <p className={styles.heading}>Configure a stock for best outcome</p>
 
       {loadingPage ? (
@@ -1067,28 +1080,23 @@ function ConfigurationPage() {
                   </p>
                   <p className={styles.desc}>Unfinished trades</p>
                 </div>
-
-                {/* <div className={styles.card}>
-                  <p className={`${styles.title}`}>{tradeResults.analytics?.buyTrades}</p>
-                  <p className={styles.desc}>BUY trades</p>
-                </div>
-
-                <div className={styles.card}>
-                  <p className={`${styles.title}`}>{tradeResults.analytics?.sellTrades}</p>
-                  <p className={styles.desc}>SELL trades</p>
-                </div> */}
               </div>
 
-              {parseInt(tradeResults.analytics?.profitPercent) > 44 && (
-                <Button
-                  style={{ margin: "15px auto 0 auto" }}
-                  onClick={handleSavePresetToDb}
-                  disabled={disabledButtons.savePresetToDb}
-                  useSpinnerWhenDisabled
-                >
-                  Save this preset to database
+              <div className={styles.buttons}>
+                <Button outlineButton onClick={() => setShowTradesModal(true)}>
+                  View trades
                 </Button>
-              )}
+
+                {parseInt(tradeResults.analytics?.profitPercent) > 44 && (
+                  <Button
+                    onClick={handleSavePresetToDb}
+                    disabled={disabledButtons.savePresetToDb}
+                    useSpinnerWhenDisabled
+                  >
+                    Save this preset to database
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             ""

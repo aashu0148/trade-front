@@ -7,17 +7,31 @@ import { getDateFormatted } from "utils/util";
 
 import styles from "./TradesModal.module.scss";
 
-function TradesModal({ onClose, trades = [] }) {
+function TradesModal({
+  onClose,
+  trades = [],
+  hideTime = false,
+  showDateInCard = false,
+}) {
   return (
     <Modal onClose={onClose}>
       <div className={styles.container}>
-        <p className={`heading-small`}>
-          {getDateFormatted(trades[0]?.time, false, true)} Trades
-        </p>
+        {hideTime ? (
+          ""
+        ) : (
+          <p className={`heading-small`}>
+            {getDateFormatted(trades[0]?.time, false, true)} Trades
+          </p>
+        )}
 
         <div className={styles.cards}>
           {trades.map((item) => (
-            <TradeCard key={item.id} trade={item} hideChartButton />
+            <TradeCard
+              key={item._id || item.startPrice + item.type + item.time}
+              trade={item}
+              hideChartButton
+              showDateWithTime={showDateInCard}
+            />
           ))}
         </div>
       </div>

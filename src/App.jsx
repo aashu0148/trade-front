@@ -27,6 +27,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [banner, setBanner] = useState({});
   const [userDetails, setUserDetails] = useState({});
+  const [mobileView, setMobileView] = useState(window.outerWidth < 769);
 
   const isUserAdmin = userDetails?.role === "admin";
 
@@ -94,6 +95,10 @@ function App() {
     });
   };
 
+  const handleResize = (event) => {
+    setMobileView(event.target.outerWidth < 769);
+  };
+
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -108,15 +113,21 @@ function App() {
   useEffect(() => {
     handleUserDetection();
 
+    window.addEventListener("resize", handleResize);
+
     setInterval(() => {
       greetBackend();
     }, 60 * 1000);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   return (
     <div className="main-app">
       <Toaster
-        position="bottom"
+        position={mobileView ? "top-right" : "bottom"}
         toastOptions={{
           duration: 3000,
         }}

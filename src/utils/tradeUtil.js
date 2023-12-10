@@ -1336,6 +1336,9 @@ export const takeTrades = async (
     sl,
     isSellTrade = false
   ) => {
+    let statusNumber = 0,
+      tradeHigh,
+      tradeLow;
     if (
       !triggerPrice ||
       !target ||
@@ -1343,18 +1346,36 @@ export const takeTrades = async (
       !Array.isArray(data?.c) ||
       !data?.c?.length
     )
-      return 0;
+      return {
+        statusNumber,
+        tradeHigh,
+        tradeLow,
+      };
 
+    tradeHigh = data.h[0];
+    tradeLow = data.l[0];
     for (let i = 0; i < data.c.length; ++i) {
-      const c = data.c[i];
       const l = data.l[i];
       const h = data.h[i];
 
-      if ((isSellTrade && l < target) || (!isSellTrade && h > target)) return 1;
-      if ((isSellTrade && h >= sl) || (!isSellTrade && l <= sl)) return -1;
+      if (h > tradeHigh) tradeHigh = h;
+      else if (l < tradeLow) tradeLow = l;
+
+      if (
+        statusNumber == 0 &&
+        ((isSellTrade && l < target) || (!isSellTrade && h > target))
+      ) {
+        statusNumber = 1;
+      }
+      if (
+        statusNumber == 0 &&
+        ((isSellTrade && h >= sl) || (!isSellTrade && l <= sl))
+      ) {
+        statusNumber = -1;
+      }
     }
 
-    return 0;
+    return { statusNumber, tradeHigh, tradeLow };
   };
 
   const analyzeAllTradesForCompletion = async (currentIndex) => {
@@ -1382,7 +1403,7 @@ export const takeTrades = async (
       const isSellTrade = trade.type == signalEnum.sell;
       const tradeStartIndex = trade.startIndex;
 
-      const statusNumber = checkTradeCompletion(
+      const { statusNumber, tradeHigh, tradeLow } = checkTradeCompletion(
         trade.startPrice,
         {
           c: priceData.c.slice(tradeStartIndex, currentIndex),
@@ -1398,6 +1419,10 @@ export const takeTrades = async (
 
       const status =
         statusNumber == 1 ? "profit" : statusNumber == -1 ? "loss" : "taken";
+
+      trades[i].tradeHigh = tradeHigh;
+      trades[i].tradeLow = tradeLow;
+
       if (status == trade.status) return;
 
       // update the trade status
