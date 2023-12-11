@@ -26,6 +26,7 @@ function TradeApproveModal({
     sl: tradeDetails.sl,
   });
   const [errors, setErrors] = useState({
+    startPrice: "",
     target: "",
     sl: "",
     type: "",
@@ -48,7 +49,7 @@ function TradeApproveModal({
     else if (values.type == "sell" && values.target > values.startPrice)
       errors.target = "Target must be smaller than trigger";
     else if (values.type == "sell" && values.sl < values.startPrice)
-      errors.target = "Stop loss must be greater than trigger";
+      errors.sl = "Stop loss must be greater than trigger";
 
     if (!values.startPrice) errors.startPrice = "Enter startPrice";
 
@@ -149,6 +150,7 @@ function TradeApproveModal({
                 }))
               }
               onWheel={(event) => event.target.blur()}
+              error={errors.startPrice}
             />
 
             <div
