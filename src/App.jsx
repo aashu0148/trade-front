@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { LogOut } from "react-feather";
 import { io } from "socket.io-client";
 
 import Banner from "Components/Banner/Banner";
@@ -22,6 +21,7 @@ import "react-calendar/dist/Calendar.css";
 
 let socket;
 const backendUrl = process.env.REACT_APP_BACKEND_URL;
+const AppContext = createContext();
 function App() {
   const [appLoaded, setAppLoaded] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -126,59 +126,61 @@ function App() {
 
   return (
     <div className="main-app">
-      <Toaster
-        position={mobileView ? "top-right" : "bottom"}
-        toastOptions={{
-          duration: 3000,
-        }}
-      />
-      {banner.show ? <Banner bannerDetails={banner} /> : ""}
+      <AppContext.Provider value={{ mobileView }}>
+        <Toaster
+          position={mobileView ? "top-right" : "bottom"}
+          toastOptions={{
+            duration: 3000,
+          }}
+        />
+        {banner.show ? <Banner bannerDetails={banner} /> : ""}
 
-      {appLoaded ? (
-        <Router>
-          {isAuthenticated && (
-            <Navbar isAuthenticated={isAuthenticated} isAdmin={isUserAdmin} />
-          )}
-
-          <Routes>
-            <Route path="/auth" element={<AuthPage />} />
-            {isAuthenticated ? (
-              <Route path="/">
-                <Route path="/" element={<TradePage socket={socket} />} />
-                <Route path="/configure" element={<ConfigurationPage />} />
-                <Route path="/calendar" element={<CalendarPage />} />
-
-                {isUserAdmin ? (
-                  <>
-                    <Route path="/stocks" element={<StocksPage />} />
-                    <Route path="/test" element={<TestPage />} />
-                    <Route path="/live" element={<LiveTestPage />} />
-                  </>
-                ) : (
-                  ""
-                )}
-              </Route>
-            ) : (
-              ""
+        {appLoaded ? (
+          <Router>
+            {isAuthenticated && (
+              <Navbar isAuthenticated={isAuthenticated} isAdmin={isUserAdmin} />
             )}
 
-            <Route
-              path="/*"
-              element={
-                <div className="spinner-container">
-                  <h1>Page not found</h1>
-                </div>
-              }
-            />
-          </Routes>
-        </Router>
-      ) : (
-        <div className="spinner-container">
-          <Spinner />
-        </div>
-      )}
+            <Routes>
+              <Route path="/auth" element={<AuthPage />} />
+              {isAuthenticated ? (
+                <Route path="/">
+                  <Route path="/" element={<TradePage socket={socket} />} />
+                  <Route path="/configure" element={<ConfigurationPage />} />
+                  <Route path="/calendar" element={<CalendarPage />} />
+
+                  {isUserAdmin ? (
+                    <>
+                      <Route path="/stocks" element={<StocksPage />} />
+                      <Route path="/test" element={<TestPage />} />
+                      <Route path="/live" element={<LiveTestPage />} />
+                    </>
+                  ) : (
+                    ""
+                  )}
+                </Route>
+              ) : (
+                ""
+              )}
+
+              <Route
+                path="/*"
+                element={
+                  <div className="spinner-container">
+                    <h1>Page not found</h1>
+                  </div>
+                }
+              />
+            </Routes>
+          </Router>
+        ) : (
+          <div className="spinner-container">
+            <Spinner />
+          </div>
+        )}
+      </AppContext.Provider>
     </div>
   );
 }
 
-export default App;
+export { App as default, AppContext };
