@@ -13,9 +13,9 @@ import TestPage from "Pages/TestPage/TestPage";
 import Navbar from "Components/Navbar/Navbar";
 import StocksPage from "Pages/StocksPage/StocksPage";
 import CalendarPage from "Pages/CalendarPage/CalendarPage";
+import LiveTestPage from "Pages/LiveTestPage/LiveTestPage";
 
 import { getCurrentUser, sayHiToBackend } from "apis";
-import { handleLogout } from "utils/util";
 
 import "styles/global.scss";
 import "react-calendar/dist/Calendar.css";
@@ -152,6 +152,7 @@ function App() {
                   <>
                     <Route path="/stocks" element={<StocksPage />} />
                     <Route path="/test" element={<TestPage />} />
+                    <Route path="/live" element={<LiveTestPage />} />
                   </>
                 ) : (
                   ""

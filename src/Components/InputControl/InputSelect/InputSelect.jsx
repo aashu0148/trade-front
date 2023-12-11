@@ -120,7 +120,7 @@ function InputSelect({
           <Select
             {...rest}
             components={{
-              DropdownIndicator: () => null,
+              // DropdownIndicator: () => null,
               IndicatorSeparator: () => null,
               ...components,
             }}

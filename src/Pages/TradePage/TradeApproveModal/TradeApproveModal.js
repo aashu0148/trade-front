@@ -25,12 +25,45 @@ function TradeApproveModal({
     target: tradeDetails.target,
     sl: tradeDetails.sl,
   });
+  const [errors, setErrors] = useState({
+    target: "",
+    sl: "",
+    type: "",
+  });
   const [disabledButtons, setDisabledButtons] = useState({
     reject: false,
     approve: false,
   });
 
+  const validateSubmission = () => {
+    const errors = {};
+
+    if (!values.target) errors.target = "Enter target";
+    else if (values.type == "buy" && values.target < values.startPrice)
+      errors.target = "Target must be greater than trigger";
+    else if (values.type == "buy" && values.sl > values.startPrice)
+      errors.sl = "Stop loss must be smaller than trigger";
+
+    if (!values.sl) errors.sl = "Enter sl";
+    else if (values.type == "sell" && values.target > values.startPrice)
+      errors.target = "Target must be smaller than trigger";
+    else if (values.type == "sell" && values.sl < values.startPrice)
+      errors.target = "Stop loss must be greater than trigger";
+
+    if (!values.startPrice) errors.startPrice = "Enter startPrice";
+
+    if (Object.keys(errors).length) {
+      setErrors(errors);
+      return false;
+    } else {
+      setErrors({});
+      return true;
+    }
+  };
+
   const handleSubmission = async (approved = false) => {
+    if (!validateSubmission()) return;
+
     setDisabledButtons((prev) => ({
       ...prev,
       reject: approved ? false : true,
@@ -156,6 +189,7 @@ function TradeApproveModal({
                 }))
               }
               onWheel={(event) => event.target.blur()}
+              error={errors.target}
             />
 
             <InputControl
@@ -171,6 +205,7 @@ function TradeApproveModal({
                 }))
               }
               onWheel={(event) => event.target.blur()}
+              error={errors.sl}
             />
           </div>
         </div>

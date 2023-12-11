@@ -340,7 +340,7 @@ function TradePage({ socket }) {
 
         <div className={styles.cards}>
           {todayTrades
-            .filter((item) => !item.isApproved)
+            .filter((item) => item.isApproved == undefined)
             .map((item) => (
               <TradeCard
                 key={item.id}
@@ -363,6 +363,36 @@ function TradePage({ socket }) {
             ))}
         </div>
       </div>
+
+      <div className={styles.section}>
+        <p className={styles.heading}>Rejected trades</p>
+
+        <div className={styles.cards}>
+          {todayTrades
+            .filter((item) => item.isApproved == false)
+            .map((item) => (
+              <TradeCard
+                key={item.id}
+                trade={item}
+                lrp={parseFloat(
+                  Object.keys(stockData.data[item.symbol] || {}).length
+                    ? stockData.data[item.symbol]["5"].c[
+                        stockData.data[item.symbol]["5"].c.length - 1
+                      ]
+                    : ""
+                ).toFixed(1)}
+                onViewChart={() =>
+                  setStockDetailModal({ symbol: item.symbol, show: true })
+                }
+                onApprove={() => {
+                  setStockDetailModal({ symbol: item.symbol });
+                  setTradeToApprove(item);
+                }}
+              />
+            ))}
+        </div>
+      </div>
+
       <div className={styles.section}>
         <p className={styles.heading}>
           Last Recorded Price (updates every 5 min)

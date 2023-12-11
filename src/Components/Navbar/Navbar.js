@@ -36,9 +36,9 @@ function Navbar({ isAuthenticated = false, isAdmin = false }) {
             <p className={`link`} onClick={(e) => handleNavigate(e, "/stocks")}>
               Stocks
             </p>
-            {/* <p className={`link`} onClick={(e) => handleNavigate(e, "/test")}>
-              Test
-            </p> */}
+            <p className={`link`} onClick={(e) => handleNavigate(e, "/live")}>
+              Live
+            </p>
           </>
         ) : (
           ""

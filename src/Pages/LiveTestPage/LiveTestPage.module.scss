@@ -1,0 +1,46 @@
+@import "styles/variables";
+
+.container {
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+
+  .label {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 400;
+    color: $gray;
+
+    span {
+      font-size: 0.875rem;
+    }
+  }
+
+  .textBtn {
+    padding: 8px 10px;
+    text-align: center;
+    width: fit-content;
+    margin: 0 auto;
+    cursor: pointer;
+    color: $primary;
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .buttons {
+    margin: 5px 0;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+
+  .button {
+    margin-top: 28px;
+    padding: 7px 18px;
+    height: fit-content;
+  }
+}
