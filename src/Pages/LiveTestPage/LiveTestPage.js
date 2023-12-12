@@ -180,14 +180,11 @@ function LiveTestPage() {
           ? "loss"
           : "taken";
 
-      trade.tradeHigh = tradeHigh;
-      trade.tradeLow = tradeLow;
-
       if (status == trade.status) {
         if (tradeHigh !== currTradeHigh || tradeLow !== currTradeLow) {
           setTradesTaken((prev) =>
             prev.map((item) =>
-              item._id == trade._id ? { ...item, ...trade } : item
+              item._id == trade._id ? { ...item, tradeHigh, tradeLow } : item
             )
           );
         }
@@ -195,10 +192,11 @@ function LiveTestPage() {
       }
 
       // update the trade status
-      trade.status = status;
       setTradesTaken((prev) =>
         prev.map((item) =>
-          item._id == trade._id ? { ...item, ...trade } : item
+          item._id == trade._id
+            ? { ...item, tradeHigh, tradeLow, status }
+            : item
         )
       );
     });
