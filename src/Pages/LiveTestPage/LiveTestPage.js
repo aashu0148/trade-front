@@ -6,16 +6,24 @@ import InputControl from "Components/InputControl/InputControl";
 import InputSelect from "Components/InputControl/InputSelect/InputSelect";
 import Button from "Components/Button/Button";
 import Spinner from "Components/Spinner/Spinner";
+import TradeApproveModal from "Pages/TradePage/TradeApproveModal/TradeApproveModal";
 
-import { getDateFormatted, getTimeFormatted } from "utils/util";
+import {
+  getDateFormatted,
+  getTimeFormatted,
+  generateUniqueString,
+} from "utils/util";
+import { takeTrades } from "utils/tradeUtil";
 import { getBestStockPresets, getStocksData } from "apis/trade";
 import { AppContext } from "App";
 
 import styles from "./LiveTestPage.module.scss";
+import TradesModal from "Pages/CalendarPage/TradesModal/TradesModal";
 
 let timeout,
   chartSpeed = 100,
-  currChartIndex = 200;
+  currChartIndex = 200,
+  isChartStrictlyPaused = false;
 function LiveTestPage() {
   const candleSeries = useRef({});
 
@@ -30,11 +38,13 @@ function LiveTestPage() {
   const [stocksData, setStocksData] = useState({});
   const [selectedStock, setSelectedStock] = useState({});
   const [stockPresets, setStockPresets] = useState({});
+  const [loadingPage, setLoadingPage] = useState(true);
+  const [tradesTaken, setTradesTaken] = useState([]);
+  const [tradeToApprove, setTradeToApprove] = useState({});
   const [disabledButtons, setDisabledButtons] = useState({
     savePresetToDb: false,
     fetchStockData: false,
   });
-  const [loadingPage, setLoadingPage] = useState(true);
   const [timeFrame, setTimeFrame] = useState({
     start: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000),
     end: new Date(),
@@ -54,17 +64,194 @@ function LiveTestPage() {
     })),
   ].filter((item) => item.data["5"]?.c?.length);
 
-  const pauseChart = () => {
-    setChartDetails((prev) => ({ ...prev, running: false }));
-    clearTimeout(timeout);
+  const handleApprovalDecision = (values, isApproved) => {
+    const trade = {
+      ...tradeToApprove,
+      ...values,
+      isApproved: isApproved ? true : false,
+    };
+    const tempTrades = [...tradesTaken];
+    tempTrades[tempTrades.length - 1] = { ...trade };
+
+    setTradeToApprove({});
+    setTradesTaken(tempTrades);
+    isChartStrictlyPaused = false;
+    playChart();
   };
 
-  const playChart = () => {
-    setChartDetails((prev) => ({ ...prev, running: true }));
-    timeout = setTimeout(() => updateChartData(currChartIndex), chartSpeed);
+  const analyzeTakenTrades = () => {
+    const checkTradeCompletion = (
+      triggerPrice,
+      priceData,
+      target,
+      sl,
+      isSellTrade = false
+    ) => {
+      let statusNumber = 0,
+        tradeHigh,
+        tradeLow;
+      if (
+        !triggerPrice ||
+        !target ||
+        !sl ||
+        !Array.isArray(priceData?.c) ||
+        !priceData?.c?.length
+      )
+        return {
+          statusNumber,
+          tradeHigh,
+          tradeLow,
+        };
+
+      tradeHigh = priceData.h[0];
+      tradeLow = priceData.l[0];
+      for (let i = 0; i < priceData.c.length; ++i) {
+        const l = priceData.l[i];
+        const h = priceData.h[i];
+
+        if (h > tradeHigh) tradeHigh = h;
+        else if (l < tradeLow) tradeLow = l;
+
+        if (
+          statusNumber == 0 &&
+          ((isSellTrade && l < target) || (!isSellTrade && h > target))
+        ) {
+          statusNumber = 1;
+        }
+        if (
+          statusNumber == 0 &&
+          ((isSellTrade && h >= sl) || (!isSellTrade && l <= sl))
+        ) {
+          statusNumber = -1;
+        }
+      }
+
+      return {
+        statusNumber,
+        tradeHigh,
+        tradeLow,
+      };
+    };
+
+    tradesTaken.forEach((trade) => {
+      if (
+        trade.status == "profit" ||
+        trade.status == "loss" ||
+        trade.status == "unfinished"
+      )
+        return;
+
+      const currTradeHigh = trade.tradeHigh || 0;
+      const currTradeLow = trade.tradeLow || 9999999;
+      const isSellTrade = trade.type.toLowerCase() == "sell";
+
+      const data = selectedStock.data ? selectedStock.data["5"] : {};
+      if (!data?.c?.length) return;
+
+      const tradeTimeInSec = trade.time / 1000;
+      const timeIndex = data.t.findIndex((t) => t >= tradeTimeInSec);
+      if (timeIndex < 0) return;
+
+      const { statusNumber, tradeHigh, tradeLow } = checkTradeCompletion(
+        trade.startPrice,
+        {
+          c: data.c.slice(timeIndex, currChartIndex + 1),
+          o: data.o.slice(timeIndex, currChartIndex + 1),
+          h: data.h.slice(timeIndex, currChartIndex + 1),
+          l: data.l.slice(timeIndex, currChartIndex + 1),
+          t: data.t.slice(timeIndex, currChartIndex + 1),
+        },
+        trade.target,
+        trade.sl,
+        isSellTrade
+      );
+
+      const currentTime = data.t[currChartIndex + 1];
+      const currentDate = new Date(currentTime * 1000).toLocaleDateString(
+        "en-in"
+      );
+
+      const status =
+        trade.date !== currentDate
+          ? "unfinished"
+          : statusNumber == 1
+          ? "profit"
+          : statusNumber == -1
+          ? "loss"
+          : "taken";
+
+      trade.tradeHigh = tradeHigh;
+      trade.tradeLow = tradeLow;
+
+      if (status == trade.status) {
+        if (tradeHigh !== currTradeHigh || tradeLow !== currTradeLow) {
+          setTradesTaken((prev) =>
+            prev.map((item) =>
+              item._id == trade._id ? { ...item, ...trade } : item
+            )
+          );
+        }
+        return;
+      }
+
+      // update the trade status
+      trade.status = status;
+      setTradesTaken((prev) =>
+        prev.map((item) =>
+          item._id == trade._id ? { ...item, ...trade } : item
+        )
+      );
+    });
   };
 
-  function updateChartData(nextIndex) {
+  const takeTradeOnNewData = async () => {
+    const preset = stockPresets[selectedStock.value] || {};
+    const stockData = {
+      5: {
+        t: selectedStock.data["5"].t.slice(0, currChartIndex + 1),
+        v: selectedStock.data["5"].v.slice(0, currChartIndex + 1),
+        c: selectedStock.data["5"].c.slice(0, currChartIndex + 1),
+        o: selectedStock.data["5"].o.slice(0, currChartIndex + 1),
+        h: selectedStock.data["5"].h.slice(0, currChartIndex + 1),
+        l: selectedStock.data["5"].l.slice(0, currChartIndex + 1),
+      },
+    };
+    const { trades } = await takeTrades(stockData, preset, true);
+    if (!trades.length) {
+      // console.log(`🟡No trades to take!`);
+      return;
+    }
+
+    const isAllowedToTakeThisTrade = () => {
+      const unfinishedSimilarTrades = Array.from(tradesTaken).filter(
+        (item) =>
+          item.status == "taken" &&
+          (item.isApproved == true || item.isApproved == undefined)
+      );
+
+      return unfinishedSimilarTrades.length > 0 ? false : true;
+    };
+
+    const tradeObj = {
+      _id: generateUniqueString(),
+      name: selectedStock.value,
+      symbol: selectedStock.value,
+      ...trades[0],
+      status: "taken",
+      time: trades[0]?.time ? trades[0].time * 1000 : Date.now(),
+    };
+    tradeObj.date = new Date(tradeObj.time).toLocaleDateString("en-in");
+
+    if (!isAllowedToTakeThisTrade()) return;
+
+    setTradesTaken((prev) => [...prev, tradeObj]);
+    pauseChart();
+    setTradeToApprove(tradeObj);
+    isChartStrictlyPaused = true;
+    console.log("🟢Trade taken");
+  };
+
+  async function updateChartData(nextIndex) {
     currChartIndex = nextIndex;
     const selectedStockDataLength = selectedStock.data["5"]
       ? selectedStock.data["5"].c?.length || 0
@@ -87,7 +274,23 @@ function LiveTestPage() {
 
     candleSeries.current.update(data);
 
-    timeout = setTimeout(() => updateChartData(nextIndex + 1), chartSpeed);
+    await takeTradeOnNewData();
+    analyzeTakenTrades();
+
+    if (!isChartStrictlyPaused)
+      timeout = setTimeout(() => updateChartData(nextIndex + 1), chartSpeed);
+  }
+
+  function pauseChart() {
+    setChartDetails((prev) => ({ ...prev, running: false }));
+    clearTimeout(timeout);
+  }
+
+  function playChart() {
+    if (isChartStrictlyPaused) return;
+
+    setChartDetails((prev) => ({ ...prev, running: true }));
+    timeout = setTimeout(() => updateChartData(currChartIndex), chartSpeed);
   }
 
   const handleClearChart = () => {
@@ -100,9 +303,12 @@ function LiveTestPage() {
 
     clearTimeout(timeout);
     setChartDetails({});
+    setTradeToApprove([]);
+    setTradesTaken([]);
+    isChartStrictlyPaused = false;
   };
 
-  const handleStartTest = () => {
+  const handleStartChart = () => {
     if (!selectedStock.data["5"]) return;
 
     const chartElem = document.querySelector("#chart");
@@ -359,22 +565,59 @@ function LiveTestPage() {
               </Button>
             </>
           ) : (
-            <Button onClick={handleStartTest}>Start chart</Button>
+            <Button onClick={handleStartChart}>Start chart</Button>
           )}
         </div>
       ) : (
         ""
       )}
 
-      <div className={styles.chartOuter}>
-        {chartDetails.built ? tooltipDiv : ""}
-        <div
-          id="chart"
-          className={`${styles.chart} ${
-            appContext.mobileView ? styles.shortChart : ""
-          }`}
-        />
+      <div className={styles.body}>
+        <div className={styles.chartOuter}>
+          {chartDetails.built ? tooltipDiv : ""}
+          <div
+            id="chart"
+            className={`${styles.chart} ${
+              appContext.mobileView ? styles.shortChart : ""
+            }`}
+          />
+        </div>
+
+        <div>
+          <div className={styles.tradeDiv}>
+            {tradeToApprove?.symbol ? (
+              <TradeApproveModal
+                className={styles.tradeForm}
+                tradeDetails={tradeToApprove}
+                lrp={
+                  selectedStock.data && selectedStock.data["5"]
+                    ? selectedStock.data["5"].c[currChartIndex]
+                    : ""
+                }
+                onDecision={handleApprovalDecision}
+                staticModal
+                withoutChart
+                withoutModal
+              />
+            ) : (
+              ""
+            )}
+          </div>
+        </div>
       </div>
+
+      <TradesModal
+        lrps={{
+          [selectedStock.value]:
+            selectedStock.data && selectedStock.data["5"]
+              ? selectedStock.data["5"].c[currChartIndex]
+              : "",
+        }}
+        className={styles.allTrades}
+        trades={tradesTaken}
+        withoutModal
+        hideTime
+      />
     </div>
   );
 }

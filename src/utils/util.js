@@ -33,8 +33,10 @@ export const copyToClipboard = (text, hideToast = false) => {
   navigator.clipboard.writeText(text);
 };
 
-export const generateUniqueString = () =>
-  (Date.now() + "" + parseInt(Math.random() * 9999999)).toString(16).slice(-10);
+export const generateUniqueString = (idLength = 10) =>
+  (Date.now() + parseInt(Math.random() * 99999999999))
+    .toString(16)
+    .slice(-1 * idLength);
 
 export const errorToastLogger = (
   functionName,

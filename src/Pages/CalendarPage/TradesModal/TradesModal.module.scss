@@ -8,6 +8,12 @@
   flex-direction: column;
   gap: 25px;
 
+  .section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
   .cards {
     display: flex;
     flex-wrap: wrap;

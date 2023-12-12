@@ -53,7 +53,9 @@ function TradeCard({
               (isBuyTrade && trade.status == "loss") ||
               (!isBuyTrade && trade.status == "profit")
                 ? 100
-                : trade.status == "loss" || trade.status == "profit"
+                : trade.status == "loss" ||
+                  trade.status == "profit" ||
+                  trade.status == "unfinished"
                 ? 0
                 : lrp < trigger && !isBuyTrade
                 ? ((trigger - lrp) / (trigger - target)) * 100
@@ -74,7 +76,9 @@ function TradeCard({
               (isBuyTrade && trade.status == "profit") ||
               (!isBuyTrade && trade.status == "loss")
                 ? 100
-                : trade.status == "loss" || trade.status == "profit"
+                : trade.status == "loss" ||
+                  trade.status == "profit" ||
+                  trade.status == "unfinished"
                 ? 0
                 : lrp > trigger && isBuyTrade
                 ? ((lrp - trigger) / (target - trigger)) * 100
