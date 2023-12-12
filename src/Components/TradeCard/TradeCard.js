@@ -175,37 +175,48 @@ function TradeCard({
         <p className={styles.price}>@{trigger.toFixed(2)}</p>
       </div>
 
-      <div className={styles.footer}>
-        {hideChartButton ? (
-          ""
+      <div>
+        {lrp ? (
+          <div className={styles.footer}>
+            <label className={styles.label}>
+              LRP: <span>{lrp}</span>
+            </label>
+          </div>
         ) : (
-          <p
-            className={styles.btn}
-            onClick={() => (onViewChart ? onViewChart(trade) : "")}
-          >
-            Chart
-          </p>
+          ""
         )}
+        <div className={styles.footer}>
+          {hideChartButton ? (
+            ""
+          ) : (
+            <p
+              className={styles.btn}
+              onClick={() => (onViewChart ? onViewChart(trade) : "")}
+            >
+              Chart
+            </p>
+          )}
 
-        <p className={styles.time}>
-          {getTimeFormatted(timestamp)}{" "}
-          {showDateWithTime ? getDateFormatted(timestamp, true) : ""}
-        </p>
+          <p className={styles.time}>
+            {getTimeFormatted(timestamp)}{" "}
+            {showDateWithTime ? getDateFormatted(timestamp, true) : ""}
+          </p>
+        </div>
+
+        {typeof trade.isApproved !== "boolean" &&
+        Date.now() - trade.time < 4 * 60 * 1000 ? (
+          <Button
+            className={styles.approve}
+            onClick={() => {
+              if (onApprove) onApprove(trade);
+            }}
+          >
+            Approve
+          </Button>
+        ) : (
+          ""
+        )}
       </div>
-
-      {typeof trade.isApproved !== "boolean" &&
-      Date.now() - trade.time < 4 * 60 * 1000 ? (
-        <Button
-          className={styles.approve}
-          onClick={() => {
-            if (onApprove) onApprove(trade);
-          }}
-        >
-          Approve
-        </Button>
-      ) : (
-        ""
-      )}
     </div>
   );
 }
