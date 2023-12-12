@@ -21,7 +21,7 @@ import { AppContext } from "App";
 import styles from "./LiveTestPage.module.scss";
 
 let timeout,
-  chartSpeed = 100,
+  chartSpeed = 50,
   currChartIndex = 200,
   isChartStrictlyPaused = false;
 function LiveTestPage() {
