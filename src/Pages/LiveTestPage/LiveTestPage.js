@@ -26,6 +26,7 @@ let timeout,
   isChartStrictlyPaused = false;
 function LiveTestPage() {
   const candleSeries = useRef({});
+  const tradesRef = useRef([]);
 
   const appContext = useContext(AppContext);
   const [tooltipDetails, setTooltipDetails] = useState({
@@ -76,6 +77,7 @@ function LiveTestPage() {
     setTradeToApprove({});
     setTradesTaken(tempTrades);
     isChartStrictlyPaused = false;
+    currChartIndex++;
     playChart();
   };
 
@@ -133,7 +135,7 @@ function LiveTestPage() {
       };
     };
 
-    tradesTaken.forEach((trade) => {
+    tradesRef.current.forEach((trade) => {
       if (
         trade.status == "profit" ||
         trade.status == "loss" ||
@@ -221,7 +223,7 @@ function LiveTestPage() {
     }
 
     const isAllowedToTakeThisTrade = () => {
-      const unfinishedSimilarTrades = Array.from(tradesTaken).filter(
+      const unfinishedSimilarTrades = Array.from(tradesRef.current).filter(
         (item) =>
           item.status == "taken" &&
           (item.isApproved == true || item.isApproved == undefined)
@@ -450,6 +452,10 @@ function LiveTestPage() {
       }, {})
     );
   };
+
+  useEffect(() => {
+    tradesRef.current = [...tradesTaken];
+  }, [tradesTaken]);
 
   useEffect(() => {
     handleClearChart();
