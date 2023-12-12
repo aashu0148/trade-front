@@ -6,6 +6,7 @@ import InputControl from "Components/InputControl/InputControl";
 import InputSelect from "Components/InputControl/InputSelect/InputSelect";
 import Button from "Components/Button/Button";
 import Spinner from "Components/Spinner/Spinner";
+import TradesModal from "Pages/CalendarPage/TradesModal/TradesModal";
 import TradeApproveModal from "Pages/TradePage/TradeApproveModal/TradeApproveModal";
 
 import {
@@ -18,7 +19,6 @@ import { getBestStockPresets, getStocksData } from "apis/trade";
 import { AppContext } from "App";
 
 import styles from "./LiveTestPage.module.scss";
-import TradesModal from "Pages/CalendarPage/TradesModal/TradesModal";
 
 let timeout,
   chartSpeed = 100,
@@ -615,6 +615,7 @@ function LiveTestPage() {
         }}
         className={styles.allTrades}
         trades={tradesTaken}
+        showDateInCard
         withoutModal
         hideTime
       />
