@@ -26,6 +26,8 @@ let timeout,
   isChartStrictlyPaused = false;
 function LiveTestPage() {
   const candleSeries = useRef({});
+  const vwapSeries = useRef({});
+  const psarSeries = useRef({});
   const tradesRef = useRef([]);
 
   const appContext = useContext(AppContext);
@@ -216,7 +218,17 @@ function LiveTestPage() {
         l: selectedStock.data["5"].l.slice(0, currChartIndex + 1),
       },
     };
-    const { trades } = await takeTrades(stockData, preset, true);
+    const { trades, indicators } = await takeTrades(stockData, preset, true);
+
+    vwapSeries.current.update({
+      time: stockData["5"].t[currChartIndex],
+      value: indicators.vwap[currChartIndex],
+    });
+    psarSeries.current.update({
+      time: stockData["5"].t[currChartIndex],
+      value: indicators.psar[currChartIndex],
+    });
+
     if (!trades.length) {
       // console.log(`🟡No trades to take!`);
       return;
@@ -308,7 +320,7 @@ function LiveTestPage() {
     isChartStrictlyPaused = false;
   };
 
-  const handleStartChart = () => {
+  const handleStartChart = async () => {
     if (!selectedStock.data["5"]) return;
 
     const chartElem = document.querySelector("#chart");
@@ -329,6 +341,20 @@ function LiveTestPage() {
         secondsVisible: false,
       },
       pane: 0,
+    });
+
+    const stockData = {
+      5: {
+        t: selectedStock.data["5"].t.slice(0, currChartIndex + 1),
+        v: selectedStock.data["5"].v.slice(0, currChartIndex + 1),
+        c: selectedStock.data["5"].c.slice(0, currChartIndex + 1),
+        o: selectedStock.data["5"].o.slice(0, currChartIndex + 1),
+        h: selectedStock.data["5"].h.slice(0, currChartIndex + 1),
+        l: selectedStock.data["5"].l.slice(0, currChartIndex + 1),
+      },
+    };
+    const { indicators } = await takeTrades(stockData, {
+      additionalIndicators: { vwap: true, psar: true, sma: true },
     });
 
     candleSeries.current = chart.addCandlestickSeries({
@@ -403,6 +429,34 @@ function LiveTestPage() {
         });
       }
     });
+
+    // vwap
+    vwapSeries.current = chart.addLineSeries({
+      priceFormat: { type: "price" },
+      color: "orange",
+      lineWidth: 2,
+      pane: 0,
+    });
+    vwapSeries.current.setData(
+      stockData["5"].c.map((_e, i) => ({
+        time: stockData["5"].t[i],
+        value: indicators.vwap ? indicators.vwap[i] : "",
+      }))
+    );
+
+    // psar
+    psarSeries.current = chart.addLineSeries({
+      priceFormat: { type: "price" },
+      color: "gray",
+      lineWidth: 2,
+      pane: 0,
+    });
+    psarSeries.current.setData(
+      stockData["5"].c.map((_e, i) => ({
+        time: stockData["5"].t[i],
+        value: indicators.psar ? indicators.psar[i] : "",
+      }))
+    );
 
     chart.timeScale().fitContent();
     currChartIndex = 200;
@@ -578,6 +632,27 @@ function LiveTestPage() {
 
       <div className={styles.body}>
         <div className={styles.chartOuter}>
+          {chartDetails.built ? (
+            <div className={styles.legends}>
+              <label>
+                VWAP:
+                <span
+                  className={styles.swatch}
+                  style={{ backgroundColor: "orange" }}
+                />
+              </label>
+              <label>
+                PSAR:
+                <span
+                  className={styles.swatch}
+                  style={{ backgroundColor: "gray" }}
+                />
+              </label>
+            </div>
+          ) : (
+            ""
+          )}
+
           {chartDetails.built ? tooltipDiv : ""}
           <div
             id="chart"
