@@ -107,7 +107,7 @@ export const indicatorsWeightEnum = {
   tl: 2,
   engulf: 2,
   sr15min: 2,
-  allStar: 3,
+  allStar: 1,
   br: 2,
   macd: 1.5,
   rsi: 1,
@@ -1665,6 +1665,7 @@ export const takeTrades = async (
         ? signalEnum.buy
         : signalEnum.hold;
     const psarSignal = getPsarSignal(i);
+    const isSideways = isStockSideways(i);
 
     let brSignal, tlSignal;
 
@@ -1917,11 +1918,15 @@ export const takeTrades = async (
     };
     calculateFurtherIndicatorsSignals();
 
-    const additionalIndicatorsWeight =
+    let additionalIndicatorsWeight =
       furtherIndicatorSignals.reduce(
         (acc, curr) => (curr.weight || 0) + acc,
         0
       ) || 0;
+    if (isSideways) {
+      if (additionalIndicatorsWeight < 0) additionalIndicatorsWeight++;
+      else if (additionalIndicatorsWeight > 0) additionalIndicatorsWeight--;
+    }
 
     const decisionMakingPoint = decisionMakingPoints || 3;
 
@@ -1950,6 +1955,7 @@ export const takeTrades = async (
       furtherIndicatorSignals,
       isBuySignal,
       isSellSignal,
+      isSideways,
     });
 
     if (!isBuySignal && !isSellSignal) {
