@@ -187,6 +187,34 @@ function StockChart({
       ]);
     });
 
+    // VWAP
+    const vwapSeries = chart.addLineSeries({
+      priceFormat: { type: "price" },
+      color: "orange",
+      lineWidth: 1,
+      pane: 0,
+    });
+    vwapSeries.setData(
+      stockData["5"].c.map((item, i) => ({
+        time: stockData["5"].t[i],
+        value: indicators.vwap ? indicators.vwap[i] : "",
+      }))
+    );
+
+    // PSAR
+    const psarSeries = chart.addLineSeries({
+      priceFormat: { type: "price" },
+      color: "gray",
+      lineWidth: 1,
+      pane: 0,
+    });
+    psarSeries.setData(
+      stockData["5"].c.map((_e, i) => ({
+        time: stockData["5"].t[i],
+        value: indicators.psar ? indicators.psar[i] : "",
+      }))
+    );
+
     // MACD
     const macdSeries = chart.addLineSeries({
       priceFormat: { type: "price" },

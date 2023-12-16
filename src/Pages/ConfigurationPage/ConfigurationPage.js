@@ -18,6 +18,7 @@ import {
 import { copyToClipboard } from "utils/util";
 import {
   defaultTradePreset,
+  indicatorEnum,
   indicatorsWeightEnum,
   takeTrades,
 } from "utils/tradeUtil";
@@ -47,12 +48,16 @@ const optionalIndicators = [
   //   value: "trend",
   // },
   {
+    label: "All star" + ` (${indicatorsWeightEnum.allStar} point)`,
+    value: [indicatorEnum.allStar],
+  },
+  {
     label: "Bollinger band" + ` (${indicatorsWeightEnum.bollingerBand} point)`,
     value: "bollinger",
   },
   {
-    label: "Moving average" + ` (${indicatorsWeightEnum.sma} point)`,
-    value: "sma",
+    label: "Moving average" + ` (${indicatorsWeightEnum.ema} point)`,
+    value: [indicatorEnum.ema],
   },
   {
     label: "RSI" + ` (${indicatorsWeightEnum.rsi} point)`,
@@ -319,7 +324,7 @@ function ConfigurationPage() {
       // nothing
     }
 
-    fetchStockData();
+    if (!Object.keys(stocksData).length) fetchStockData();
     fetchBestStockPreset();
   }, []);
 
@@ -419,25 +424,8 @@ function ConfigurationPage() {
               disabled={!selectedStock?.value}
             />
           </div>
-          <div className="row" style={{ alignItems: "center" }}>
+          {/* <div className="row" style={{ alignItems: "center" }}>
             <MultiSelect
-              id={JSON.stringify(values.useSRsToNeglectTrades)}
-              options={[
-                {
-                  label: `Use SR to neglect trades`,
-                  value: "useSRsToNeglectTrades",
-                  selected: values.useSRsToNeglectTrades,
-                },
-              ]}
-              onChange={(obj) =>
-                setValues((prev) => ({
-                  ...prev,
-                  useSRsToNeglectTrades: obj[0].selected,
-                }))
-              }
-            />
-
-            {/* <MultiSelect
               id={JSON.stringify(values.reverseTheTradingLogic)}
               options={[
                 {
@@ -452,8 +440,8 @@ function ConfigurationPage() {
                   reverseTheTradingLogic: obj[0].selected,
                 }))
               }
-            /> */}
-          </div>
+            /> 
+          </div> */}
           <div className="row">
             <InputControl
               placeholder="Enter number"
