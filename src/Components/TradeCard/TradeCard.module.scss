@@ -148,20 +148,20 @@
     margin-left: auto;
   }
 
+  .label {
+    font-size: 14px;
+
+    span {
+      font: inherit;
+      font-weight: 700;
+    }
+  }
+
   .footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 10px;
-
-    .label {
-      font-size: 14px;
-
-      span {
-        font: inherit;
-        font-weight: 700;
-      }
-    }
 
     .btn {
       font-size: 14px;

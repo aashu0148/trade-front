@@ -160,7 +160,20 @@ function TradeCard({
           : ""
       }`}
     >
-      {tradeBar}
+      {trade.status == "limit" || trade.status == "cancelled" ? (
+        <div style={{ textAlign: "center" }}>
+          <div className={styles.top}>
+            <p className={styles.name} style={{ textTransform: "capitalize" }}>
+              {trade.status} order
+            </p>
+          </div>
+          <label className={styles.label}>
+            Target: <span>{trade.target}</span> SL: <span>{trade.sl}</span>
+          </label>
+        </div>
+      ) : (
+        tradeBar
+      )}
 
       <div className={styles.top}>
         <p

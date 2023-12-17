@@ -15,11 +15,29 @@ function TradesModal({
   hideTime = false,
   showDateInCard = false,
   withoutModal = false,
+  hideCancelledOrders = false,
 }) {
   const segregatedTrades = {
-    approved: trades.filter((item) => item.isApproved),
-    rejected: trades.filter((item) => item.isApproved == false),
-    ignored: trades.filter((item) => item.isApproved == undefined),
+    limit: trades.filter((item) => item.status == "limit"),
+    cancelled: trades.filter((item) => item.status == "cancelled"),
+    approved: trades.filter(
+      (item) =>
+        item.status !== "limit" &&
+        item.status !== "cancelled" &&
+        item.isApproved
+    ),
+    rejected: trades.filter(
+      (item) =>
+        item.status !== "limit" &&
+        item.status !== "cancelled" &&
+        item.isApproved == false
+    ),
+    ignored: trades.filter(
+      (item) =>
+        item.status !== "limit" &&
+        item.status !== "cancelled" &&
+        item.isApproved == undefined
+    ),
   };
 
   const getTradesSection = (filteredTrades, title) => {
@@ -52,6 +70,10 @@ function TradesModal({
         </p>
       )}
 
+      {segregatedTrades.limit.length
+        ? getTradesSection(segregatedTrades.limit, "Limit orders")
+        : ""}
+
       {segregatedTrades.approved.length
         ? getTradesSection(segregatedTrades.approved, "Approved trades")
         : ""}
@@ -62,6 +84,10 @@ function TradesModal({
 
       {segregatedTrades.rejected.length
         ? getTradesSection(segregatedTrades.rejected, "Rejected trades")
+        : ""}
+
+      {segregatedTrades.cancelled.length && !hideCancelledOrders
+        ? getTradesSection(segregatedTrades.cancelled, "Cancelled orders")
         : ""}
     </div>
   );

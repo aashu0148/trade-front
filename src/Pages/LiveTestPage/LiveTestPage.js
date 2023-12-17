@@ -19,6 +19,7 @@ import { getBestStockPresets, getStocksData } from "apis/trade";
 import { AppContext } from "App";
 
 import styles from "./LiveTestPage.module.scss";
+import { analyzeTradesForCompletion } from "utils/tradeMaintainanceUtil";
 
 let timeout,
   chartSpeed = 50,
@@ -68,142 +69,39 @@ function LiveTestPage() {
   ].filter((item) => item.data["5"]?.c?.length);
 
   const handleApprovalDecision = (values, isApproved) => {
+    const stockData = selectedStock.data["5"] || {};
+    const prices = {
+      high:
+        stockData.h[currChartIndex] > stockData.h[currChartIndex - 1]
+          ? stockData.h[currChartIndex]
+          : stockData.h[currChartIndex - 1],
+      low:
+        stockData.l[currChartIndex] < stockData.l[currChartIndex - 1]
+          ? stockData.l[currChartIndex]
+          : stockData.l[currChartIndex - 1],
+    };
+
     const trade = {
       ...tradeToApprove,
       ...values,
       isApproved: isApproved ? true : false,
     };
+
+    if (trade.startPrice > prices.low && trade.startPrice < prices.high)
+      trade.status = "taken";
+    else {
+      trade.status = "limit";
+      trade.limitIndex = currChartIndex;
+    }
+
     const tempTrades = [...tradesTaken];
-    tempTrades[tempTrades.length - 1] = { ...trade };
+    tempTrades[tempTrades.length ? tempTrades.length - 1 : 0] = { ...trade };
 
     setTradeToApprove({});
     setTradesTaken(tempTrades);
     isChartStrictlyPaused = false;
     currChartIndex++;
     playChart();
-  };
-
-  const analyzeTakenTrades = () => {
-    const checkTradeCompletion = (
-      triggerPrice,
-      priceData,
-      target,
-      sl,
-      isSellTrade = false
-    ) => {
-      let statusNumber = 0,
-        tradeHigh,
-        tradeLow;
-      if (
-        !triggerPrice ||
-        !target ||
-        !sl ||
-        !Array.isArray(priceData?.c) ||
-        !priceData?.c?.length
-      )
-        return {
-          statusNumber,
-          tradeHigh,
-          tradeLow,
-        };
-
-      tradeHigh = priceData.h[0];
-      tradeLow = priceData.l[0];
-      for (let i = 0; i < priceData.c.length; ++i) {
-        const l = priceData.l[i];
-        const h = priceData.h[i];
-
-        if (h > tradeHigh) tradeHigh = h;
-        else if (l < tradeLow) tradeLow = l;
-
-        if (
-          statusNumber == 0 &&
-          ((isSellTrade && l < target) || (!isSellTrade && h > target))
-        ) {
-          statusNumber = 1;
-        }
-        if (
-          statusNumber == 0 &&
-          ((isSellTrade && h >= sl) || (!isSellTrade && l <= sl))
-        ) {
-          statusNumber = -1;
-        }
-      }
-
-      return {
-        statusNumber,
-        tradeHigh,
-        tradeLow,
-      };
-    };
-
-    tradesRef.current.forEach((trade) => {
-      if (
-        trade.status == "profit" ||
-        trade.status == "loss" ||
-        trade.status == "unfinished"
-      )
-        return;
-
-      const currTradeHigh = trade.tradeHigh || 0;
-      const currTradeLow = trade.tradeLow || 9999999;
-      const isSellTrade = trade.type.toLowerCase() == "sell";
-
-      const data = selectedStock.data ? selectedStock.data["5"] : {};
-      if (!data?.c?.length) return;
-
-      const tradeTimeInSec = trade.time / 1000;
-      const timeIndex = data.t.findIndex((t) => t >= tradeTimeInSec);
-      if (timeIndex < 0) return;
-
-      const { statusNumber, tradeHigh, tradeLow } = checkTradeCompletion(
-        trade.startPrice,
-        {
-          c: data.c.slice(timeIndex, currChartIndex + 1),
-          o: data.o.slice(timeIndex, currChartIndex + 1),
-          h: data.h.slice(timeIndex, currChartIndex + 1),
-          l: data.l.slice(timeIndex, currChartIndex + 1),
-          t: data.t.slice(timeIndex, currChartIndex + 1),
-        },
-        trade.target,
-        trade.sl,
-        isSellTrade
-      );
-
-      const currentTime = data.t[currChartIndex + 1];
-      const currentDate = new Date(currentTime * 1000).toLocaleDateString(
-        "en-in"
-      );
-
-      const status =
-        trade.date !== currentDate
-          ? "unfinished"
-          : statusNumber == 1
-          ? "profit"
-          : statusNumber == -1
-          ? "loss"
-          : "taken";
-
-      if (status == trade.status) {
-        if (tradeHigh !== currTradeHigh || tradeLow !== currTradeLow) {
-          setTradesTaken((prev) =>
-            prev.map((item) =>
-              item._id == trade._id ? { ...item, tradeHigh, tradeLow } : item
-            )
-          );
-        }
-        return;
-      }
-
-      // update the trade status
-      setTradesTaken((prev) =>
-        prev.map((item) =>
-          item._id == trade._id
-            ? { ...item, tradeHigh, tradeLow, status }
-            : item
-        )
-      );
-    });
   };
 
   const takeTradeOnNewData = async () => {
@@ -234,11 +132,12 @@ function LiveTestPage() {
       return;
     }
 
-    const isAllowedToTakeThisTrade = () => {
+    const isAllowedToTakeThisTrade = (trade) => {
       const unfinishedSimilarTrades = Array.from(tradesRef.current).filter(
         (item) =>
-          item.status == "taken" &&
-          (item.isApproved == true || item.isApproved == undefined)
+          (item.status == "taken" &&
+            (item.isApproved == true || item.isApproved == undefined)) ||
+          (item.status == "limit" && item.type == trade.type)
       );
 
       return unfinishedSimilarTrades.length > 0 ? false : true;
@@ -254,7 +153,7 @@ function LiveTestPage() {
     };
     tradeObj.date = new Date(tradeObj.time).toLocaleDateString("en-in");
 
-    if (!isAllowedToTakeThisTrade()) return;
+    if (!isAllowedToTakeThisTrade(tradeObj)) return;
 
     setTradesTaken((prev) => [...prev, tradeObj]);
     pauseChart();
@@ -286,8 +185,14 @@ function LiveTestPage() {
 
     candleSeries.current.update(data);
 
+    const analyzedTrades = analyzeTradesForCompletion(
+      tradesRef.current,
+      currChartIndex,
+      selectedStock.data["5"]
+    );
+    if (analyzedTrades) setTradesTaken(analyzedTrades);
+
     await takeTradeOnNewData();
-    analyzeTakenTrades();
 
     if (!isChartStrictlyPaused)
       timeout = setTimeout(() => updateChartData(nextIndex + 1), chartSpeed);
@@ -516,7 +421,7 @@ function LiveTestPage() {
   }, [selectedStock]);
 
   useEffect(() => {
-    fetchStockData();
+    if (!Object.keys(stocksData).length) fetchStockData();
     fetchBestStockPreset();
 
     return () => {
