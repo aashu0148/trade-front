@@ -33,6 +33,16 @@ export const copyToClipboard = (text, hideToast = false) => {
   navigator.clipboard.writeText(text);
 };
 
+export const getDebounceFunc = () => {
+  let timeout;
+
+  return (func, time = 200) => {
+    clearTimeout(timeout);
+
+    timeout = setTimeout(func, time);
+  };
+};
+
 export const generateUniqueString = (idLength = 10) =>
   (Date.now() + parseInt(Math.random() * 99999999999))
     .toString(16)

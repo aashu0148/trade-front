@@ -5,6 +5,7 @@ import Modal from "Components/Modal/Modal";
 import Button from "Components/Button/Button";
 import InputControl from "Components/InputControl/InputControl";
 import StockChart from "../StockChart/StockChart";
+import Slider from "Components/Slider/Slider";
 import Toggle from "Components/Toggle/Toggle";
 
 import { updateTrade } from "apis/trade";
@@ -25,10 +26,10 @@ function TradeApproveModal({
   staticModal = false,
 }) {
   const [values, setValues] = useState({
-    startPrice: tradeDetails.startPrice,
+    startPrice: parseFloat(tradeDetails.startPrice.toFixed(3)),
     type: tradeDetails.type,
-    target: tradeDetails.target,
-    sl: tradeDetails.sl,
+    target: parseFloat(tradeDetails.target.toFixed(3)),
+    sl: parseFloat(tradeDetails.sl.toFixed(3)),
   });
   const [errors, setErrors] = useState({
     startPrice: "",
@@ -99,6 +100,66 @@ function TradeApproveModal({
     toast.success("Trade updated successfully");
     if (onSuccess) onSuccess(res.data);
   };
+
+  const handleSliderChange = (newVal) => {
+    let sl, target, trigger;
+    if (values.type == "buy") [sl, trigger, target] = newVal;
+    else [target, trigger, sl] = newVal;
+
+    setValues((prev) => ({ ...prev, target, startPrice: trigger, sl }));
+  };
+
+  const getSliderDetails = () => {
+    let val = [],
+      labels = [];
+    const threePercent = (3 / 100) * values.startPrice;
+
+    const min = values.startPrice - threePercent;
+    const max = values.startPrice + threePercent;
+
+    if (values.type == "buy") {
+      val = [values.sl, values.startPrice, values.target];
+      labels = [
+        {
+          value: values.sl,
+          label: "SL",
+          style: { background: "red", borderColor: "red" },
+        },
+        {
+          value: values.startPrice,
+          label: "Trigger",
+          style: { background: "white" },
+        },
+        {
+          value: values.target,
+          label: "Target",
+          style: { background: "green", borderColor: "green" },
+        },
+      ];
+    } else {
+      val = [values.target, values.startPrice, values.sl];
+      labels = [
+        {
+          value: values.target,
+          label: "Target",
+          style: { background: "green", borderColor: "green" },
+        },
+        {
+          value: values.startPrice,
+          label: "Trigger",
+          style: { background: "white" },
+        },
+        {
+          value: values.sl,
+          label: "SL",
+          style: { background: "red", borderColor: "red" },
+        },
+      ];
+    }
+
+    return { value: val, min, max, labels };
+  };
+  const sliderDetails = getSliderDetails();
 
   const approvalJsx = (
     <div className={`${styles.container} ${className || ""}`}>
@@ -224,6 +285,15 @@ function TradeApproveModal({
           />
         </div>
       </div>
+
+      <Slider
+        value={sliderDetails.value}
+        min={sliderDetails.min}
+        max={sliderDetails.max}
+        dotDetails={sliderDetails.labels}
+        onChange={handleSliderChange}
+      />
+      <div />
 
       <div className="footer">
         <Button
