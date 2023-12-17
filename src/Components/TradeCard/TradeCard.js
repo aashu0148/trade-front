@@ -67,11 +67,21 @@ function TradeCard({
       else return 0;
     }
 
+    let finalWidth;
     if (lrp < trigger && !isBuyTrade)
-      return ((trigger - lrp) / (trigger - target)) * 100;
+      finalWidth = ((trigger - lrp) / (trigger - target)) * 100;
     else if (lrp < trigger && isBuyTrade)
-      return ((trigger - lrp) / (trigger - sl)) * 100;
-    else return 0;
+      finalWidth = ((trigger - lrp) / (trigger - sl)) * 100;
+    else finalWidth = 0;
+
+    if (
+      finalWidth < t1PercentOfTarget &&
+      trade.status == "taken" &&
+      t1Succeeded &&
+      !isBuyTrade
+    )
+      return t1PercentOfTarget;
+    else return finalWidth;
   };
 
   const getRightPieceWidth = () => {
@@ -90,11 +100,21 @@ function TradeCard({
       else return 0;
     }
 
+    let finalWidth;
     if (lrp > trigger && isBuyTrade)
-      return ((lrp - trigger) / (target - trigger)) * 100;
+      finalWidth = ((lrp - trigger) / (target - trigger)) * 100;
     else if (lrp > trigger && !isBuyTrade)
-      return ((lrp - trigger) / (sl - trigger)) * 100;
-    else return 0;
+      finalWidth = ((lrp - trigger) / (sl - trigger)) * 100;
+    else finalWidth = 0;
+
+    if (
+      finalWidth < t1PercentOfTarget &&
+      trade.status == "taken" &&
+      t1Succeeded &&
+      isBuyTrade
+    )
+      return t1PercentOfTarget;
+    else return finalWidth;
   };
 
   const tradeBar = (

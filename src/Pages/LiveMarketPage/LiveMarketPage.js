@@ -3,7 +3,6 @@ import { Pause, Play } from "react-feather";
 import { toast } from "react-hot-toast";
 
 import InputControl from "Components/InputControl/InputControl";
-import InputSelect from "Components/InputControl/InputSelect/InputSelect";
 import Button from "Components/Button/Button";
 import Spinner from "Components/Spinner/Spinner";
 import TradesModal from "Pages/CalendarPage/TradesModal/TradesModal";
