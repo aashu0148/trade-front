@@ -23,6 +23,16 @@ function TradeCard({
   const isBuyTrade = trade.type == "buy";
 
   const { startPrice: trigger, tradeHigh, tradeLow, target, sl } = trade;
+  const targetLength = Math.abs(trigger - target);
+  const slLength = Math.abs(trigger - sl);
+  const t1 = isBuyTrade ? trigger + slLength : trigger - slLength;
+  const t1Length = Math.abs(trigger - t1);
+  const t1PercentOfTarget = (t1Length / targetLength) * 100;
+  const t1Succeeded =
+    (isBuyTrade && tradeHigh > t1) || (!isBuyTrade && tradeLow < t1);
+
+  // t1Length should be < 80% of targetLength
+  const useTargetOne = t1PercentOfTarget < 80;
 
   let timestamp = trade.time;
   // if timestamp in seconds
@@ -41,6 +51,52 @@ function TradeCard({
   if (!slPercent) slPercent = 0;
   if (slPercent > 100) slPercent = 100;
 
+  const getLeftPieceWidth = () => {
+    if (
+      (isBuyTrade && trade.status == "loss") ||
+      (!isBuyTrade && trade.status == "profit")
+    )
+      return 100;
+
+    if (
+      trade.status == "loss" ||
+      trade.status == "profit" ||
+      trade.status == "unfinished"
+    ) {
+      if (t1Succeeded && !isBuyTrade) return t1PercentOfTarget;
+      else return 0;
+    }
+
+    if (lrp < trigger && !isBuyTrade)
+      return ((trigger - lrp) / (trigger - target)) * 100;
+    else if (lrp < trigger && isBuyTrade)
+      return ((trigger - lrp) / (trigger - sl)) * 100;
+    else return 0;
+  };
+
+  const getRightPieceWidth = () => {
+    if (
+      (isBuyTrade && trade.status == "profit") ||
+      (!isBuyTrade && trade.status == "loss")
+    )
+      return 100;
+
+    if (
+      trade.status == "loss" ||
+      trade.status == "profit" ||
+      trade.status == "unfinished"
+    ) {
+      if (t1Succeeded && isBuyTrade) return t1PercentOfTarget;
+      else return 0;
+    }
+
+    if (lrp > trigger && isBuyTrade)
+      return ((lrp - trigger) / (target - trigger)) * 100;
+    else if (lrp > trigger && !isBuyTrade)
+      return ((lrp - trigger) / (sl - trigger)) * 100;
+    else return 0;
+  };
+
   const tradeBar = (
     <div className={styles.bar}>
       <div
@@ -49,20 +105,7 @@ function TradeCard({
         <div
           className={styles.inner}
           style={{
-            width: `${
-              (isBuyTrade && trade.status == "loss") ||
-              (!isBuyTrade && trade.status == "profit")
-                ? 100
-                : trade.status == "loss" ||
-                  trade.status == "profit" ||
-                  trade.status == "unfinished"
-                ? 0
-                : lrp < trigger && !isBuyTrade
-                ? ((trigger - lrp) / (trigger - target)) * 100
-                : lrp < trigger && isBuyTrade
-                ? ((trigger - lrp) / (trigger - sl)) * 100
-                : 0
-            }%`,
+            width: `${getLeftPieceWidth()}%`,
           }}
         />
       </div>
@@ -72,20 +115,7 @@ function TradeCard({
         <div
           className={styles.inner}
           style={{
-            width: `${
-              (isBuyTrade && trade.status == "profit") ||
-              (!isBuyTrade && trade.status == "loss")
-                ? 100
-                : trade.status == "loss" ||
-                  trade.status == "profit" ||
-                  trade.status == "unfinished"
-                ? 0
-                : lrp > trigger && isBuyTrade
-                ? ((lrp - trigger) / (target - trigger)) * 100
-                : lrp > trigger && !isBuyTrade
-                ? ((lrp - trigger) / (sl - trigger)) * 100
-                : 0
-            }%`,
+            width: `${getRightPieceWidth()}%`,
           }}
         />
       </div>
@@ -94,11 +124,29 @@ function TradeCard({
         <span>{trigger.toFixed(1)}</span>
       </div>
 
+      {/* t1 stick */}
+      {useTargetOne ? (
+        <div
+          className={`${styles.stick}`}
+          style={{
+            left: `${
+              isBuyTrade
+                ? 50 + (t1PercentOfTarget / 100) * 50
+                : 50 - (t1PercentOfTarget / 100) * 50
+            }%`,
+          }}
+        >
+          <span style={{ color: colors.green }}>{t1.toFixed(1)}</span>
+        </div>
+      ) : (
+        ""
+      )}
+
       <div
         className={`${styles.stick} ${
           isBuyTrade ? styles.redStick : styles.greenStick
         }`}
-        style={{ left: "0%", background: "transparent" }}
+        style={{ left: "0%", borderColor: "transparent" }}
       >
         <span>{(isBuyTrade ? sl : target).toFixed(1)}</span>
       </div>
@@ -107,7 +155,7 @@ function TradeCard({
         className={`${styles.stick} ${
           isBuyTrade ? styles.greenStick : styles.redStick
         }`}
-        style={{ left: "100%", background: "transparent" }}
+        style={{ left: "100%", borderColor: "transparent" }}
       >
         <span>{(isBuyTrade ? target : sl).toFixed(1)}</span>
       </div>
@@ -131,7 +179,7 @@ function TradeCard({
       )}
 
       {/* sl stick */}
-      {tradeLow && tradeLow ? (
+      {tradeHigh && tradeLow ? (
         <div
           className={`${styles.stick} ${styles.redStick}`}
           style={{

@@ -171,6 +171,10 @@ function ConfigurationPage() {
     const startTime = Date.now();
 
     const tradesResponse = await takeTrades(selectedStock.data, values, false);
+    tradesResponse.trades.forEach((item) => {
+      item.symbol = selectedStock.value;
+      item.name = selectedStock.value;
+    });
     const { trades, indicators } = tradesResponse;
     const endTime = Date.now();
 

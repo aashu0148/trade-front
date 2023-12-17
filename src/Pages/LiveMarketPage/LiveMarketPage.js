@@ -49,24 +49,16 @@ function LiveMarketPage() {
     savePresetToDb: false,
     fetchStockData: false,
   });
+  const [selectedDate, setSelectedDate] = useState("");
   const [timeFrame, setTimeFrame] = useState({
     start: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000),
     end: new Date(),
   });
+  const [isMarketRunning, setIsMarketRunning] = useState(false);
   const [chartDetails, setChartDetails] = useState({
     built: false,
     running: false,
   });
-
-  const availableStocks = [
-    ...Object.keys(stocksData).map((key) => ({
-      value: key,
-      label: `${key} | ${
-        stocksData[key]["5"].c[stocksData[key]["5"].c.length - 1]
-      }`,
-      data: stocksData[key],
-    })),
-  ].filter((item) => item.data["5"]?.c?.length);
 
   const handleApprovalDecision = (values, isApproved) => {
     const stockData = selectedStock.data["5"] || {};
@@ -196,6 +188,18 @@ function LiveMarketPage() {
 
     if (!isChartStrictlyPaused)
       timeout = setTimeout(() => updateChartData(nextIndex + 1), chartSpeed);
+  }
+
+  function pauseMarket() {
+    setChartDetails((prev) => ({ ...prev, running: false }));
+    clearTimeout(timeout);
+  }
+
+  function playMarket() {
+    if (isChartStrictlyPaused) return;
+
+    setChartDetails((prev) => ({ ...prev, running: true }));
+    timeout = setTimeout(() => updateChartData(currChartIndex), chartSpeed);
   }
 
   function pauseChart() {
@@ -453,28 +457,9 @@ function LiveMarketPage() {
     </div>
   ) : (
     <div className={styles.container}>
-      <p className="heading">Test stock like its LIVE</p>
+      <p className="heading">Test previous market days like its LIVE</p>
 
       <div className={`row ${styles.topBar}`}>
-        <InputSelect
-          placeholder="Select a stock"
-          label="Select stock"
-          options={availableStocks.map((item) => ({
-            label: item.label,
-            value: item.value,
-          }))}
-          value={
-            selectedStock.value
-              ? { label: selectedStock.label, value: selectedStock.value }
-              : ""
-          }
-          onChange={(e) => {
-            setSelectedStock(
-              availableStocks.find((item) => item.value == e.value)
-            );
-          }}
-        />
-
         <InputControl
           placeholder="Select start date"
           label="Start date"
@@ -506,6 +491,31 @@ function LiveMarketPage() {
           useSpinnerWhenDisabled
         >
           Fetch new data
+        </Button>
+      </div>
+
+      <div className={`row`} style={{ justifyContent: "center" }}>
+        <div style={{ flex: "none" }}>
+          <InputControl
+            placeholder="Choose date"
+            label="Choose trading date"
+            datePicker
+            datePickerProps={{
+              minDate: timeFrame.start,
+              maxDate: new Date(),
+            }}
+            containerStyles={{ width: "400px", maxWidth: "100%" }}
+            value={selectedDate}
+            onChange={(date) => setSelectedDate(date)}
+          />
+        </div>
+
+        <Button
+          className={styles.button}
+          disabled={disabledButtons.fetchStockData}
+          useSpinnerWhenDisabled
+        >
+          Start market
         </Button>
       </div>
 

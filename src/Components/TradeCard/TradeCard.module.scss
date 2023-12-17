@@ -36,9 +36,9 @@
       position: absolute;
       top: 0;
       height: calc(100% + 5px);
-      width: 1px;
+      width: 0px;
+      border-left: 2px solid $gray;
       transform: translateY(-2.5px);
-      background-color: $gray;
       display: flex;
       flex-direction: column;
       gap: 5px;
@@ -64,8 +64,12 @@
       }
     }
 
+    .stick:has(label) {
+      border-left-style: dashed;
+    }
+
     .greenStick {
-      background-color: $green;
+      border-color: $green;
 
       label,
       span {
@@ -74,7 +78,7 @@
     }
 
     .redStick {
-      background-color: $red;
+      border-color: $red;
 
       label,
       span {
