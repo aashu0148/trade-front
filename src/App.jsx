@@ -13,6 +13,7 @@ import Navbar from "Components/Navbar/Navbar";
 import StocksPage from "Pages/StocksPage/StocksPage";
 import CalendarPage from "Pages/CalendarPage/CalendarPage";
 import LiveTestPage from "Pages/LiveTestPage/LiveTestPage";
+import LiveMarketPage from "Pages/LiveMarketPage/LiveMarketPage";
 
 import { getCurrentUser, sayHiToBackend } from "apis";
 
@@ -155,6 +156,7 @@ function App() {
                       <Route path="/stocks" element={<StocksPage />} />
                       <Route path="/test" element={<TestPage />} />
                       <Route path="/live" element={<LiveTestPage />} />
+                      <Route path="/live-market" element={<LiveMarketPage />} />
                     </>
                   ) : (
                     ""

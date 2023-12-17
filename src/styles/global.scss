@@ -97,6 +97,33 @@ a {
   background-color: $white;
   border-bottom: 1px solid $white-2;
 
+  .backdrop {
+    max-width: 70% !important;
+
+    .links {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 20px;
+    }
+  }
+
+  .left-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    .burger {
+      z-index: 50;
+      height: fit-content;
+      display: flex;
+
+      svg {
+        height: 18px;
+        width: 18px;
+      }
+    }
+  }
+
   .logo {
     display: flex;
     gap: 10px;
@@ -131,7 +158,7 @@ a {
 
   .links {
     display: flex;
-    gap: 20px;
+    gap: 30px;
     align-items: center;
 
     .link {
