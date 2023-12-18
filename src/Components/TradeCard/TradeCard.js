@@ -228,6 +228,19 @@ function TradeCard({
           : ""
       }`}
     >
+      <div className={styles.top}>
+        <p
+          className={styles.type}
+          style={{ color: isBuyTrade ? colors.green : colors.red }}
+        >
+          {trade.type}
+        </p>
+
+        <p className={styles.name}>{trade.name}</p>
+
+        <p className={styles.price}>@{trigger.toFixed(2)}</p>
+      </div>
+
       {trade.status == "limit" || trade.status == "cancelled" ? (
         <div style={{ textAlign: "center" }}>
           <div className={styles.top}>
@@ -243,19 +256,6 @@ function TradeCard({
       ) : (
         tradeBar
       )}
-
-      <div className={styles.top}>
-        <p
-          className={styles.type}
-          style={{ color: isBuyTrade ? colors.green : colors.red }}
-        >
-          {trade.type}
-        </p>
-
-        <p className={styles.name}>{trade.name}</p>
-
-        <p className={styles.price}>@{trigger.toFixed(2)}</p>
-      </div>
 
       <div>
         {lrp ? (
