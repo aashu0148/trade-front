@@ -77,12 +77,36 @@ function TradeApproveModal({
       return;
     }
 
+    const sData = stockData["5"] || {};
+    const lastIndex = sData.t?.length ? sData.t.length - 1 : 0;
+
+    if (lastIndex) {
+      const prices = {
+        high:
+          sData.h[lastIndex] > sData.h[lastIndex - 1]
+            ? sData.h[lastIndex]
+            : sData.h[lastIndex - 1],
+        low:
+          sData.l[lastIndex] < sData.l[lastIndex - 1]
+            ? sData.l[lastIndex]
+            : sData.l[lastIndex - 1],
+      };
+
+      if (values.startPrice > prices.low && values.startPrice < prices.high)
+        values.status = "taken";
+      else {
+        values.status = "limit";
+        values.limitTime = sData.t[lastIndex];
+      }
+    }
+
     setDisabledButtons((prev) => ({
       ...prev,
       reject: approved ? false : true,
       approve: approved ? true : false,
     }));
     const res = await updateTrade(tradeDetails._id, {
+      ...values,
       isApproved: approved,
       type: values.type,
       target: values.target,
