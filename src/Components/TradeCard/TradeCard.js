@@ -236,7 +236,8 @@ function TradeCard({
             </p>
           </div>
           <label className={styles.label}>
-            Target: <span>{trade.target}</span> SL: <span>{trade.sl}</span>
+            Target: <span>{trade.target.toFixed(2)}</span> SL:{" "}
+            <span>{trade.sl.toFixed(2)}</span>
           </label>
         </div>
       ) : (
