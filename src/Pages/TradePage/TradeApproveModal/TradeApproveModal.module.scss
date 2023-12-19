@@ -8,6 +8,18 @@
   width: 1100px;
   max-width: 100%;
 
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+
+    .right {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+  }
+
   .form {
     display: flex;
     flex-direction: column;

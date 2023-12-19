@@ -21,23 +21,13 @@ import styles from "./LiveMarketPage.module.scss";
 import { analyzeTradesForCompletion } from "utils/tradeMaintainanceUtil";
 
 let timeout,
-  chartSpeed = 50,
-  currChartIndex = 200,
-  isChartStrictlyPaused = false;
+  currentCandleIndex = 200,
+  currentDayString,
+  isStrictlyPaused = false;
 function LiveMarketPage() {
-  const candleSeries = useRef({});
-  const vwapSeries = useRef({});
-  const psarSeries = useRef({});
   const tradesRef = useRef([]);
 
   const appContext = useContext(AppContext);
-  const [tooltipDetails, setTooltipDetails] = useState({
-    style: {},
-    data: {},
-    close: "",
-    index: "",
-    date: "",
-  });
   const [stocksData, setStocksData] = useState({});
   const [selectedStock, setSelectedStock] = useState({});
   const [stockPresets, setStockPresets] = useState({});
@@ -53,27 +43,21 @@ function LiveMarketPage() {
     start: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000),
     end: new Date(),
   });
-  const [isMarketRunning, setIsMarketRunning] = useState(false);
-  const [chartDetails, setChartDetails] = useState({
-    built: false,
+  const [marketStatus, setMarketStatus] = useState({
+    started: false,
     running: false,
   });
+  const [tradesForApproval, setTradesForApproval] = useState([]);
 
-  const handleApprovalDecision = (values, isApproved) => {
-    const stockData = selectedStock.data["5"] || {};
+  const handleApprovalDecision = ({ values, isApproved, trade: tradeObj }) => {
+    const stockData = stocksData[tradeObj.symbol]["5"] || {};
     const prices = {
-      high:
-        stockData.h[currChartIndex] > stockData.h[currChartIndex - 1]
-          ? stockData.h[currChartIndex]
-          : stockData.h[currChartIndex - 1],
-      low:
-        stockData.l[currChartIndex] < stockData.l[currChartIndex - 1]
-          ? stockData.l[currChartIndex]
-          : stockData.l[currChartIndex - 1],
+      high: stockData.h[currentCandleIndex - 1],
+      low: stockData.l[currentCandleIndex - 1],
     };
 
     const trade = {
-      ...tradeToApprove,
+      ...tradeObj,
       ...values,
       isApproved: isApproved ? true : false,
     };
@@ -82,298 +66,166 @@ function LiveMarketPage() {
       trade.status = "taken";
     else {
       trade.status = "limit";
-      trade.limitIndex = currChartIndex;
+      trade.limitIndex = currentCandleIndex;
     }
 
-    const tempTrades = [...tradesTaken];
-    tempTrades[tempTrades.length ? tempTrades.length - 1 : 0] = { ...trade };
+    const newTradesForApproval = tradesForApproval.filter(
+      (item) => item._id !== trade._id
+    );
+    setTradesForApproval(newTradesForApproval);
+    setTradesTaken((prev) => [...prev, trade]);
+    isStrictlyPaused = false;
 
-    setTradeToApprove({});
-    setTradesTaken(tempTrades);
-    isChartStrictlyPaused = false;
-    currChartIndex++;
-    playChart();
+    if (!newTradesForApproval.length) {
+      currentCandleIndex++;
+      playMarket();
+    }
   };
 
-  const takeTradeOnNewData = async () => {
-    const preset = stockPresets[selectedStock.value] || {};
-    const stockData = {
+  function pauseMarket() {
+    setMarketStatus((prev) => ({ ...prev, running: false }));
+    clearTimeout(timeout);
+  }
+
+  function playMarket() {
+    if (isStrictlyPaused) return;
+
+    setMarketStatus((prev) => ({ ...prev, running: true }));
+    timeout = setTimeout(() => updateMarket(currentCandleIndex));
+  }
+
+  const getStockDataTillCurrentIndex = (symbol, dataLength = 1000) => {
+    let startIdx = currentCandleIndex - dataLength;
+    if (startIdx < 0) startIdx = 0;
+
+    const data = {
       5: {
-        t: selectedStock.data["5"].t.slice(0, currChartIndex + 1),
-        v: selectedStock.data["5"].v.slice(0, currChartIndex + 1),
-        c: selectedStock.data["5"].c.slice(0, currChartIndex + 1),
-        o: selectedStock.data["5"].o.slice(0, currChartIndex + 1),
-        h: selectedStock.data["5"].h.slice(0, currChartIndex + 1),
-        l: selectedStock.data["5"].l.slice(0, currChartIndex + 1),
+        t: stocksData[symbol]["5"].t.slice(startIdx, currentCandleIndex + 1),
+        v: stocksData[symbol]["5"].v.slice(startIdx, currentCandleIndex + 1),
+        c: stocksData[symbol]["5"].c.slice(startIdx, currentCandleIndex + 1),
+        o: stocksData[symbol]["5"].o.slice(startIdx, currentCandleIndex + 1),
+        h: stocksData[symbol]["5"].h.slice(startIdx, currentCandleIndex + 1),
+        l: stocksData[symbol]["5"].l.slice(startIdx, currentCandleIndex + 1),
       },
     };
-    const { trades, indicators } = await takeTrades(stockData, preset, true);
 
-    vwapSeries.current.update({
-      time: stockData["5"].t[currChartIndex],
-      value: indicators.vwap[currChartIndex],
-    });
-    psarSeries.current.update({
-      time: stockData["5"].t[currChartIndex],
-      value: indicators.psar[currChartIndex],
-    });
+    return data;
+  };
 
+  const updateMarket = async () => {
+    const dateTimestamp =
+      Object.values(stocksData)[0]["5"].t[currentCandleIndex];
+    const dateStr = new Date(dateTimestamp * 1000).toLocaleDateString("en-in");
+
+    if (dateStr !== currentDayString) {
+      // next day started, stop the market
+      handleStopMarket();
+      return;
+    }
+    const analyzedTrades = analyzeTradesForCompletion(
+      tradesRef.current,
+      currentCandleIndex,
+      stocksData
+    );
+    if (analyzedTrades?.length) setTradesTaken(analyzedTrades);
+
+    const allSymbols = Object.keys(stocksData);
+
+    const allTakenTrades = await Promise.all(
+      allSymbols.map((s) => {
+        const bestPresetForStock = stockPresets[s] || {};
+        const data = getStockDataTillCurrentIndex(s, 400);
+
+        return takeTrades(data, bestPresetForStock, true);
+      })
+    );
+
+    const allTrades = allSymbols.map((s, i) => {
+      const t = allTakenTrades[i].trades;
+
+      return {
+        symbol: s,
+        trade: t.length ? t[0] : {},
+      };
+    });
+    const trades = allTrades.filter((item) => item.trade?.startPrice);
+
+    ++currentCandleIndex;
     if (!trades.length) {
-      // console.log(`🟡No trades to take!`);
+      timeout = setTimeout(updateMarket, 300);
       return;
     }
 
     const isAllowedToTakeThisTrade = (trade) => {
-      const unfinishedSimilarTrades = Array.from(tradesRef.current).filter(
+      const unfinishedSimilarTrades = tradesRef.current.filter(
         (item) =>
           (item.status == "taken" &&
+            item.symbol == trade.symbol &&
             (item.isApproved == true || item.isApproved == undefined)) ||
-          (item.status == "limit" && item.type == trade.type)
+          (item.symbol == trade.symbol &&
+            item.status == "limit" &&
+            item.type == trade.type)
       );
 
       return unfinishedSimilarTrades.length > 0 ? false : true;
     };
 
-    const tradeObj = {
-      _id: generateUniqueString(),
-      name: selectedStock.value,
-      symbol: selectedStock.value,
-      ...trades[0],
-      status: "taken",
-      time: trades[0]?.time ? trades[0].time * 1000 : Date.now(),
-    };
-    tradeObj.date = new Date(tradeObj.time).toLocaleDateString("en-in");
+    const newlyTakenTrades = [];
+    for (let i = 0; i < trades.length; ++i) {
+      const item = trades[i];
 
-    if (!isAllowedToTakeThisTrade(tradeObj)) return;
+      const tradeObj = {
+        _id: generateUniqueString(10),
+        name: item.symbol,
+        symbol: item.symbol,
+        ...item.trade,
+        status: "taken",
+        time: item.trade?.time ? item.trade.time * 1000 : Date.now(),
+      };
+      tradeObj.date = new Date(tradeObj.time).toLocaleDateString("en-in");
 
-    setTradesTaken((prev) => [...prev, tradeObj]);
-    pauseChart();
-    setTradeToApprove(tradeObj);
-    isChartStrictlyPaused = true;
-    console.log("🟢Trade taken");
+      if (!isAllowedToTakeThisTrade(tradeObj)) continue;
+
+      newlyTakenTrades.push(tradeObj);
+    }
+
+    if (newlyTakenTrades.length) {
+      setTradesForApproval(newlyTakenTrades);
+      pauseMarket();
+      isStrictlyPaused = true;
+    } else timeout = setTimeout(updateMarket, 100);
   };
 
-  async function updateChartData(nextIndex) {
-    currChartIndex = nextIndex;
-    const selectedStockDataLength = selectedStock.data["5"]
-      ? selectedStock.data["5"].c?.length || 0
-      : 0;
+  function handleStopMarket() {
+    setMarketStatus({ running: false, started: false });
+    setTradesForApproval([]);
+    clearTimeout(timeout);
+  }
 
-    if (!selectedStockDataLength || selectedStockDataLength < nextIndex) {
-      // stop the chart now
-      setChartDetails({});
+  const handleStartMarket = () => {
+    if (!selectedDate) return;
+
+    const firstStock = Object.values(stocksData)[0];
+    const dateStr = selectedDate.toLocaleDateString("en-in");
+
+    const dateStartIndex = firstStock["5"].t.findIndex(
+      (t) => new Date(t * 1000).toLocaleDateString("en-in") == dateStr
+    );
+
+    if (dateStartIndex < 0) {
+      toast.error("Market holiday");
       return;
     }
 
-    const data = {
-      time: selectedStock.data["5"].t[nextIndex],
-      high: selectedStock.data["5"].h[nextIndex],
-      low: selectedStock.data["5"].l[nextIndex],
-      open: selectedStock.data["5"].o[nextIndex],
-      close: selectedStock.data["5"].c[nextIndex],
-    };
-    if (!candleSeries.current?.update) return;
-
-    candleSeries.current.update(data);
-
-    const analyzedTrades = analyzeTradesForCompletion(
-      tradesRef.current,
-      currChartIndex,
-      selectedStock.data["5"]
-    );
-    if (analyzedTrades) setTradesTaken(analyzedTrades);
-
-    await takeTradeOnNewData();
-
-    if (!isChartStrictlyPaused)
-      timeout = setTimeout(() => updateChartData(nextIndex + 1), chartSpeed);
-  }
-
-  function pauseMarket() {
-    setChartDetails((prev) => ({ ...prev, running: false }));
-    clearTimeout(timeout);
-  }
-
-  function playMarket() {
-    if (isChartStrictlyPaused) return;
-
-    setChartDetails((prev) => ({ ...prev, running: true }));
-    timeout = setTimeout(() => updateChartData(currChartIndex), chartSpeed);
-  }
-
-  function pauseChart() {
-    setChartDetails((prev) => ({ ...prev, running: false }));
-    clearTimeout(timeout);
-  }
-
-  function playChart() {
-    if (isChartStrictlyPaused) return;
-
-    setChartDetails((prev) => ({ ...prev, running: true }));
-    timeout = setTimeout(() => updateChartData(currChartIndex), chartSpeed);
-  }
-
-  const handleClearChart = () => {
-    const chartElem = document.querySelector("#chart");
-
-    if (!chartElem) return;
-    chartElem.innerHTML = "";
-    candleSeries.current = null;
-    currChartIndex = 200;
-
-    clearTimeout(timeout);
-    setChartDetails({});
-    setTradeToApprove([]);
     setTradesTaken([]);
-    isChartStrictlyPaused = false;
-  };
-
-  const handleStartChart = async () => {
-    if (!selectedStock.data["5"]) return;
-
-    const chartElem = document.querySelector("#chart");
-
-    if (!chartElem) return;
-    chartElem.innerHTML = "";
-
-    const width = chartElem.clientWidth;
-    const height = chartElem.clientHeight;
-
-    const { createChart } = window.LightweightCharts;
-
-    const chart = createChart(chartElem, {
-      width,
-      height,
-      timeScale: {
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      pane: 0,
-    });
-
-    const stockData = {
-      5: {
-        t: selectedStock.data["5"].t.slice(0, currChartIndex + 1),
-        v: selectedStock.data["5"].v.slice(0, currChartIndex + 1),
-        c: selectedStock.data["5"].c.slice(0, currChartIndex + 1),
-        o: selectedStock.data["5"].o.slice(0, currChartIndex + 1),
-        h: selectedStock.data["5"].h.slice(0, currChartIndex + 1),
-        l: selectedStock.data["5"].l.slice(0, currChartIndex + 1),
-      },
-    };
-    const { indicators } = await takeTrades(stockData, {
-      additionalIndicators: { vwap: true, psar: true, sma: true },
-    });
-
-    candleSeries.current = chart.addCandlestickSeries({
-      pane: 0,
-      upColor: "#26a69a",
-      downColor: "#ef5350",
-      borderVisible: false,
-      wickUpColor: "#26a69a",
-      wickDownColor: "#ef5350",
-    });
-    const timeArr = selectedStock.data["5"].t;
-    candleSeries.current.setData(
-      selectedStock.data["5"].c.slice(0, 201).map((item, i) => ({
-        time: selectedStock.data["5"].t[i],
-        high: selectedStock.data["5"].h[i],
-        low: selectedStock.data["5"].l[i],
-        open: selectedStock.data["5"].o[i],
-        close: selectedStock.data["5"].c[i],
-      }))
-    );
-
-    // update tooltip
-    chart.subscribeCrosshairMove((param) => {
-      if (
-        param.point === undefined ||
-        !param.time ||
-        param.point.x < 0 ||
-        param.point.x > chartElem.clientWidth ||
-        param.point.y < 0 ||
-        param.point.y > chartElem.clientHeight
-      ) {
-        setTooltipDetails((prev) => ({
-          ...prev,
-          style: { ...prev.style, opacity: 0 },
-        }));
-      } else {
-        // time will be in the same format that we supplied to setData.
-        // thus it will be YYYY-MM-DD
-        const dateStr = param.time;
-        const data = param.seriesPrices.get(candleSeries.current);
-        const price = data?.value !== undefined ? data.value : data.close;
-
-        const y = param.point.y;
-        let left = param.point.x;
-        if (left > chartElem.clientWidth) {
-          left = param.point.x;
-        }
-
-        let top = y;
-        if (top > chartElem.clientHeight) {
-          top = y;
-        }
-
-        const style = {
-          opacity: "1",
-          top: top + "px",
-          left: left + "px",
-        };
-
-        const index = timeArr.findIndex((item) => item == dateStr);
-
-        setTooltipDetails({
-          style,
-          data,
-          index,
-          close: price,
-          date: `${getDateFormatted(
-            dateStr * 1000,
-            true,
-            true
-          )} ${getTimeFormatted(dateStr * 1000)}`,
-        });
-      }
-    });
-
-    // vwap
-    vwapSeries.current = chart.addLineSeries({
-      priceFormat: { type: "price" },
-      color: "orange",
-      lineWidth: 2,
-      pane: 0,
-    });
-    vwapSeries.current.setData(
-      stockData["5"].c.map((_e, i) => ({
-        time: stockData["5"].t[i],
-        value: indicators.vwap ? indicators.vwap[i] : "",
-      }))
-    );
-
-    // psar
-    psarSeries.current = chart.addLineSeries({
-      priceFormat: { type: "price" },
-      color: "gray",
-      lineWidth: 2,
-      pane: 0,
-    });
-    psarSeries.current.setData(
-      stockData["5"].c.map((_e, i) => ({
-        time: stockData["5"].t[i],
-        value: indicators.psar ? indicators.psar[i] : "",
-      }))
-    );
-
-    chart.timeScale().fitContent();
-    currChartIndex = 200;
-    setChartDetails({
+    currentDayString = dateStr;
+    currentCandleIndex = dateStartIndex;
+    setMarketStatus({
+      started: true,
       running: true,
-      built: true,
     });
 
-    playChart();
+    timeout = setTimeout(updateMarket, 200);
   };
 
   const fetchStockData = async () => {
@@ -415,13 +267,16 @@ function LiveMarketPage() {
     );
   };
 
+  const getFormattedDateAndTime = (timestamp) => {
+    return `${getTimeFormatted(timestamp)}, ${getDateFormatted(
+      timestamp,
+      true
+    )}`;
+  };
+
   useEffect(() => {
     tradesRef.current = [...tradesTaken];
   }, [tradesTaken]);
-
-  useEffect(() => {
-    handleClearChart();
-  }, [selectedStock]);
 
   useEffect(() => {
     if (!Object.keys(stocksData).length) fetchStockData();
@@ -432,23 +287,10 @@ function LiveMarketPage() {
     };
   }, []);
 
-  const getTrimmedPrice = (txt) => {
-    if (typeof txt == "number") return txt.toFixed(2);
-    else return txt;
-  };
-
-  const tooltipDiv = (
-    <div className={styles.tooltip} style={{ ...tooltipDetails.style }}>
-      {["close", "open", "high", "low", "date"].map((item) => (
-        <div className={styles.item} key={item}>
-          <label>{item}</label>
-          <span>
-            {getTrimmedPrice(tooltipDetails[item] || tooltipDetails.data[item])}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
+  const stocksLrps = Object.keys(stocksData).reduce((acc, key) => {
+    acc[key] = stocksData[key]["5"].c[currentCandleIndex];
+    return acc;
+  }, {});
 
   return loadingPage ? (
     <div className="spinner-container">
@@ -493,119 +335,97 @@ function LiveMarketPage() {
         </Button>
       </div>
 
-      <div className={`row`} style={{ justifyContent: "center" }}>
-        <div style={{ flex: "none" }}>
+      {Object.keys(stocksData).length ? (
+        <div className={styles.controls}>
           <InputControl
             placeholder="Choose date"
             label="Choose trading date"
             datePicker
             datePickerProps={{
-              minDate: timeFrame.start,
+              minDate: new Date(
+                timeFrame.start.getTime() + 7 * 24 * 60 * 60 * 1000
+              ),
               maxDate: new Date(),
             }}
             containerStyles={{ width: "400px", maxWidth: "100%" }}
             value={selectedDate}
             onChange={(date) => setSelectedDate(date)}
           />
-        </div>
 
-        <Button
-          className={styles.button}
-          disabled={disabledButtons.fetchStockData}
-          useSpinnerWhenDisabled
-        >
-          Start market
-        </Button>
-      </div>
-
-      {selectedStock?.data ? (
-        <div className={styles.buttons}>
-          {chartDetails.built ? (
+          {marketStatus.started ? (
             <>
-              {chartDetails.running ? (
-                <Button outlineButton onClick={pauseChart}>
+              {marketStatus.running ? (
+                <Button
+                  className={styles.button}
+                  outlineButton
+                  onClick={pauseMarket}
+                >
                   <Pause />
                 </Button>
               ) : (
-                <Button onClick={playChart}>
+                <Button className={styles.button} onClick={playMarket}>
                   <Play />
                 </Button>
               )}
 
-              <Button outlineButton onClick={handleClearChart}>
-                Clear chart
+              <Button
+                className={styles.button}
+                onClick={handleStopMarket}
+                useSpinnerWhenDisabled
+              >
+                Stop market
               </Button>
             </>
           ) : (
-            <Button onClick={handleStartChart}>Start chart</Button>
+            <Button
+              className={styles.button}
+              onClick={handleStartMarket}
+              useSpinnerWhenDisabled
+            >
+              Start market
+            </Button>
           )}
         </div>
       ) : (
         ""
       )}
 
-      <div className={styles.body}>
-        <div className={styles.chartOuter}>
-          {chartDetails.built ? (
-            <div className={styles.legends}>
-              <label>
-                VWAP:
-                <span
-                  className={styles.swatch}
-                  style={{ backgroundColor: "orange" }}
-                />
-              </label>
-              <label>
-                PSAR:
-                <span
-                  className={styles.swatch}
-                  style={{ backgroundColor: "gray" }}
-                />
-              </label>
-            </div>
-          ) : (
-            ""
+      {marketStatus.started && (
+        <p className="title" style={{ textAlign: "center" }}>
+          {getFormattedDateAndTime(
+            Object.values(stocksData)[0]["5"].t[currentCandleIndex] * 1000
           )}
+        </p>
+      )}
 
-          {chartDetails.built ? tooltipDiv : ""}
-          <div
-            id="chart"
-            className={`${styles.chart} ${
-              appContext.mobileView ? styles.shortChart : ""
-            }`}
-          />
-        </div>
-
-        <div>
-          <div className={styles.tradeDiv}>
-            {tradeToApprove?.symbol ? (
-              <TradeApproveModal
-                className={styles.tradeForm}
-                tradeDetails={tradeToApprove}
-                lrp={
-                  selectedStock.data && selectedStock.data["5"]
-                    ? selectedStock.data["5"].c[currChartIndex]
-                    : ""
-                }
-                onDecision={handleApprovalDecision}
-                staticModal
-                withoutChart
-                withoutModal
-              />
-            ) : (
-              ""
+      <div className={styles.approvalBox}>
+        {tradesForApproval?.length ? (
+          <TradeApproveModal
+            bodyClassName={styles.formBody}
+            className={styles.tradeForm}
+            tradeDetails={tradesForApproval[0]}
+            stockData={getStockDataTillCurrentIndex(
+              tradesForApproval[0].symbol
             )}
-          </div>
-        </div>
+            stockPreset={stockPresets[tradesForApproval[0].symbol]}
+            lrp={stocksLrps[tradesForApproval[0].symbol]}
+            onDecision={(values, isApproved) =>
+              handleApprovalDecision({
+                trade: tradesForApproval[0],
+                values,
+                isApproved,
+              })
+            }
+            staticModal
+            withoutModal
+          />
+        ) : (
+          ""
+        )}
       </div>
 
       <TradesModal
-        lrps={{
-          [selectedStock.value]:
-            selectedStock.data && selectedStock.data["5"]
-              ? selectedStock.data["5"].c[currChartIndex]
-              : "",
-        }}
+        lrps={stocksLrps}
         className={styles.allTrades}
         trades={tradesTaken}
         showDateInCard

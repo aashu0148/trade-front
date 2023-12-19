@@ -1,7 +1,7 @@
 export const analyzeTradesForCompletion = (
   trades = [],
   currIndex,
-  stockData = { c: [], v: [], h: [], o: [], l: [] }
+  stockData = {}
 ) => {
   const checkTradeCompletion = (
     triggerPrice,
@@ -65,6 +65,9 @@ export const analyzeTradesForCompletion = (
     )
       return;
 
+    const symbol = trade.symbol || trade.name;
+    const sData = stockData[symbol] ? stockData[symbol]["5"] : {};
+
     if (trade.status == "limit") {
       if (currIndex - trade.startIndex > 8) {
         trade.status = "cancelled";
@@ -72,8 +75,8 @@ export const analyzeTradesForCompletion = (
       }
 
       const prices = {
-        high: stockData.h[currIndex],
-        low: stockData.l[currIndex],
+        high: sData.h[currIndex],
+        low: sData.l[currIndex],
       };
 
       if (trade.startPrice > prices.low && trade.startPrice < prices.high) {
@@ -89,27 +92,27 @@ export const analyzeTradesForCompletion = (
     const currTradeLow = trade.tradeLow || 9999999;
     const isSellTrade = trade.type.toLowerCase() == "sell";
 
-    if (!stockData?.c?.length) return;
+    if (!sData?.c?.length) return;
 
     const tradeTimeInSec = trade.time / 1000;
-    const timeIndex = stockData.t.findIndex((t) => t >= tradeTimeInSec);
+    const timeIndex = sData.t.findIndex((t) => t >= tradeTimeInSec);
     if (timeIndex < 0) return;
 
     const { statusNumber, tradeHigh, tradeLow } = checkTradeCompletion(
       trade.startPrice,
       {
-        c: stockData.c.slice(timeIndex, currIndex + 1),
-        o: stockData.o.slice(timeIndex, currIndex + 1),
-        h: stockData.h.slice(timeIndex, currIndex + 1),
-        l: stockData.l.slice(timeIndex, currIndex + 1),
-        t: stockData.t.slice(timeIndex, currIndex + 1),
+        c: sData.c.slice(timeIndex, currIndex + 1),
+        o: sData.o.slice(timeIndex, currIndex + 1),
+        h: sData.h.slice(timeIndex, currIndex + 1),
+        l: sData.l.slice(timeIndex, currIndex + 1),
+        t: sData.t.slice(timeIndex, currIndex + 1),
       },
       trade.target,
       trade.sl,
       isSellTrade
     );
 
-    const currentTime = stockData.t[currIndex + 1];
+    const currentTime = sData.t[currIndex];
     const currentDate = new Date(currentTime * 1000).toLocaleDateString(
       "en-in"
     );

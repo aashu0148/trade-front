@@ -188,9 +188,11 @@ function LiveTestPage() {
     const analyzedTrades = analyzeTradesForCompletion(
       tradesRef.current,
       currChartIndex,
-      selectedStock.data["5"]
+      {
+        [selectedStock.value]: selectedStock.data,
+      }
     );
-    if (analyzedTrades) setTradesTaken(analyzedTrades);
+    if (analyzedTrades) setTradesTaken(structuredClone(analyzedTrades));
 
     await takeTradeOnNewData();
 

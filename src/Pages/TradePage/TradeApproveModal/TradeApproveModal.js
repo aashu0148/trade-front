@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import Modal from "Components/Modal/Modal";
@@ -14,6 +14,7 @@ import styles from "./TradeApproveModal.module.scss";
 
 function TradeApproveModal({
   className,
+  bodyClassName,
   tradeDetails = {},
   onClose,
   onSuccess,
@@ -41,6 +42,26 @@ function TradeApproveModal({
     reject: false,
     approve: false,
   });
+
+  const handleTradeTypeReversal = (obj) => {
+    const targetLen = Math.abs(values.startPrice - values.target);
+    const slLen = Math.abs(values.startPrice - values.sl);
+
+    const newType = obj.value;
+    const newTarget =
+      newType == "buy"
+        ? values.startPrice + targetLen
+        : values.startPrice - targetLen;
+    const newSl =
+      newType == "buy" ? values.startPrice - slLen : values.startPrice + slLen;
+
+    setValues((prev) => ({
+      ...prev,
+      type: newType,
+      target: newTarget,
+      sl: newSl,
+    }));
+  };
 
   const validateSubmission = () => {
     const errors = {};
@@ -183,158 +204,173 @@ function TradeApproveModal({
 
     return { value: val, min, max, labels };
   };
+
+  useEffect(() => {
+    if (!tradeDetails.symbol) return;
+
+    setValues({
+      startPrice: parseFloat(tradeDetails.startPrice.toFixed(3)),
+      type: tradeDetails.type,
+      target: parseFloat(tradeDetails.target.toFixed(3)),
+      sl: parseFloat(tradeDetails.sl.toFixed(3)),
+    });
+    setErrors({});
+  }, [tradeDetails.symbol]);
+
   const sliderDetails = getSliderDetails();
 
   const approvalJsx = (
     <div className={`${styles.container} ${className || ""}`}>
       <p className="heading">Approve/Reject this trade</p>
 
-      {withoutChart ? (
-        ""
-      ) : (
-        <StockChart
-          stockData={stockData}
-          stockPreset={stockPreset}
-          shortChart
-        />
-      )}
+      <div className={`${styles.body} ${bodyClassName || ""}`}>
+        {withoutChart ? (
+          ""
+        ) : (
+          <StockChart
+            stockData={stockData}
+            stockPreset={stockPreset}
+            shortChart
+          />
+        )}
 
-      <div className={styles.form}>
-        <div className={styles.details}>
-          <div className={styles.info}>
-            <label>Symbol</label>
-            <span>{tradeDetails.symbol}</span>
+        <div className={styles.right}>
+          <div className={styles.form}>
+            <div className={styles.details}>
+              <div className={styles.info}>
+                <label>Symbol</label>
+                <span>{tradeDetails.symbol}</span>
+              </div>
+
+              <div className={styles.info}>
+                <label>LRP</label>
+                <span>{lrp}</span>
+              </div>
+
+              <div className={styles.info}>
+                <label>Type</label>
+                <span className={`${styles.green}`}>{tradeDetails.type}</span>
+              </div>
+
+              <div className={styles.info}>
+                <label>Reasons</label>
+                <span
+                  className={`${styles.small}`}
+                  style={{ textTransform: "capitalize" }}
+                >
+                  {typeof tradeDetails?.analytics?.allowedIndicatorSignals ==
+                  "object"
+                    ? Object.keys(
+                        tradeDetails.analytics?.allowedIndicatorSignals
+                      )
+                        .filter(
+                          (key) =>
+                            tradeDetails.analytics.allowedIndicatorSignals[
+                              key
+                            ] == tradeDetails.type
+                        )
+                        .join(", ")
+                    : ""}
+                </span>
+              </div>
+            </div>
+
+            <div className="row">
+              <InputControl
+                label="Trigger price"
+                placeholder="Enter trigger price"
+                type="number"
+                min={0}
+                value={values.startPrice}
+                onChange={(e) =>
+                  setValues((prev) => ({
+                    ...prev,
+                    startPrice: parseFloat(e.target.value),
+                  }))
+                }
+                onWheel={(event) => event.target.blur()}
+                error={errors.startPrice}
+              />
+
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "6px" }}
+              >
+                <label className={styles.label}>Type</label>
+
+                <Toggle
+                  className={styles.toggle}
+                  options={[
+                    { label: "BUY", value: "buy" },
+                    { label: "SELL", value: "sell" },
+                  ]}
+                  selected={values.type}
+                  onChange={handleTradeTypeReversal}
+                />
+              </div>
+            </div>
+
+            <div className="row">
+              <InputControl
+                label="Target"
+                placeholder="Enter target"
+                type="number"
+                min={0}
+                value={values.target}
+                onChange={(e) =>
+                  setValues((prev) => ({
+                    ...prev,
+                    target: parseFloat(e.target.value),
+                  }))
+                }
+                onWheel={(event) => event.target.blur()}
+                error={errors.target}
+              />
+
+              <InputControl
+                label="Stop loss"
+                placeholder="Enter SL"
+                type="number"
+                min={0}
+                value={values.sl}
+                onChange={(e) =>
+                  setValues((prev) => ({
+                    ...prev,
+                    sl: parseFloat(e.target.value),
+                  }))
+                }
+                onWheel={(event) => event.target.blur()}
+                error={errors.sl}
+              />
+            </div>
           </div>
 
-          <div className={styles.info}>
-            <label>LRP</label>
-            <span>{lrp}</span>
-          </div>
+          <Slider
+            value={sliderDetails.value}
+            min={sliderDetails.min}
+            max={sliderDetails.max}
+            dotDetails={sliderDetails.labels}
+            onChange={handleSliderChange}
+          />
+          <div />
 
-          <div className={styles.info}>
-            <label>Type</label>
-            <span className={`${styles.green}`}>{tradeDetails.type}</span>
-          </div>
-
-          <div className={styles.info}>
-            <label>Reasons</label>
-            <span
-              className={`${styles.small}`}
-              style={{ textTransform: "capitalize" }}
+          <div className="footer">
+            <Button
+              redButton
+              disabled={disabledButtons.reject}
+              useSpinnerWhenDisabled
+              onClick={() => handleSubmission()}
             >
-              {typeof tradeDetails?.analytics?.allowedIndicatorSignals ==
-              "object"
-                ? Object.keys(tradeDetails.analytics?.allowedIndicatorSignals)
-                    .filter(
-                      (key) =>
-                        tradeDetails.analytics.allowedIndicatorSignals[key] ==
-                        tradeDetails.type
-                    )
-                    .join(", ")
-                : ""}
-            </span>
+              Reject
+            </Button>
+            <Button
+              disabled={disabledButtons.approve}
+              useSpinnerWhenDisabled
+              onClick={() => handleSubmission(true)}
+            >
+              Approve
+            </Button>
           </div>
         </div>
-
-        <div className="row">
-          <InputControl
-            label="Trigger price"
-            placeholder="Enter trigger price"
-            type="number"
-            min={0}
-            value={values.startPrice}
-            onChange={(e) =>
-              setValues((prev) => ({
-                ...prev,
-                startPrice: parseFloat(e.target.value),
-              }))
-            }
-            onWheel={(event) => event.target.blur()}
-            error={errors.startPrice}
-          />
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label className={styles.label}>Type</label>
-
-            <Toggle
-              className={styles.toggle}
-              options={[
-                { label: "BUY", value: "buy" },
-                { label: "SELL", value: "sell" },
-              ]}
-              selected={values.type}
-              onChange={(obj) =>
-                setValues((prev) => ({
-                  ...prev,
-                  type: obj.value,
-                  target: prev.sl,
-                  sl: prev.target,
-                }))
-              }
-            />
-          </div>
-        </div>
-
-        <div className="row">
-          <InputControl
-            label="Target"
-            placeholder="Enter target"
-            type="number"
-            min={0}
-            value={values.target}
-            onChange={(e) =>
-              setValues((prev) => ({
-                ...prev,
-                target: parseFloat(e.target.value),
-              }))
-            }
-            onWheel={(event) => event.target.blur()}
-            error={errors.target}
-          />
-
-          <InputControl
-            label="Stop loss"
-            placeholder="Enter SL"
-            type="number"
-            min={0}
-            value={values.sl}
-            onChange={(e) =>
-              setValues((prev) => ({
-                ...prev,
-                sl: parseFloat(e.target.value),
-              }))
-            }
-            onWheel={(event) => event.target.blur()}
-            error={errors.sl}
-          />
-        </div>
-      </div>
-
-      <Slider
-        value={sliderDetails.value}
-        min={sliderDetails.min}
-        max={sliderDetails.max}
-        dotDetails={sliderDetails.labels}
-        onChange={handleSliderChange}
-      />
-      <div />
-
-      <div className="footer">
-        <Button
-          redButton
-          disabled={disabledButtons.reject}
-          useSpinnerWhenDisabled
-          onClick={() => handleSubmission()}
-        >
-          Reject
-        </Button>
-        <Button
-          disabled={disabledButtons.approve}
-          useSpinnerWhenDisabled
-          onClick={() => handleSubmission(true)}
-        >
-          Approve
-        </Button>
       </div>
     </div>
   );
