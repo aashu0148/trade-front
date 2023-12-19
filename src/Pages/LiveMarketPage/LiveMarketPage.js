@@ -48,8 +48,8 @@ function LiveMarketPage() {
   const handleApprovalDecision = ({ values, isApproved, trade: tradeObj }) => {
     const stockData = stocksData[tradeObj.symbol]["5"] || {};
     const prices = {
-      high: stockData.h[currentCandleIndex],
-      low: stockData.l[currentCandleIndex],
+      high: stockData.h[currentCandleIndex - 1],
+      low: stockData.l[currentCandleIndex - 1],
     };
 
     const trade = {
@@ -85,23 +85,27 @@ function LiveMarketPage() {
   function playMarket() {
     if (isStrictlyPaused) return;
 
-    ++currentCandleIndex;
     setMarketStatus((prev) => ({ ...prev, running: true }));
     timeout = setTimeout(() => updateMarket(currentCandleIndex));
   }
 
-  const getStockDataTillCurrentIndex = (symbol, dataLength = 1000) => {
+  const getStockDataTillCurrentIndex = (
+    symbol,
+    dataLength = 1000,
+    oneShort = false
+  ) => {
     let startIdx = currentCandleIndex - dataLength;
     if (startIdx < 0) startIdx = 0;
+    const endIdx = currentCandleIndex + (oneShort ? 0 : 1);
 
     const data = {
       5: {
-        t: stocksData[symbol]["5"].t.slice(startIdx, currentCandleIndex + 1),
-        v: stocksData[symbol]["5"].v.slice(startIdx, currentCandleIndex + 1),
-        c: stocksData[symbol]["5"].c.slice(startIdx, currentCandleIndex + 1),
-        o: stocksData[symbol]["5"].o.slice(startIdx, currentCandleIndex + 1),
-        h: stocksData[symbol]["5"].h.slice(startIdx, currentCandleIndex + 1),
-        l: stocksData[symbol]["5"].l.slice(startIdx, currentCandleIndex + 1),
+        t: stocksData[symbol]["5"].t.slice(startIdx, endIdx),
+        v: stocksData[symbol]["5"].v.slice(startIdx, endIdx),
+        c: stocksData[symbol]["5"].c.slice(startIdx, endIdx),
+        o: stocksData[symbol]["5"].o.slice(startIdx, endIdx),
+        h: stocksData[symbol]["5"].h.slice(startIdx, endIdx),
+        l: stocksData[symbol]["5"].l.slice(startIdx, endIdx),
       },
     };
 
@@ -146,8 +150,8 @@ function LiveMarketPage() {
     });
     const trades = allTrades.filter((item) => item.trade?.startPrice);
 
+    ++currentCandleIndex;
     if (!trades.length) {
-      ++currentCandleIndex;
       timeout = setTimeout(updateMarket, 300);
       return;
     }
@@ -190,7 +194,6 @@ function LiveMarketPage() {
       pauseMarket();
       isStrictlyPaused = true;
     } else {
-      ++currentCandleIndex;
       timeout = setTimeout(updateMarket, 100);
     }
   };
@@ -403,7 +406,9 @@ function LiveMarketPage() {
             className={styles.tradeForm}
             tradeDetails={tradesForApproval[0]}
             stockData={getStockDataTillCurrentIndex(
-              tradesForApproval[0].symbol
+              tradesForApproval[0].symbol,
+              700,
+              true
             )}
             stockPreset={stockPresets[tradesForApproval[0].symbol]}
             lrp={stocksLrps[tradesForApproval[0].symbol]}
