@@ -19,7 +19,7 @@ import { getBestStockPresets, getStocksData } from "apis/trade";
 import { AppContext } from "App";
 
 import styles from "./LiveTestPage.module.scss";
-import { analyzeTradesForCompletion } from "utils/tradeMaintainanceUtil";
+import { analyzeTradesForCompletion } from "utils/tradeMaintenanceUtil";
 
 let timeout,
   chartSpeed = 50,

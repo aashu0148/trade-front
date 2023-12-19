@@ -15,10 +15,9 @@ import {
 } from "utils/util";
 import { takeTrades } from "utils/tradeUtil";
 import { getBestStockPresets, getStocksData } from "apis/trade";
-import { AppContext } from "App";
+import { analyzeTradesForCompletion } from "utils/tradeMaintenanceUtil";
 
 import styles from "./LiveMarketPage.module.scss";
-import { analyzeTradesForCompletion } from "utils/tradeMaintainanceUtil";
 
 let timeout,
   currentCandleIndex = 200,
@@ -27,13 +26,10 @@ let timeout,
 function LiveMarketPage() {
   const tradesRef = useRef([]);
 
-  const appContext = useContext(AppContext);
   const [stocksData, setStocksData] = useState({});
-  const [selectedStock, setSelectedStock] = useState({});
   const [stockPresets, setStockPresets] = useState({});
   const [loadingPage, setLoadingPage] = useState(true);
   const [tradesTaken, setTradesTaken] = useState([]);
-  const [tradeToApprove, setTradeToApprove] = useState({});
   const [disabledButtons, setDisabledButtons] = useState({
     savePresetToDb: false,
     fetchStockData: false,
@@ -52,8 +48,8 @@ function LiveMarketPage() {
   const handleApprovalDecision = ({ values, isApproved, trade: tradeObj }) => {
     const stockData = stocksData[tradeObj.symbol]["5"] || {};
     const prices = {
-      high: stockData.h[currentCandleIndex - 1],
-      low: stockData.l[currentCandleIndex - 1],
+      high: stockData.h[currentCandleIndex],
+      low: stockData.l[currentCandleIndex],
     };
 
     const trade = {
@@ -77,7 +73,6 @@ function LiveMarketPage() {
     isStrictlyPaused = false;
 
     if (!newTradesForApproval.length) {
-      currentCandleIndex++;
       playMarket();
     }
   };
@@ -90,6 +85,7 @@ function LiveMarketPage() {
   function playMarket() {
     if (isStrictlyPaused) return;
 
+    ++currentCandleIndex;
     setMarketStatus((prev) => ({ ...prev, running: true }));
     timeout = setTimeout(() => updateMarket(currentCandleIndex));
   }
@@ -150,8 +146,8 @@ function LiveMarketPage() {
     });
     const trades = allTrades.filter((item) => item.trade?.startPrice);
 
-    ++currentCandleIndex;
     if (!trades.length) {
+      ++currentCandleIndex;
       timeout = setTimeout(updateMarket, 300);
       return;
     }
@@ -193,7 +189,10 @@ function LiveMarketPage() {
       setTradesForApproval(newlyTakenTrades);
       pauseMarket();
       isStrictlyPaused = true;
-    } else timeout = setTimeout(updateMarket, 100);
+    } else {
+      ++currentCandleIndex;
+      timeout = setTimeout(updateMarket, 100);
+    }
   };
 
   function handleStopMarket() {
@@ -252,7 +251,6 @@ function LiveMarketPage() {
 
     toast.success("new stock data filled");
     setStocksData(res.data);
-    setSelectedStock({});
   };
 
   const fetchBestStockPreset = async () => {
