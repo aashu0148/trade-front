@@ -59,41 +59,40 @@ function TradePage({ socket }) {
     });
 
     socket.on("test", (data) => {
-      console.log(data);
-
-      if (Array.isArray(data) && data[0]?.analytic) {
-        console.log(
-          data
-            .map((item) => ({
-              symbol: item.symbol,
-              MAIN: item.analytic.netSignal,
-              PRICE: item.analytic.price,
-              PP: item.analytic.possibleProfit,
-              R: item.analytic.nearestResistance,
-              S: item.analytic.nearestSupport,
-              ...item.analytic.mainSignals,
-              ...item.analytic.otherSignals,
-            }))
-            .map((item) =>
-              Object.keys(item)
-                .map((a) => `${a}: ${item[a]}`)
-                .join(" | ")
-                .slice(8)
-                .replace("PRICE: ", "")
-                .replaceAll("undefined", "_")
-                .replace("MAIN: ", "")
-                .replace("rsiSignal", "rsi")
-                .replace("macdSignal", "macd")
-                .replace("srSignal", "sr")
-                .replace("bollingerBandSignal", "bb")
-                .replace("smaSignal", "sma")
-                .replace("psarSignal", "psar")
-                .replace("willRSignal", "willR")
-                .replace("mfiSignal", "mfi")
-                .replace("vwapSignal", "vwap")
-            )
-        );
-      }
+      // console.log(data);
+      // if (Array.isArray(data) && data[0]?.analytic) {
+      //   console.log(
+      //     data
+      //       .map((item) => ({
+      //         symbol: item.symbol,
+      //         MAIN: item.analytic.netSignal,
+      //         PRICE: item.analytic.price,
+      //         PP: item.analytic.possibleProfit,
+      //         R: item.analytic.nearestResistance,
+      //         S: item.analytic.nearestSupport,
+      //         ...item.analytic.mainSignals,
+      //         ...item.analytic.otherSignals,
+      //       }))
+      //       .map((item) =>
+      //         Object.keys(item)
+      //           .map((a) => `${a}: ${item[a]}`)
+      //           .join(" | ")
+      //           .slice(8)
+      //           .replace("PRICE: ", "")
+      //           .replaceAll("undefined", "_")
+      //           .replace("MAIN: ", "")
+      //           .replace("rsiSignal", "rsi")
+      //           .replace("macdSignal", "macd")
+      //           .replace("srSignal", "sr")
+      //           .replace("bollingerBandSignal", "bb")
+      //           .replace("smaSignal", "sma")
+      //           .replace("psarSignal", "psar")
+      //           .replace("willRSignal", "willR")
+      //           .replace("mfiSignal", "mfi")
+      //           .replace("vwapSignal", "vwap")
+      //       )
+      //   );
+      // }
     });
 
     socket.on("stock-data", (data) => {
