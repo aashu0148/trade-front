@@ -11,6 +11,7 @@ function StockChart({
   shortChart = false,
   tradesResponse = {},
   showIndexInTooltip = false,
+  firstTradeIndex = -1,
 }) {
   const [tooltipDetails, setTooltipDetails] = useState({
     style: {},
@@ -123,6 +124,26 @@ function StockChart({
         : await takeTrades(stockData, stockPreset, false);
 
     // trade marks
+    if (firstTradeIndex > 0) {
+      const line = chart.addLineSeries({
+        pane: 0,
+        color: "black",
+        lineWidth: 8,
+      });
+
+      try {
+        line.setData([
+          {
+            time: stockData["5"].t[firstTradeIndex - 1],
+            value: stockData["5"].c[firstTradeIndex - 1],
+          },
+          {
+            time: stockData["5"].t[firstTradeIndex + 1],
+            value: stockData["5"].c[firstTradeIndex - 1],
+          },
+        ]);
+      } catch (err) {}
+    }
     trades.forEach((trade, i) => {
       const line = chart.addLineSeries({
         pane: 0,
@@ -130,16 +151,24 @@ function StockChart({
         lineWidth: 8,
       });
 
-      line.setData([
-        {
-          time: stockData["5"].t[trade.startIndex - 1],
-          value: trade.startPrice,
-        },
-        {
-          time: stockData["5"].t[trade.startIndex + 1],
-          value: trade.startPrice,
-        },
-      ]);
+      try {
+        line.setData([
+          {
+            time: stockData["5"].t[trade.startIndex - 1],
+            value: trade.startPrice,
+          },
+          {
+            time: stockData["5"].t[trade.startIndex + 1],
+            value: trade.startPrice,
+          },
+        ]);
+      } catch (err) {
+        // console.log("Error setting line data", {
+        //   trade,
+        //   time: stockData["5"].t[trade.startIndex - 1],
+        //   stockData,
+        // });
+      }
     });
 
     // trend lines

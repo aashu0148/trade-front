@@ -88,25 +88,32 @@ export const analyzeTradesForCompletion = (
       return;
     }
 
-    const currTradeHigh = trade.tradeHigh || 0;
-    const currTradeLow = trade.tradeLow || 9999999;
     const isSellTrade = trade.type.toLowerCase() == "sell";
-
     if (!sData?.c?.length) return;
 
     const tradeTimeInSec = trade.time / 1000;
     const timeIndex = sData.t.findIndex((t) => t >= tradeTimeInSec);
     if (timeIndex < 0) return;
 
+    const tradePriceData = {
+      c: sData.c.slice(timeIndex, currIndex + 1),
+      o: sData.o.slice(timeIndex, currIndex + 1),
+      h: sData.h.slice(timeIndex, currIndex + 1),
+      l: sData.l.slice(timeIndex, currIndex + 1),
+      t: sData.t.slice(timeIndex, currIndex + 1),
+      v: sData.v.slice(timeIndex, currIndex + 1),
+    };
+    const longTradePriceData = {
+      c: sData.c.slice(timeIndex - 50, currIndex + 1),
+      o: sData.o.slice(timeIndex - 50, currIndex + 1),
+      h: sData.h.slice(timeIndex - 50, currIndex + 1),
+      l: sData.l.slice(timeIndex - 50, currIndex + 1),
+      t: sData.t.slice(timeIndex - 50, currIndex + 1),
+      v: sData.v.slice(timeIndex - 50, currIndex + 1),
+    };
     const { statusNumber, tradeHigh, tradeLow } = checkTradeCompletion(
       trade.startPrice,
-      {
-        c: sData.c.slice(timeIndex, currIndex + 1),
-        o: sData.o.slice(timeIndex, currIndex + 1),
-        h: sData.h.slice(timeIndex, currIndex + 1),
-        l: sData.l.slice(timeIndex, currIndex + 1),
-        t: sData.t.slice(timeIndex, currIndex + 1),
-      },
+      tradePriceData,
       trade.target,
       trade.sl,
       isSellTrade
@@ -126,16 +133,9 @@ export const analyzeTradesForCompletion = (
         ? "loss"
         : "taken";
 
-    if (status == trade.status) {
-      if (tradeHigh !== currTradeHigh || tradeLow !== currTradeLow) {
-        trade.tradeHigh = tradeHigh;
-        trade.tradeLow = tradeLow;
-      }
-
-      return;
-    }
-
     // update the trade status
+    trade.priceData = longTradePriceData;
+    trade.tradeStartIndex = 50;
     trade.tradeHigh = tradeHigh;
     trade.tradeLow = tradeLow;
     trade.status = status;

@@ -146,6 +146,7 @@ function LiveMarketPage() {
       return {
         symbol: s,
         trade: t.length ? t[0] : {},
+        preset: stockPresets[s] || {},
       };
     });
     const trades = allTrades.filter((item) => item.trade?.startPrice);
@@ -181,6 +182,7 @@ function LiveMarketPage() {
         ...item.trade,
         status: "taken",
         time: item.trade?.time ? item.trade.time * 1000 : Date.now(),
+        preset: item.preset,
       };
       tradeObj.date = new Date(tradeObj.time).toLocaleDateString("en-in");
 

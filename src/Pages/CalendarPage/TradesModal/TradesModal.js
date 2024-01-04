@@ -51,7 +51,7 @@ function TradesModal({
               lrp={lrps[item.symbol]}
               key={item._id || item.startPrice + item.type + item.time}
               trade={item}
-              hideChartButton
+              // hideChartButton
               showDateWithTime={showDateInCard}
             />
           ))}

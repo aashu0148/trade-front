@@ -250,9 +250,9 @@ function TradePage({ socket }) {
                       ]
                     : ""
                 ).toFixed(1)}
-                onViewChart={() =>
-                  setStockDetailModal({ symbol: item.symbol, show: true })
-                }
+                // onViewChart={() =>
+                //   setStockDetailModal({ symbol: item.symbol, show: true })
+                // }
                 onApprove={() => {
                   setStockDetailModal({ symbol: item.symbol });
                   setTradeToApprove(item);

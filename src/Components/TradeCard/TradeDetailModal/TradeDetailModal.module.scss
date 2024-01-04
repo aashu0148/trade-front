@@ -1,0 +1,44 @@
+@import "styles/variables";
+
+.container {
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+
+  .tradeDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .detail {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+
+      label {
+        min-width: 60px;
+        color: $gray;
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .value {
+        font-size: 16px;
+        font-weight: 500;
+        color: $black;
+
+        &.green,
+        &.red {
+          font-weight: 600;
+          color: $green;
+          text-transform: uppercase;
+        }
+
+        &.red {
+          color: $red;
+        }
+      }
+    }
+  }
+}
