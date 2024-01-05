@@ -22,7 +22,7 @@ function TradeCard({
   showDateWithTime = false,
 }) {
   const isBuyTrade = trade.type == "buy";
-  const {
+  let {
     startPrice: trigger,
     tradeHigh,
     tradeLow,

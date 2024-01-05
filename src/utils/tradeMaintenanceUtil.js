@@ -104,12 +104,12 @@ export const analyzeTradesForCompletion = (
       v: sData.v.slice(timeIndex, currIndex + 1),
     };
     const longTradePriceData = {
-      c: sData.c.slice(timeIndex - 50, currIndex + 1),
-      o: sData.o.slice(timeIndex - 50, currIndex + 1),
-      h: sData.h.slice(timeIndex - 50, currIndex + 1),
-      l: sData.l.slice(timeIndex - 50, currIndex + 1),
-      t: sData.t.slice(timeIndex - 50, currIndex + 1),
-      v: sData.v.slice(timeIndex - 50, currIndex + 1),
+      c: sData.c.slice(timeIndex - 85, currIndex + 1),
+      o: sData.o.slice(timeIndex - 85, currIndex + 1),
+      h: sData.h.slice(timeIndex - 85, currIndex + 1),
+      l: sData.l.slice(timeIndex - 85, currIndex + 1),
+      t: sData.t.slice(timeIndex - 85, currIndex + 1),
+      v: sData.v.slice(timeIndex - 85, currIndex + 1),
     };
     const { statusNumber, tradeHigh, tradeLow } = checkTradeCompletion(
       trade.startPrice,
@@ -135,7 +135,7 @@ export const analyzeTradesForCompletion = (
 
     // update the trade status
     trade.priceData = longTradePriceData;
-    trade.tradeStartIndex = 50;
+    trade.tradeStartIndex = 85;
     trade.tradeHigh = tradeHigh;
     trade.tradeLow = tradeLow;
     trade.status = status;

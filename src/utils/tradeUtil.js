@@ -1417,6 +1417,14 @@ export const takeTrades = async (
       const isSellTrade = trade.type == signalEnum.sell;
       const tradeStartIndex = trade.startIndex;
 
+      const longTradePriceData = {
+        c: priceData.c.slice(tradeStartIndex - 85, currentIndex),
+        o: priceData.o.slice(tradeStartIndex - 85, currentIndex),
+        h: priceData.h.slice(tradeStartIndex - 85, currentIndex),
+        l: priceData.l.slice(tradeStartIndex - 85, currentIndex),
+        t: priceData.t.slice(tradeStartIndex - 85, currentIndex),
+        v: priceData.v.slice(tradeStartIndex - 85, currentIndex),
+      };
       const { statusNumber, tradeHigh, tradeLow } = checkTradeCompletion(
         trade.startPrice,
         {
@@ -1436,6 +1444,8 @@ export const takeTrades = async (
 
       trades[i].tradeHigh = tradeHigh;
       trades[i].tradeLow = tradeLow;
+      trades[i].priceData = longTradePriceData;
+      trades[i].tradeStartIndex =85;
 
       if (status == trade.status) return;
 
@@ -2059,6 +2069,7 @@ export const takeTrades = async (
       sl: isBuySignal ? price - stopLoss : price + stopLoss,
       analytics: analyticDetails,
       status: "taken",
+      preset,
     };
 
     if (isAllowedToTakeThisTrade(trade)) trades.push(trade);
