@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import Modal from "Components/Modal/Modal";
 import StockChart from "Pages/TradePage/StockChart/StockChart";
@@ -6,7 +6,9 @@ import StockChart from "Pages/TradePage/StockChart/StockChart";
 import styles from "./TradeDetailModal.module.scss";
 
 function TradeDetailModal({ onClose, trade }) {
-  // console.log(trade);
+  useEffect(() => {
+    console.log(trade);
+  }, []);
 
   return (
     <Modal onClose={onClose}>

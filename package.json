@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@aashu0148/yota-algo": "^1.0.5",
     "@debut/indicators": "^1.3.19",
     "@ixjb94/indicators": "^1.1.22",
     "@testing-library/jest-dom": "^5.17.0",

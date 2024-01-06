@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { takeTrades } from "@aashu0148/yota-algo";
 
-import { takeTrades } from "utils/tradeUtil";
 import { getDateFormatted, getTimeFormatted } from "utils/util";
 
 import styles from "./StockChart.module.scss";

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Bookmark, Check, Copy, X } from "react-feather";
 import { toast } from "react-hot-toast";
+import { takeTrades, indicatorsWeightEnum } from "@aashu0148/yota-algo";
 
 import InputSelect from "Components/InputControl/InputSelect/InputSelect";
 import InputControl from "Components/InputControl/InputControl";
@@ -11,7 +12,6 @@ import Spinner from "Components/Spinner/Spinner";
 
 import { getBestStockPresets, getStocksData } from "apis/trade";
 import { copyToClipboard } from "utils/util";
-import { indicatorsWeightEnum, takeTrades } from "utils/tradeUtil";
 
 import styles from "./TestPage.module.scss";
 

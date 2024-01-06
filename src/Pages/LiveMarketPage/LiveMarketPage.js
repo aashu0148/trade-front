@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { Pause, Play } from "react-feather";
 import { toast } from "react-hot-toast";
+import { takeTrades } from "@aashu0148/yota-algo";
 
 import InputControl from "Components/InputControl/InputControl";
 import Button from "Components/Button/Button";
@@ -13,7 +14,6 @@ import {
   getTimeFormatted,
   generateUniqueString,
 } from "utils/util";
-import { takeTrades } from "utils/tradeUtil";
 import { getBestStockPresets, getStocksData } from "apis/trade";
 import { analyzeTradesForCompletion } from "utils/tradeMaintenanceUtil";
 

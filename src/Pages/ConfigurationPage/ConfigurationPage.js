@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Bookmark, Copy, X } from "react-feather";
+import { Copy, X } from "react-feather";
 import { toast } from "react-hot-toast";
-import Calendar from "react-calendar";
+import {
+  takeTrades,
+  defaultTradePreset,
+  indicatorEnum,
+  indicatorsWeightEnum,
+} from "@aashu0148/yota-algo";
 
 import InputSelect from "Components/InputControl/InputSelect/InputSelect";
 import InputControl from "Components/InputControl/InputControl";
@@ -9,6 +14,7 @@ import MultiSelect from "Components/MultiSelect/MultiSelect";
 import Button from "Components/Button/Button";
 import Spinner from "Components/Spinner/Spinner";
 import StockChart from "Pages/TradePage/StockChart/StockChart";
+import TradesModal from "Pages/CalendarPage/TradesModal/TradesModal";
 
 import {
   createNewPreset,
@@ -16,15 +22,8 @@ import {
   getStocksData,
 } from "apis/trade";
 import { copyToClipboard } from "utils/util";
-import {
-  defaultTradePreset,
-  indicatorEnum,
-  indicatorsWeightEnum,
-  takeTrades,
-} from "utils/tradeUtil";
 
 import styles from "./ConfigurationPage.module.scss";
-import TradesModal from "Pages/CalendarPage/TradesModal/TradesModal";
 
 const optionalIndicators = [
   {
@@ -70,10 +69,6 @@ const optionalIndicators = [
   {
     label: "William % R" + ` (${indicatorsWeightEnum.williamR} point)`,
     value: "willR",
-  },
-  {
-    label: "Money flow index" + ` (${indicatorsWeightEnum.mfi} point)`,
-    value: "mfi",
   },
   {
     label: "Commodity channel index" + ` (${indicatorsWeightEnum.cci} point)`,
@@ -778,57 +773,6 @@ function ConfigurationPage() {
                       setValues((prev) => ({
                         ...prev,
                         willRPeriod: parseInt(e.target.value),
-                      }))
-                    }
-                    disabled={!selectedStock?.value}
-                  />
-                </div>
-              </div>
-              <div className="col" style={{ gap: "10px" }}>
-                <p className={styles.label}>MFI (Money flow index)</p>
-
-                <div className="row">
-                  <InputControl
-                    placeholder="Enter number"
-                    hintText="MFI - low"
-                    numericInput
-                    max={90}
-                    min={10}
-                    value={values.mfiLow}
-                    onChange={(e) =>
-                      setValues((prev) => ({
-                        ...prev,
-                        mfiLow: parseInt(e.target.value),
-                      }))
-                    }
-                    disabled={!selectedStock?.value}
-                  />
-                  <InputControl
-                    placeholder="Enter number"
-                    hintText="MFI - high"
-                    numericInput
-                    max={90}
-                    min={10}
-                    value={values.mfiHigh}
-                    onChange={(e) =>
-                      setValues((prev) => ({
-                        ...prev,
-                        mfiHigh: parseInt(e.target.value),
-                      }))
-                    }
-                    disabled={!selectedStock?.value}
-                  />
-                  <InputControl
-                    placeholder="Enter number"
-                    hintText="MFI - period"
-                    numericInput
-                    max={30}
-                    min={4}
-                    value={values.mfiPeriod}
-                    onChange={(e) =>
-                      setValues((prev) => ({
-                        ...prev,
-                        mfiPeriod: parseInt(e.target.value),
                       }))
                     }
                     disabled={!selectedStock?.value}
