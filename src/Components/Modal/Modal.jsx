@@ -25,11 +25,10 @@ function Modal({
   const location = useLocation();
 
   const containerRef = useRef();
+  const innerRef = useRef();
   const isMobileView = window.outerWidth < 768;
 
   const [lastLocation, setLastLocation] = useState("");
-
-  const uniqueId = useMemo(() => generateUniqueString(), []);
 
   const handleCloseModal = () => {
     if (!onClose) return;
@@ -40,12 +39,35 @@ function Modal({
     navigate(-1);
   };
 
+  const handleContainerClick = (event) => {
+    const isClickedInsideContainer = containerRef.current.contains(
+      event.target
+    );
+    if (!isClickedInsideContainer) return;
+    const isClickedInsideInner = innerRef.current.contains(event.target);
+
+    if (isClickedInsideInner) return;
+
+    handleCloseModal();
+    event.stopPropagation();
+  };
+
   const handleURLParamsOnMount = () => {
     const location = window.location;
     const params = new URLSearchParams(location.search);
 
-    if (location.search?.includes("modal") || preventUrlChange) return;
-    params.append("modal", "true");
+    if (
+      preventUrlChange ||
+      (location.search.includes("modal") && location.search.includes("modal2"))
+    )
+      return;
+
+    if (
+      location.search?.includes("modal") &&
+      !location.search.includes("modal2")
+    )
+      params.append("modal2", "true");
+    else params.append("modal", "true");
 
     navigate({
       pathname: location.pathname,
@@ -86,21 +108,20 @@ function Modal({
 
   const modal = isMobileView ? (
     <div
-      id={"id:" + uniqueId}
       ref={containerRef}
       className={`${styles.mobileContainer} ${
         title || noTopPadding ? styles.modalWithTitle : ""
       } ${fullScreenInMobile ? styles.fullScreenMobile : ""} ${
         className || ""
       }`}
-      onClick={(event) => {
-        if (event.target?.id == `id:${uniqueId}` && onClose) handleCloseModal();
-
-        event.stopPropagation();
-      }}
+      onClick={handleContainerClick}
       style={{ zIndex: +props.zIndex || "" }}
     >
-      <div className={`${styles.inner} custom-scroll`} style={styleToInner}>
+      <div
+        ref={innerRef}
+        className={`${styles.inner} custom-scroll`}
+        style={styleToInner}
+      >
         {title && (
           <div className={styles.modalTitle}>
             <div className={styles.heading}>{title}</div>
@@ -123,17 +144,12 @@ function Modal({
     </div>
   ) : (
     <div
-      id={"id:" + uniqueId}
       ref={containerRef}
       className={`${styles.container} ${className || ""}`}
-      onClick={(event) => {
-        if (event.target?.id == `id:${uniqueId}` && onClose && closeOnBlur)
-          handleCloseModal();
-
-        event.stopPropagation();
-      }}
+      onClick={handleContainerClick}
     >
       <div
+        ref={innerRef}
         className={`${styles.inner} ${
           doNotAnimate ? styles.preventAnimation : ""
         }`}

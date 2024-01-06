@@ -6,6 +6,8 @@ import StockChart from "Pages/TradePage/StockChart/StockChart";
 import styles from "./TradeDetailModal.module.scss";
 
 function TradeDetailModal({ onClose, trade }) {
+  // console.log(trade);
+
   return (
     <Modal onClose={onClose}>
       <div className={styles.container}>
@@ -25,16 +27,24 @@ function TradeDetailModal({ onClose, trade }) {
             </p>
           </div>
           <div className={styles.detail}>
+            <label>Trigger:</label>
+            <p className={`${styles.value}`}>{trade.startPrice}</p>
+          </div>
+          <div className={styles.detail}>
             <label>Target:</label>
-            <p className={`${styles.value} ${styles.green}`}>{trade.target}</p>
+            <p className={`${styles.value} ${styles.green}`}>
+              {trade.target ? trade.target.toFixed(2) : ""}
+            </p>
           </div>
           <div className={styles.detail}>
             <label>SL:</label>
-            <p className={`${styles.value} ${styles.red}`}>{trade.sl}</p>
+            <p className={`${styles.value} ${styles.red}`}>
+              {trade.sl ? trade.sl.toFixed(2) : ""}
+            </p>
           </div>
           <div className={styles.detail}>
             <label>Reasons:</label>
-            <p className={styles.value}>
+            <p className={styles.value} style={{ textTransform: "uppercase" }}>
               {typeof trade.analytics.allowedIndicatorSignals == "object"
                 ? Object.keys(trade.analytics.allowedIndicatorSignals)
                     .filter(
